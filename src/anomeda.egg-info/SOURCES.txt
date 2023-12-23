@@ -1,0 +1,10 @@
+LICENSE
+README.md
+pyproject.toml
+src/anomeda/DataFrame.py
+src/anomeda/__init__.py
+src/anomeda/utils.py
+src/anomeda.egg-info/PKG-INFO
+src/anomeda.egg-info/SOURCES.txt
+src/anomeda.egg-info/dependency_links.txt
+src/anomeda.egg-info/top_level.txt
