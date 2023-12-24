@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plts
 from scipy.optimize import curve_fit
 from datetime import datetime, timedelta
 from sklearn.mixture import BayesianGaussianMixture
