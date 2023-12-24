@@ -1,5 +1,5 @@
 # Let users know if they're missing any of our hard dependencies
-hard_dependencies = ("numpy", "pandas", "sklearn")
+hard_dependencies = ("numpy", "pandas", "sklearn", "scipy")
 missing_dependencies = []
 
 for dependency in hard_dependencies:
