@@ -117,14 +117,16 @@ class DataFrame:
     )
     """
     
-    def __init__(self, data: pd.DataFrame, 
-                 measures_names=None, 
-                 measures_types=None, 
-                 discretized_measures=None, 
-                 index_name=None, 
-                 metric_name=None, 
-                 agg_func='sum'
-                ):
+    def __init__(
+        self, 
+        data: pd.DataFrame,
+        measures_names=None, 
+        measures_types=None, 
+        discretized_measures=None, 
+        index_name=None, 
+        metric_name=None, 
+        agg_func='sum'
+    ):
         
         self._data = data.copy()
         
