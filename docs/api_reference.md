@@ -1,23 +1,23 @@
-# Sample Header
+# API reference
 
-Here is coming the documentation for **anomeda**
+Here you can find the documentation for all available endpoints of **anomeda** package.
 
-# This is H2 header
-
-Text
-
-## This is H3 header
+## This is H2 header
 
 Text
 
-## This is H4 header
+### This is H3 header
 
 Text
 
-## This is H5 header
+#### This is H4 header
 
 Text
 
-## This is H6 header
+##### This is H5 header
+
+Text
+
+###### This is H6 header
 
 Text
