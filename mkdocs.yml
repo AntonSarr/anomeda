@@ -20,6 +20,9 @@ python:
   
 site_name: Anomeda Python Package
 
+theme:
+  name: readthedocs
+
 nav:
   - Overview: index.md 
   - User Guide: user_guide.md 
