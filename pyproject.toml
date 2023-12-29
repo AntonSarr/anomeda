@@ -12,6 +12,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "mkdocstrings[python]>=0.18",
+]
 
 [project.urls]
 Homepage = "https://github.com/AntonSarr/anomeda"

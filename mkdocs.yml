@@ -32,7 +32,10 @@ plugins:
         python:
           options:
             docstring_section_style: list
-            members_order: source
+            show_if_no_docstring: true
+            show_signature_annotations: true
+            merge_init_into_class: true
             show_root_heading: true
             show_source: false
-            show_signature_annotations: true
+            heading_level: 2
+            paths: [src]
