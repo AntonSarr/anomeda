@@ -1,8 +1,8 @@
 # API reference
 
-Here you can find the documentation for all available endpoints of **anomeda** package.
+Here you can find the documentation for all available endpoints of **anomeda** Python package.
 
-## anomeda.DataFrame
+## DataFrame
 
 ```python
 anomeda.DataFrame(
@@ -16,98 +16,139 @@ anomeda.DataFrame(
 )
 ```
 
-## anomeda.DataFrame.aspandas
+Class containing data to be processed by anomeda package.
+    
+### Parameters
+
+**data** : *pandas.DataFrame*
+    Underlying data must be pandas.DataFrame object
+
+**measures_names** : *list of str or tuple objects*
+    List containing columns considered as measures in the data
+
+**measures_types** : *dict*
+    Dict containing 'categorical' and/or 'continuous' keys and list of measures as values. Continuous measures will be discretized automatically if not presented in discretized_measures parameter.
+
+**discretized_measures** : *dict*
+    Dict containig name of the measure as key and array-like object containing discretized values of the measure of the same shape as original data. If measure is in 'continuous' list of measures_types parameter, it will be discretized automatically.
+
+**index_name** : *str or list*
+    Columns to be considered as an index (usually a date or a timestamp)
+
+**metric_name** : *str*
+    Column with a metric to be analyzed
+
+**agg_func**: *str*
+    Way of aggregating metric_name by measures. Can be 'sum', 'avg' or callable compatible with pandas.DataFrame.groupby
+
+### Example
+
+```python
+anmd_df = anomeda.DataFrame(
+    data,
+    measures_names=['dummy_measure', 'dummy_numeric_measure'],
+    measures_types={
+        'categorical': ['dummy_measure'], 
+        'continuous': ['dummy_numeric_measure']
+    },
+    index_name='dt',
+    metric_name='metric',
+    agg_func='sum'
+)
+```
+
+## DataFrame.aspandas
 
 Text
 
-## anomeda.DataFrame.copy
+## DataFrame.copy
 
 Text
 
-## anomeda.DataFrame.get_agg_func
+## DataFrame.get_agg_func
 
 Text
 
-## anomeda.DataFrame.get_discretization_mapping
+## DataFrame.get_discretization_mapping
 
 Text
 
-## anomeda.DataFrame.get_discretized_measures
+## DataFrame.get_discretized_measures
 
 Text
 
-## anomeda.DataFrame.get_index_name
+## DataFrame.get_index_name
 
 Text
 
-## anomeda.DataFrame.get_measures_names
+## DataFrame.get_measures_names
 
 Text
 
-## anomeda.DataFrame.get_measures_types
+## DataFrame.get_measures_types
 
 Text
 
-## anomeda.DataFrame.get_metric_name
+## DataFrame.get_metric_name
 
 Text
 
-## anomeda.DataFrame.mod_data
+## DataFrame.mod_data
 
 Text
 
-## anomeda.DataFrame.set_agg_func
+## DataFrame.set_agg_func
 
 Text
 
-## anomeda.DataFrame.set_discretization_mapping
+## DataFrame.set_discretization_mapping
 
 Text
 
-## anomeda.DataFrame.set_discretized_measures
+## DataFrame.set_discretized_measures
 
 Text
 
-## anomeda.DataFrame.set_index_name
+## DataFrame.set_index_name
 
 Text
 
-## anomeda.DataFrame.set_measures_names
+## DataFrame.set_measures_names
 
 Text
 
-## anomeda.DataFrame.set_measures_types
+## DataFrame.set_measures_types
 
 Text
 
-## anomeda.DataFrame.set_metric_name
+## DataFrame.set_metric_name
 
 Text
 
-## anomeda.describe_trend
+## describe_trend
 
 Text
 
-## anomeda.describe_trends_by_clusters
+## describe_trends_by_clusters
 
 Text
 
-## anomeda.describe_variance_by_clusters
+## describe_variance_by_clusters
 
 Text
 
-## anomeda.explain_values_difference
+## explain_values_difference
 
 Text
 
-## anomeda.explain_variance_difference
+## explain_variance_difference
 
 Text
 
-## anomeda.find_anomalies
+## find_anomalies
 
 Text
 
-## anomeda.find_anomalies_by_clusters
+## find_anomalies_by_clusters
 
 Text
