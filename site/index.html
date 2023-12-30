@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="None">
+        
+        
+        <link rel="shortcut icon" href="img/favicon.ico">
+        <title>Anomeda Python Package</title>
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+        <link href="css/font-awesome.min.css" rel="stylesheet">
+        <link href="css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+        <link href="assets/_mkdocstrings.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body class="homepage">
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href=".">Anomeda Python Package</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem active">
+                                <a href="." class="nav-link">Overview</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="user_guide/" class="nav-link">User Guide</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="api_reference/" class="nav-link">Docs</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" class="nav-link disabled">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="user_guide/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#introductions-to-anomeda" class="nav-link">Introductions to Anomeda</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="1"><a href="#installing" class="nav-link">Installing</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="1"><a href="#how-to-use" class="nav-link">How to use</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#create-an-anomedadataframe-object" class="nav-link">Create an anomeda.DataFrame object</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#find-an-anomaly-change-of-the-metric" class="nav-link">Find an anomaly change of the metric</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#find-the-root-cause-of-an-anomaly-change-of-the-metric" class="nav-link">Find the root cause of an anomaly change of the metric</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#find-clusters-of-events-which-make-your-metric-rise-or-decrease" class="nav-link">Find clusters of events which make your metric rise or decrease</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="introductions-to-anomeda">Introductions to Anomeda</h1>
+<p>"Why has the number of visits of our website decreased this week? Who are the users who caused that?" - <strong>anomeda</strong> will help to answer such questions quicklya and easily.</p>
+<p><strong>anomeda</strong> is a Python library developed for Data Analysts, Data Scientists, BI Analysts and others. It helps to identify important metric changes and quickly find clusters in data which changed the trend of the metric or caused the anomaly.</p>
+<h1 id="installing">Installing</h1>
+<p>The GitHub repo contains the source distribution and built distribution files in <em>dist</em> folder.</p>
+<p>You must have <em>pandas</em>, <em>numpy</em>, <em>sklearn</em>, <em>scipy</em> installed. </p>
+<h1 id="how-to-use">How to use</h1>
+<p>After the library is installed, you can pass the pandas.DataFrame object with events to anomeda and look for insights about the metric's behavior. </p>
+<h2 id="create-an-anomedadataframe-object">Create an anomeda.DataFrame object</h2>
+<p>The base object anomeda is working with is the DataFrame. It is based on pandas.DataFrame object which contains events represented by rows or time series (aggregated events). It may contain:
+- Index
+    - Usually a datetime of a corresponding event
+- Measures
+    - Columns which describes an event, like "country", "region", "client category", etc. Measures can be numerical and categorical
+- Metric
+    - Metric you want to track, can be either aggregated, like "count of visits in a period", or non-aggregated, like "fact of visit"</p>
+<pre><code class="language-python">anmd_df = anomeda.DataFrame(
+    data, # pandas.DataFrame
+    measures_names=['dummy_measure', 'dummy_numeric_measure'], # columns represending measures
+    measures_types={
+        'categorical': ['dummy_measure'], 
+        'continuous': ['dummy_numeric_measure']
+    },
+    index_name='dt',
+    metric_name='metric',
+    agg_func='sum' # function that is used to aggregate metric if more than 1 metric value will be found for a particular set of measure values
+)
+</code></pre>
+<p>Each of the parameters can be changed with corresponding method, like <code>anomeda.DataFrame.set_measures_names</code>, <code>anomeda.DataFrame.set_measures_types</code>, <code>anomeda.DataFrame.set_index_name</code>, etc. The parameters can be retrieved with a corresponding getter, like <code>anomeda.DataFrame.get_measures_names</code>, <code>anomeda.DataFrame.get_measures_types</code>, <code>anomeda.DataFrame.get_index_name</code>, etc.</p>
+<p>The underlying pandas.DataFrame object can be changed without creating a new instance of anomeda.DataFrame with <code>mod_data</code> method.</p>
+<p>IF you need to get the pandas.DataFrame representation of an object, you can use <code>aspandas</code> method.</p>
+<h3 id="discretization-of-numeric-measures">Discretization of numeric measures</h3>
+<p>When continuous measures are passed, they will be mapped to discrete values by sklearn.mixture.BayesianGaussianMixture by default. You can pass your own discrete values of continuous measure when creating an anomeda.DataFrame object (see <code>discretized_measures</code> parameter of <code>anomeda.DataFrame</code> constructor) or later on (see method <code>anomeda.DataFrame.set_discretized_measures</code>)</p>
+<p>If you need to see the discretized values, you can use <code>anomeda.DataFrame.get_discretization_mapping</code> method</p>
+<h2 id="find-an-anomaly-change-of-the-metric">Find an anomaly change of the metric</h2>
+<p><code>anomeda.find_anomalies</code> and <code>anomeda.find_anomalies_by_clusters</code> are responsible for looking for unusual metric changes in the data.</p>
+<p>First, there are some parameters for the method (see docsctring of the methods for details):</p>
+<pre><code class="language-python">n = 3
+p = (0.05, 0.95)
+normal_whole_window = True
+read_deltas_consequently = False
+</code></pre>
+<p>The output is unique and sorted index values and an indication if total metric value is an anomaly or not. The values are aggregated using <code>agg_func</code> parameter.</p>
+<pre><code>index_values, anomalies_flag = anomeda.find_anomalies(anmd_df, n=n, p=p, normal_whole_window=normal_whole_window, read_deltas_consequently=read_deltas_consequently)
+</code></pre>
+<p>The methods use an alghorithm based on analyzing the <strong>historical changes</strong> of metric values in order to decide if the current point is an anomaly. The parameters mentioned before can tune the method for your needs.</p>
+<h2 id="find-the-root-cause-of-an-anomaly-change-of-the-metric">Find the root cause of an anomaly change of the metric</h2>
+<p>When you found an unusual period (whether by using <code>anomeda.find_anomalies</code> or by yourself), you can compare it to other period in order to find which events caused the difference between metric values.</p>
+<p>All you need to do is to call <code>anomeda.explain_values_difference</code> with 2 anomeda.DataFrame objects containing data you want to compare. It will automatically detect clusters of events using measure values, compare the metric values and return the result.</p>
+<pre><code class="language-python">anomeda.explain_values_difference(
+    anmd_df1,
+    anmd_df2
+</code></pre>
+<p>The output is a pandas.DataFrame with average metric value in each cluster in both periods and the <em>differences</em> between them. Thus, sorting by the absolute or relative differences and average values, you can find the most important clusters in terms of its contribution to the overall metric's change. </p>
+<h2 id="find-clusters-of-events-which-make-your-metric-rise-or-decrease">Find clusters of events which make your metric rise or decrease</h2>
+<p>Anomeda can calculate trends of the metric for each cluster in your data and show the most significat positive and negative contributions. It aggregates metric values by index, fit a line a * x + b, where x is index numeric value, and produce the output.</p>
+<pre><code class="language-python">anomeda.describe_trends_by_clusters(anmd_df)
+</code></pre>
+<p>The output is a pandas.DataFrame with the following columns:
+- Measures
+- trend_coeff
+    - Coefficient <em>a</em> of a fitted line a * x + b
+- trend_bias
+    - Coefficient <em>b</em> of a fitted line a * x + b
+- avg_value 
+- contribution_metric 
+    - Coefficient which describes how important the cluster for the total metric is. It is calculated as follows: <code>sign(a) * abs(a * avg_value)</code>, where a is coefficient <em>a</em> of a fitted line a * x + b</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="js/jquery-3.6.0.min.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+        <script>
+            var base_url = ".",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="js/base.js"></script>
+        <script src="search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
+
+<!--
+MkDocs version : 1.5.3
+Build Date UTC : 2023-12-30 14:45:05.205993+00:00
+-->
