@@ -9,6 +9,7 @@ Here you can find the documentation for all available endpoints of **anomeda** P
       merge_init_into_class: true
       show_root_heading: true
       show_root_full_path: false
+
 ::: anomeda.utils
     options:
       heading_level: 2
