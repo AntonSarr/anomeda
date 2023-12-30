@@ -5,9 +5,6 @@ nav:
   - User Guide: user_guide.md 
   - Docs: api_reference.md
   
-exclude_docs: |
-  *.py
-
 plugins:
   - search
   - mkdocstrings:
@@ -19,4 +16,5 @@ plugins:
             docstring_style: numpy
             show_signature_annotations: true
             show_source: false
-            paths: [src]
+            paths:
+              - src
