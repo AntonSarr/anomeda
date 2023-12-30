@@ -2,7 +2,7 @@
 
 Here you can find the documentation for all available endpoints of **anomeda** Python package.
 
-::: anomeda.DataFrame.DataFrame
+::: anomeda.DataFrame
     options:
       heading_level: 2
       show_docstring_classes: true
