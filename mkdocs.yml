@@ -11,10 +11,9 @@ plugins:
       default_handler: python
       handlers:
         python:
+          paths: [src]
           options:
             docstring_section_style: list
             docstring_style: numpy
             show_signature_annotations: true
             show_source: false
-            paths:
-              - src
