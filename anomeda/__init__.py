@@ -15,7 +15,7 @@ if missing_dependencies:
 del hard_dependencies, dependency, missing_dependencies
 
 
-import DataFrame
+from DataFrame import *
 from utils import *
 
 __doc__ = """

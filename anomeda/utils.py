@@ -12,8 +12,7 @@ INVALID_DATA_TYPE_MSG = "Data type must be anomeda.DataFrame, while {0} is provi
 
 
 def linreg(x, a, b):
-    """Return the value of f(x) = a * x + b"""
-    
+    """Return the value of f(x) = a * x + b."""
     return a * x + b
 
 
@@ -25,12 +24,13 @@ def describe_trend(data):
     data : anomeda.DataFrame
         Object containing data to be analyzed
         
-    Return
-    ------
-    a, b : float
-        Coefficients a, b of a line f(x) = a + b * x fitted to the metric, where x is time values and f(x) is metric values
+    Returns
+    -------
+    a : float
+        Coefficient a of a line f(x) = a + b * x fitted to the metric, where x is time values and f(x) is metric values
+    b : float
+        Coefficient b of a line f(x) = a + b * x fitted to the metric, where x is time values and f(x) is metric values
     """
-    
     if type(data) != DataFrame:
         raise TypeError(INVALID_DATA_TYPE_MSG.format(type(data)))
     
@@ -78,12 +78,11 @@ def describe_trends_by_clusters(data):
     data : anomeda.DataFrame
         Object containing data to be analyzed
         
-    Return
-    ------
+    Returns
+    -------
     output : pandas.DataFrame
         Object describing the trends. 
     """
-    
     if type(data) != DataFrame:
         raise TypeError(INVALID_DATA_TYPE_MSG.format(type(data)))
          
@@ -146,12 +145,11 @@ def describe_variance_by_clusters(data):
     data : anomeda.DataFrame
         Object containing data to be analyzed
         
-    Return
-    ------
+    Returns
+    -------
     output : pandas.DataFrame
         Object describing the variances. 
     """
-    
     if type(data) != DataFrame:
         raise TypeError(INVALID_DATA_TYPE_MSG.format(type(data)))
         
@@ -214,12 +212,11 @@ def explain_values_difference(
     data2 : anomeda.DataFrame
         Object containing data to be analyzed
         
-    Return
-    ------
+    Returns
+    -------
     output : pandas.DataFrame
         Object describing the clusters with the most significant changes of average value of a metric. 
     """
-    
     if type(data1) != DataFrame:
         raise TypeError(INVALID_DATA_TYPE_MSG.format(type(data1)))
         
@@ -281,12 +278,11 @@ def explain_variance_difference(
     data2 : anomeda.DataFrame
         Object containing data to be analyzed
         
-    Return
-    ------
+    Returns
+    -------
     output : pandas.DataFrame
         Object describing the clusters with the most significant changes of variance of a metric. 
     """
-    
     if type(data1) != DataFrame:
         raise TypeError(INVALID_DATA_TYPE_MSG.format(type(data1)))
         
@@ -351,14 +347,13 @@ def find_anomalies(
     read_deltas_consequently : bool
         Bool indicating if to scan metric deltas consequently (day by day, only historical data) (True) or to scan all available metric changes at once (False)
         
-    Return
-    ------
+    Returns
+    -------
     index : numpy.array
         Array of unique indexes
     anomalies : numpy.array of bool
         Bool array indicating if a metric was abnormal at a particar index point
     """
-    
     m = 0
     
     if type(data) != DataFrame:
@@ -438,12 +433,11 @@ def find_anomalies_by_clusters(
     read_deltas_consequently : bool
         Bool indicating if to scan metric deltas consequently (day by day, only historical data) (True) or to scan all available metric changes at once (False)
         
-    Return
-    ------
+    Returns
+    -------
     clusters_anomalies : list of dict
         List containing cluster and its anomalies. The keys in the cluster-dict are "cluster", "indeces", "anomalies"
     """
-    
     if type(data) != DataFrame:
         raise TypeError(INVALID_DATA_TYPE_MSG.format(type(data)))
         
@@ -497,5 +491,3 @@ def find_anomalies_by_clusters(
         })
         
     return clusters_anomalies
-        
-
