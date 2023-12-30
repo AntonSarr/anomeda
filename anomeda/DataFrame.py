@@ -10,7 +10,7 @@ warnings.filterwarnings('ignore', category=ConvergenceWarning)
 
 
 def _to_discrete_values(values, model=None):
-    """Description
+    """Transform continious values into discrete ones.
     
     Parameters
     ----------
@@ -20,8 +20,7 @@ def _to_discrete_values(values, model=None):
     model
         An object (sklearn object if preferable) which has fit_predict method taking the numeric numpy.array values of shape (n, 1) and returning mapped discrete values
     
-    
-    Return
+    Returns
     -------
     labels : np.array
         Discrete labels of mapped values
@@ -75,35 +74,28 @@ def _to_discrete_values(values, model=None):
 
 
 class DataFrame:
-    """Class containing data to be processed by anomeda library
+    """Data to be processed by anomeda package.
     
     Parameters
     ----------
     data : pandas.DataFrame
-        Underlying data must be pandas.DataFrame object
-        
-    measures_names : list of str or tuple objects
-        List containing columns considered as measures in the data
-        
+        Underlying data must be pandas.DataFrame object.
+    measures_names : list or tuple
+        List containing columns considered as measures in the data.
     measures_types : dict
         Dict containing 'categorical' and/or 'continuous' keys and list of measures as values. Continuous measures will be discretized automatically if not presented in discretized_measures parameter.
-    
     discretized_measures : dict
         Dict containig name of the measure as key and array-like object containing discretized values of the measure of the same shape as original data. If measure is in 'continuous' list of measures_types parameter, it will be discretized automatically.
-        
     index_name : str or list
         Columns to be considered as an index (usually a date or a timestamp)
-        
     metric_name : str
         Column with a metric to be analyzed
-        
     agg_func: str
         Way of aggregating metric_name by measures. Can be 'sum', 'avg' or callable compatible with pandas.DataFrame.groupby
     
-    
-    Example
-    -------
-    
+    Examples
+    --------
+    ```python
     anmd_df = anomeda.DataFrame(
         data,
         measures_names=['class', 'dummy_measure', 'dummy_numeric_measure'],
@@ -115,6 +107,7 @@ class DataFrame:
         metric_name='metric',
         agg_func='sum'
     )
+    ```
     """
     
     def __init__(
@@ -152,7 +145,6 @@ class DataFrame:
         ----------
         data : pandas.DataFrame
             A new data object
-            
         inplace : bool
             If True, then no new object will be returned. Otherwise, create and return a new anomeda.DataFrame
         """
@@ -184,14 +176,14 @@ class DataFrame:
             )
     
     def get_discretization_mapping(self):
-        """Return a dict with a mapping between discrete values and actual ranges of continous measures. In some cases, there may be more than one interval for each discrete values
+        """Return a dict with a mapping between discrete values and actual ranges of continous measures.
         
-        Example
-        -------
+        In some cases, there may be more than one interval for each discrete values
         
-        anmd_df.get_discretization_mapping()
-        
-        Will return
+        Examples
+        --------
+        ```python
+        >>> anmd_df.get_discretization_mapping()
         
         {
             'dummy_numeric_measure': {
@@ -199,53 +191,59 @@ class DataFrame:
                 1: [[0.9855150328648835, 2.458970726947438]]
             }
         }
-        
+        ```
         """
         
         return self._discretized_measures_mapping
     
     def set_discretization_mapping(self, discretized_measures_mapping):
-        """Set custom thresholds for discretization mapping
+        """Set custom thresholds for discretization.
+        
+        Threshold must have the following format
+        ```json
+        {
+            'measure_name': {
+                discrete_value: [[threshold1, threshold2], [threshold3, threshold4], ...], 
+                ...
+                },
+            ...
+        }
+        ```
         
         Parameters
         ----------
         discretized_measures_mapping : dict
-            Dict in format: 
-                {
-                    'measure_name': {
-                        discrete_value: [[t1, t2], [t3, t4], ...], 
-                        ...
-                    },
-                    ...
-                }
+            Dict with mapping between discrete value of the meause and corresponding continous values. 
             
-            
-        Example
-        -------
-        
+        Examples
+        --------
+        ```python
         anmd_df.set_discretization_mapping({
             'dummy_numeric_measure': {
                 0: [[0.01, 0.98]],
                 1: [[0.99, 2.45]]
             }
         })
+        ```
         """
         
         self.discretized_measures_mapping = discretized_measures_mapping
     
     def get_measures_names(self):
-        """Return a list of columns considered as measures"""
+        """Return a list of columns considered as measures."""
         
         return self._measures_names
     
     def set_measures_names(self, measures_names):
-        """Let anomeda.DataFrame object know what columns are measures. Columns are picked from an underlying pandas.DataFrame object, so they must be present there.
+        """Let anomeda.DataFrame object know what columns are measures. 
+        
+        Columns are picked from an underlying pandas.DataFrame object, so they must be present there.
         
         Parameters
         ----------
         measures_names : list of str
-            List containing columns which will be considered as measures"""
-        
+            List containing columns which will be considered as measures
+        """
         if measures_names is not None:
             for name in measures_names:
                 if name not in self._data.columns:
@@ -253,28 +251,28 @@ class DataFrame:
         self._measures_names = measures_names
     
     def get_measures_types(self):
-        """Return the measures_types dict"""
-        
+        """Return the measures_types dict."""
         return self._measures_types
     
     def set_measures_types(self, measures_types: dict):
-        """Set measures types. measure can be either 'categorical' or 'continous'. Types are used to clusterize the data properly.
+        """Set measures types. 
+        
+        Measure can be either 'categorical' or 'continous'. Types are used to clusterize the data properly.
         
         Parameters
         ----------
         measures_types : dict
             Dict containing 'continous' and/or 'categorical' keys and lists of measures as values
             
-        
-        Example
-        -------
-        
+        Examples
+        --------
+        ```python
         anmd_df.set_measures_types({
             'continous': ['numeric_measure_1'],
             'categorical': ['measure_1']
         })
+        ```
         """
-        
         self._measures_types = measures_types
         if measures_types is not None:    
             if 'continuous' in measures_types:
@@ -287,19 +285,17 @@ class DataFrame:
                         self._discretized_measures_mapping[measure] = _to_discrete_values(self._data[measure].values)
     
     def get_discretized_measures(self):
-        """Return discretized versions of continous measures used in the object"""
-        
+        """Return discretized versions of continous measures."""
         return self._discretized_measures
     
     def set_discretized_measures(self, discretized_measures: dict):
-        """Set custom discretization for continous measures
+        """Set custom discretization for continous measures.
         
         Parameters
         ----------
         discretized_measures : dict
             Dict containing discrete values of each measure in the format {'measure_name': [0, 1, 1, ...]}. Array of values must have same shape as original measure had.
         """
-        
         if discretized_measures is None:
             if '_discretized_measures' not in dir(self):
                 self._discretized_measures = discretized_measures
@@ -315,18 +311,18 @@ class DataFrame:
         self._discretized_measures = discretized_measures
     
     def get_index_name(self):
-        """Return the name of an index column"""
+        """Return the name of an index column."""
         
         return self._index_name
     
     def set_index_name(self, index_name):
-        """Set a name of an index column
+        """Set a name of an index column.
         
         Parameters
         ----------
         index_name : str or list
-            Column name or list of columns names containing index values. Must be present in an underling pandas.DataFrame object. If index is currenly present in measures list, you need to change the measures list first"""
-        
+            Column name or list of columns names containing index values. Must be present in an underling pandas.DataFrame object. If index is currenly present in measures list, you need to change the measures list first
+        """
         if index_name is not None:
             if type(index_name) == list and len(index_name) == 0:
                 raise KeyError("If index_name is list, it must have length >= 1")
@@ -354,12 +350,11 @@ class DataFrame:
         self._index_name = None
     
     def get_metric_name(self):
-        """Return the name of a metric column"""
-        
+        """Return the name of a metric column."""
         return self._metric_name
     
     def set_metric_name(self, metric_name):
-        """Set the name of a metric to be analyzed
+        """Set the name of a metric to be analyzed.
         
         Parameters
         ----------
@@ -375,18 +370,17 @@ class DataFrame:
         self._metric_name = metric_name
     
     def get_agg_func(self):
-        """Return the function used for aggregating metric by measures"""
-        
+        """Return the function used to aggregate the metric by measures."""
         return self._agg_func
     
     def set_agg_func(self, agg_func: str):
-        """Set a function for aggregating metric by measures
+        """Set a function to aggregate the metric by measures.
         
         Parameters
         ----------
         agg_func : str, callable
-            Can be either 'sum', 'avg' or callable compatible with pandas.DataFrame.groupby"""
-        
+            Can be either 'sum', 'avg' or callable compatible with pandas.DataFrame.groupby
+        """
         self._agg_func = agg_func
         
         
