@@ -4,7 +4,7 @@ version = "1.0.0"
 authors = [
   { name="Anton Saroka", email="anton.soroka.1313@gmail.com" },
 ]
-description = "A tiny library which helps to identify important metric changes and quickly find clusters in data which changed the trend of the metric or caused the anomaly"
+description = "Python package which helps to identify important metric changes and quickly find clusters in data which changed the trend of the metric or caused the anomaly"
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
@@ -17,3 +17,6 @@ dependencies = []
 [project.urls]
 Homepage = "https://github.com/AntonSarr/anomeda"
 Issues = "https://github.com/AntonSarr/anomeda/issues"
+
+[tool.pytest.ini_options]
+pythonpath = [".", "src", "src/anomeda"]
