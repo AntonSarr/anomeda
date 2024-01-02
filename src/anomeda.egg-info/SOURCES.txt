@@ -8,3 +8,4 @@ src/anomeda.egg-info/PKG-INFO
 src/anomeda.egg-info/SOURCES.txt
 src/anomeda.egg-info/dependency_links.txt
 src/anomeda.egg-info/top_level.txt
+tests/test_main.py
