@@ -276,7 +276,7 @@ class DataFrame:
         self._measures_types = measures_types
         if measures_types is not None:    
             if 'continuous' in measures_types:
-                if '_discretized_measures' not in dir(self) or self._discretized_measures is None:
+                if not hasattr(self, '_discretized_measures') or self._discretized_measures is None:
                     self._discretized_measures = {}
                     self._discretized_measures_mapping = {}
                 for measure in measures_types['continuous']:
@@ -297,7 +297,7 @@ class DataFrame:
             Dict containing discrete values of each measure in the format {'measure_name': [0, 1, 1, ...]}. Array of values must have same shape as original measure had.
         """
         if discretized_measures is None:
-            if '_discretized_measures' not in dir(self):
+            if not hasattr(self, '_discretized_measures'):
                 self._discretized_measures = discretized_measures
             return
         
