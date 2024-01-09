@@ -334,7 +334,10 @@ class DataFrame:
                     index_name_arr = index_name
                 if len(set(index_name_arr).intersection(set(self.get_measures_names()))) > 0:
                     raise KeyError("index_name {} must not be present among measures_names. Change measures_names first".format(index_name))
-                    
+            
+            if self._data.index.name is not None or len(self._data.index.names) > 1:
+                self._data = self._data.reset_index()
+            
             self._data = self._data.set_index(index_name)
             self._index_name = index_name
             return

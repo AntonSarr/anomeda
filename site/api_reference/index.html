@@ -869,14 +869,15 @@
 
 
 <h2 class="doc doc-heading" id="anomeda.utils.explain_values_difference">
-<code class="highlight language-python"><span class="n">explain_values_difference</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">explain_values_difference</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">,</span> <span class="n">measures_to_iterate</span> <span class="o">=</span> <span class="s1">&#39;shared&#39;</span><span class="p">)</span></code>
 
 </h2>
 
 
   <div class="doc doc-contents ">
   
-      <p>Find clusters in data which caused the most significant changes of average value of a metric when comparing data1 and data2. Output object type is a pandas.DataFrame object.</p>
+      <p>Find clusters in data which caused the most significant changes of an average value of the metric.</p>
+<p>data1 and data2 must have a common metric and at least 1 common measure.</p>
 
   <p>Parameters:</p>
   <ul>
@@ -896,7 +897,23 @@
           <p>Object containing data to be analyzed</p>
         </div>
       </li>
+      <li class="field-body">
+        <b>measures_to_iterate</b>
+        –
+        <div class="doc-md-description">
+          <p>Measures combinations used to create clusters to look for differences between metric values. If 'shared', then one set consisting of all measures shared between data objects is used. If 'combinations', then all possible combinations of measures are used. If list, then lists inside are used to create sets.</p>
+        </div>
+      </li>
   </ul>
+
+<p><strong>Examples:</strong></p>
+    <pre><code class="language-python">anomeda.explain_values_difference(
+    data1,
+    data2,
+    measures_to_iterate=[['dummy_measure'], ['dummy_measure', 'dummy_numeric_measure']] // equivalent to measures_to_iterate='combinations' if data1 and data2 have only 'dummy_measure' and 'dummy_numeric_measure' in common
+)
+</code></pre>
+      
 
   <p>Returns:</p>
   <ul>
