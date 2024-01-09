@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from itertools import combinations
 
 import numpy as np
 import pandas as pd
@@ -201,9 +202,12 @@ def describe_variance_by_clusters(data):
 
 def explain_values_difference(
     data1, 
-    data2
+    data2,
+    measures_to_iterate='shared'
 ):
-    """Find clusters in data which caused the most significant changes of average value of a metric when comparing data1 and data2. Output object type is a pandas.DataFrame object.
+    """Find clusters in data which caused the most significant changes of an average value of the metric.
+    
+    data1 and data2 must have a common metric and at least 1 common measure.
     
     Parameters
     ----------
@@ -211,6 +215,18 @@ def explain_values_difference(
         Object containing data to be analyzed
     data2 : anomeda.DataFrame
         Object containing data to be analyzed
+    measures_to_iterate: list, 'shared' or 'combinations'. Default is 'shared'
+        Measures combinations used to create clusters to look for differences between metric values. If 'shared', then one set consisting of all measures shared between data objects is used. If 'combinations', then all possible combinations of measures are used. If list, then lists inside are used to create sets.
+        
+    Examples
+    --------
+    ```python
+    anomeda.explain_values_difference(
+        data1,
+        data2,
+        measures_to_iterate=[['dummy_measure'], ['dummy_measure', 'dummy_numeric_measure']] // equivalent to measures_to_iterate='combinations' if data1 and data2 have only 'dummy_measure' and 'dummy_numeric_measure' in common
+    )
+    ```
         
     Returns
     -------
@@ -230,31 +246,71 @@ def explain_values_difference(
     if data2.get_measures_names() is None:
         raise KeyError('not-None "measure_names" must be set for anomeda.DataFrame object')
     measure_names2 = data2.get_measures_names()
-        
-    data1_pd = data1.aspandas()
-    data2_pd = data2.aspandas()
-    
-    trends1 = describe_trends_by_clusters(data1)
-    trends2 = describe_trends_by_clusters(data2)
     
     measures_names = list(set(measure_names1).intersection(set(measure_names2)))
     
-    res = trends1.merge(trends2, how='outer', on=measures_names).fillna(0)
-    res['abs_avg_values_diff'] = res['avg_value_y'] - res['avg_value_x']
-    res['rlt_avg_values_diff'] = res['abs_avg_values_diff'] / res['avg_value_x']
+    if len(measures_names) == 0:
+        raise ValueError('data1 and data2 objects must have at least one measure in common')
+        
+    if data1.get_metric_name() != data2.get_metric_name():
+        raise ValueError('data1 and data2 must have a common metric')
     
-    res['abs_trend_coeff_diff'] = res['trend_coeff_y'] - res['trend_coeff_x']
-    res['rlt_trend_coeff_diff'] = res['trend_coeff_y'] / res['trend_coeff_x']
+    if measures_to_iterate is not None:
+        if not any([
+            measures_to_iterate == 'shared', 
+            measures_to_iterate == 'combinations', 
+            type(measures_to_iterate) == list]
+        ):
+            raise ValueError("measures_to_iterate attribute must be 'shared', 'combinations' or list of lists of measures")
+            
+    if measures_to_iterate == 'shared':
+        measures_to_iterate_list = [measures_names] 
     
-    res = res[np.append(measures_names, [
+    if measures_to_iterate == 'combinations':
+        measures_to_iterate_list = []
+        for i in range(1, len(measures_names) + 1):
+            for el in combinations(measures_names, i):
+                measures_to_iterate_list.append(list(el))
+    
+    if type(measures_to_iterate) == list:
+        measures_to_iterate_list = measures_to_iterate
+    
+    reference_columns = np.append(measures_names, [
         'avg_value_x', 'avg_value_y', 
         'abs_avg_values_diff', 
         'rlt_avg_values_diff', 
         'trend_coeff_x', 'trend_coeff_y',
         'abs_trend_coeff_diff',
         'rlt_trend_coeff_diff'
-    ])]\
-    .rename(columns={
+    ])
+    
+    reference_df = pd.DataFrame([[0] * len(reference_columns)], columns=reference_columns)
+      
+    res_arr = []
+    for cur_measures in measures_to_iterate_list:
+        
+        data1_cp = data1.copy()
+        data1_cp.set_measures_names(cur_measures)
+        
+        data2_cp = data2.copy()
+        data2_cp.set_measures_names(cur_measures)
+        
+        trends1 = describe_trends_by_clusters(data1_cp)
+        trends2 = describe_trends_by_clusters(data2_cp)
+
+        res = trends1.merge(trends2, how='outer', on=cur_measures).fillna(0)
+        res['abs_avg_values_diff'] = res['avg_value_y'] - res['avg_value_x']
+        res['rlt_avg_values_diff'] = res['abs_avg_values_diff'] / res['avg_value_x']
+
+        res['abs_trend_coeff_diff'] = res['trend_coeff_y'] - res['trend_coeff_x']
+        res['rlt_trend_coeff_diff'] = res['trend_coeff_y'] / res['trend_coeff_x']
+        
+        res, _ = res.align(reference_df, axis=1)
+        
+        res_arr.append(res)
+        
+    res = pd.concat(res_arr).reset_index(drop=True)
+    res = res[reference_columns].rename(columns={
         'avg_value_x': 'avg_value_1', 
         'avg_value_y': 'avg_value_2',
         'trend_coeff_x': 'trend_coeff_1',

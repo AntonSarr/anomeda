@@ -15,8 +15,8 @@ if missing_dependencies:
 del hard_dependencies, dependency, missing_dependencies
 
 
-from DataFrame import *
-from utils import *
+from anomeda.DataFrame import *
+from anomeda.utils import *
 
 __doc__ = """
 anomeda - a Python library for exploratory analysis of anomalies and its causes
