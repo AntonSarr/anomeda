@@ -224,7 +224,10 @@ def explain_values_difference(
     anomeda.explain_values_difference(
         data1,
         data2,
-        measures_to_iterate=[['dummy_measure'], ['dummy_measure', 'dummy_numeric_measure']] // equivalent to measures_to_iterate='combinations' if data1 and data2 have only 'dummy_measure' and 'dummy_numeric_measure' in common
+        measures_to_iterate=[
+            ['dummy_measure'], 
+            ['dummy_measure', 'dummy_numeric_measure']
+        ] # equivalent to measures_to_iterate='combinations' if data1 and data2 have only 'dummy_measure' and 'dummy_numeric_measure' in common
     )
     ```
         
