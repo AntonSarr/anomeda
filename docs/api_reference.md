@@ -2,7 +2,7 @@
 
 Here you can find the documentation for all available endpoints of **anomeda** Python package.
 
-::: anomeda.DataFrame
+::: DataFrame
     options:
       heading_level: 2
       show_docstring_classes: true
@@ -10,7 +10,7 @@ Here you can find the documentation for all available endpoints of **anomeda** P
       show_root_heading: true
       show_root_full_path: false
 
-::: anomeda.utils
+::: utils
     options:
       heading_level: 2
       show_root_toc_entry: false
