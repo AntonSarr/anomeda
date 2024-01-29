@@ -982,7 +982,10 @@
     <pre><code class="language-python">anomeda.explain_values_difference(
     data1,
     data2,
-    measures_to_iterate=[['dummy_measure'], ['dummy_measure', 'dummy_numeric_measure']] // equivalent to measures_to_iterate='combinations' if data1 and data2 have only 'dummy_measure' and 'dummy_numeric_measure' in common
+    measures_to_iterate=[
+        ['dummy_measure'], 
+        ['dummy_measure', 'dummy_numeric_measure']
+    ] # equivalent to measures_to_iterate='combinations' if data1 and data2 have only 'dummy_measure' and 'dummy_numeric_measure' in common
 )
 </code></pre>
       
@@ -1064,7 +1067,7 @@
 
 
 <h2 id="utils.find_anomalies" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">find_anomalies</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">),</span> <span class="n">normal_whole_window</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">read_deltas_consequently</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">find_anomalies</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1072,7 +1075,7 @@
   <div class="doc doc-contents ">
   
       <p>Find metric anomalies by looking for the most extreme metric changes.</p>
-<p>The method decides if a metric value is an anomaly by looking at the n metric changes before and comparing them to "normal" changes we observed from historical or all available data.</p>
+<p>The method finds differences between real metric and a fitted trend line, find points with the most unique differences as marks them as anomalies.</p>
 
 
 
@@ -1084,46 +1087,6 @@
         –
         <div class="doc-md-description">
           <p>Object containing data to be analyzed</p>
-        </div>
-      </li>
-      <li class="field-body">
-        <b><code>n</code></b>
-            (<code>int</code>, default:
-                <code>1</code>
-)
-        –
-        <div class="doc-md-description">
-          <p>The number of index values the model looks back when gathering metric changes for a particular point to decide if it is an anomaly. Larger values will make the model mark a few point after the first anomaly as anomalies as well.</p>
-        </div>
-      </li>
-      <li class="field-body">
-        <b><code>p</code></b>
-            (<code>tuple of float</code>, default:
-                <code>(0.02, 0.98)</code>
-)
-        –
-        <div class="doc-md-description">
-          <p>Tuple of lowest and highest percentiles of day-to-day metric changes. Deltas within this range will be considered as "normal"</p>
-        </div>
-      </li>
-      <li class="field-body">
-        <b><code>normal_whole_window</code></b>
-            (<code>bool</code>, default:
-                <code>True</code>
-)
-        –
-        <div class="doc-md-description">
-          <p>Bool indicating if all the metric deltas in period [dt - n days, dt] period have to in "normal" range (True) or at least one them (False) in order metric value to be considered as a normal point</p>
-        </div>
-      </li>
-      <li class="field-body">
-        <b><code>read_deltas_consequently</code></b>
-            (<code>bool</code>, default:
-                <code>False</code>
-)
-        –
-        <div class="doc-md-description">
-          <p>Bool indicating if to scan metric deltas consequently (day by day, only historical data) (True) or to scan all available metric changes at once (False)</p>
         </div>
       </li>
   </ul>
@@ -1158,15 +1121,15 @@
 
 
 <h2 id="utils.find_anomalies_by_clusters" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">find_anomalies_by_clusters</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">),</span> <span class="n">normal_whole_window</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">read_deltas_consequently</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">find_anomalies_by_clusters</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
 
 </h2>
 
 
   <div class="doc doc-contents ">
   
-      <p>Find metric anomalies in each cluster by looking for the most extreme metric changes.</p>
-<p>The method decides if a metric value is an anomaly by looking at the n metric changes before and comparing them to "normal" changes we observed from historical or all available data.</p>
+      <p>Find metric anomalies in each cluster.</p>
+<p>The method finds differences between real metric and a fitted trend line, find points with the most unique differences as marks them as anomalies. It skips clusters with less than 2 samples.</p>
 
 
 
@@ -1182,42 +1145,10 @@
       </li>
       <li class="field-body">
         <b><code>n</code></b>
-            (<code>int</code>, default:
-                <code>1</code>
-)
+            (<code>int</code>)
         –
         <div class="doc-md-description">
           <p>The number of index values the model looks back when gathering metric changes for a particular point to decide if it is an anomaly. Larger values will make the model mark a few point after the first anomaly as anomalies as well.</p>
-        </div>
-      </li>
-      <li class="field-body">
-        <b><code>p</code></b>
-            (<code>tuple of float</code>, default:
-                <code>(0.02, 0.98)</code>
-)
-        –
-        <div class="doc-md-description">
-          <p>Tuple of lowest and highest percentiles of day-to-day metric changes. Deltas within this range will be considered as "normal"</p>
-        </div>
-      </li>
-      <li class="field-body">
-        <b><code>normal_whole_window</code></b>
-            (<code>bool</code>, default:
-                <code>True</code>
-)
-        –
-        <div class="doc-md-description">
-          <p>Bool indicating if all the metric deltas in period [dt - n days, dt] period have to in "normal" range (True) or at least one them (False) in order metric value to be considered as a normal point</p>
-        </div>
-      </li>
-      <li class="field-body">
-        <b><code>read_deltas_consequently</code></b>
-            (<code>bool</code>, default:
-                <code>False</code>
-)
-        –
-        <div class="doc-md-description">
-          <p>Bool indicating if to scan metric deltas consequently (day by day, only historical data) (True) or to scan all available metric changes at once (False)</p>
         </div>
       </li>
   </ul>

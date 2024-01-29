@@ -4,6 +4,8 @@ from itertools import combinations
 import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
+from scipy.stats import linregress
+from sklearn.neighbors import LocalOutlierFactor
 from sklearn.mixture import BayesianGaussianMixture
 
 from anomeda.DataFrame import DataFrame, _to_discrete_values
@@ -383,28 +385,16 @@ def explain_variance_difference(
 
 
 def find_anomalies(
-    data, 
-    n=1, 
-    p=(0.02, 0.98), 
-    normal_whole_window=True, 
-    read_deltas_consequently=False
+    data
 ):
     """Find metric anomalies by looking for the most extreme metric changes.
     
-    The method decides if a metric value is an anomaly by looking at the n metric changes before and comparing them to "normal" changes we observed from historical or all available data.
+    The method finds differences between real metric and a fitted trend line, find points with the most unique differences as marks them as anomalies.
     
     Parameters
     ----------
     data : anomeda.DataFrame
         Object containing data to be analyzed
-    n : int
-        The number of index values the model looks back when gathering metric changes for a particular point to decide if it is an anomaly. Larger values will make the model mark a few point after the first anomaly as anomalies as well.
-    p : tuple of float
-        Tuple of lowest and highest percentiles of day-to-day metric changes. Deltas within this range will be considered as "normal"
-    normal_whole_window : bool
-        Bool indicating if all the metric deltas in period [dt - n days, dt] period have to in "normal" range (True) or at least one them (False) in order metric value to be considered as a normal point
-    read_deltas_consequently : bool
-        Bool indicating if to scan metric deltas consequently (day by day, only historical data) (True) or to scan all available metric changes at once (False)
         
     Returns
     -------
@@ -435,49 +425,26 @@ def find_anomalies(
     columns_to_use = np.append(index_name, metric_name)
     
     df = data_pandas[columns_to_use].groupby(index_name).agg(agg_func).reset_index().sort_values(by=index_name, ascending=True)
+
+    y = df[metric_name].values
+    x = np.arange(len(y))
     
-    for i in range(1, n + 1):
-        df['metric_shifted_left_' + str(i)] = df[metric_name].shift(i)
-        df['delta_left_' + str(i)] = df[metric_name] - df['metric_shifted_left_' + str(i)]
+    linreg_fitted = linregress(x, y)
+    y_fitted = linreg_fitted.slope * x + linreg_fitted.intercept
+    y_diff = y - y_fitted
+    
+    clusterizator = LocalOutlierFactor(n_neighbors=min(len(y) - 1, 24), novelty=False)
+    outliers = clusterizator.fit_predict(y_diff.reshape(-1, 1)) == -1
 
-    for i in range(1, m + 1):
-        df['metric_shifted_right_' + str(i)] = df[metric_name].shift(-i)
-        df['delta_right_' + str(i)] = df[metric_name] - df['metric_shifted_right_' + str(i)]
-
-    deltas_columns = np.append(['delta_left_' + str(i + 1) for i in range(n)], ['delta_right_' + str(i + 1) for i in range(m)])
-
-    normality_arr = []
-
-    for delta_col in deltas_columns:
-        if read_deltas_consequently:
-            df['low_percentile'] = [df[delta_col].head(i).quantile(p[0]) for i in range(df.shape[0])]
-            df['high_percentile'] = [df[delta_col].head(i).quantile(p[1]) for i in range(df.shape[0])]
-        else:
-            df['low_percentile'] = df[delta_col].quantile(p[0])
-            df['high_percentile'] = df[delta_col].quantile(p[1])
-
-        normality_arr.append(((df[delta_col] <= df['high_percentile']) & (df[delta_col] >= df['low_percentile'])).values)
-
-    normality_arr = np.vstack(normality_arr).T
-
-    if normal_whole_window:
-        normal_points = normality_arr.any(axis=1)
-    else:
-        normal_points = normality_arr.all(axis=1)
-
-    return df[index_name].values, ~normal_points
+    return df[index_name].values, outliers
         
         
 def find_anomalies_by_clusters(
-    data, 
-    n=1, 
-    p=(0.02, 0.98), 
-    normal_whole_window=True, 
-    read_deltas_consequently=False
+    data
 ):
-    """Find metric anomalies in each cluster by looking for the most extreme metric changes.
+    """Find metric anomalies in each cluster.
     
-    The method decides if a metric value is an anomaly by looking at the n metric changes before and comparing them to "normal" changes we observed from historical or all available data.
+    The method finds differences between real metric and a fitted trend line, find points with the most unique differences as marks them as anomalies. It skips clusters with less than 2 samples.
     
     Parameters
     ----------
@@ -485,12 +452,6 @@ def find_anomalies_by_clusters(
         Object containing data to be analyzed
     n : int
         The number of index values the model looks back when gathering metric changes for a particular point to decide if it is an anomaly. Larger values will make the model mark a few point after the first anomaly as anomalies as well.
-    p : tuple of float
-        Tuple of lowest and highest percentiles of day-to-day metric changes. Deltas within this range will be considered as "normal"
-    normal_whole_window : bool
-        Bool indicating if all the metric deltas in period [dt - n days, dt] period have to in "normal" range (True) or at least one them (False) in order metric value to be considered as a normal point
-    read_deltas_consequently : bool
-        Bool indicating if to scan metric deltas consequently (day by day, only historical data) (True) or to scan all available metric changes at once (False)
         
     Returns
     -------
@@ -539,14 +500,15 @@ def find_anomalies_by_clusters(
         
         ydata = filtered_data[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
         
-        indeces, anomalies = find_anomalies(data.mod_data(unchanged_data_pandas.loc[filtered_data.index]), n, p, normal_whole_window, read_deltas_consequently)
-        
-        cluster = dict(zip(measures_names, measures_values))
-        
-        clusters_anomalies.append({
-            'cluster': cluster,
-            'indeces': indeces,
-            'anomalies': anomalies
-        })
+        if len(ydata) >= 2:
+            indeces, anomalies = find_anomalies(data.mod_data(unchanged_data_pandas.loc[filtered_data.index]))
+            
+            cluster = dict(zip(measures_names, measures_values))
+            
+            clusters_anomalies.append({
+                'cluster': cluster,
+                'indeces': indeces,
+                'anomalies': anomalies
+            })
         
     return clusters_anomalies
