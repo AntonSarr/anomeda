@@ -40,15 +40,13 @@ If you need to see the discretized values, you can use `anomeda.DataFrame.get_di
 
 ## Find an anomaly change of the metric
 
-`anomeda.find_anomalies` and `anomeda.find_anomalies_by_clusters` are responsible for looking for unusual metric changes in the data.
+`anomeda.find_anomalies` and `anomeda.find_anomalies_by_clusters` are responsible for looking for unusual metric changes in the data. They both currently use a method based of fitting a generic trend line and analyzing differences from a trend.
 
-First, there are some parameters for the method (see docsctring of the methods for details):
+There are some parameters for the method which represent which part of anomalies from both tailes to present:
 
 ```python
-n = 3
-p = (0.05, 0.95)
-normal_whole_window = True
-read_deltas_consequently = False
+p_large = 1 # 100% of anomalies with high values will be returned
+p_low = 1 # 100% of anomalies with low values will be returned
 ```
 
 The output is unique and sorted index values and an indication if total metric value is an anomaly or not. The values are aggregated using `agg_func` parameter.

@@ -385,7 +385,9 @@ def explain_variance_difference(
 
 
 def find_anomalies(
-    data
+    data,
+    p_large=1,
+    p_low=1
 ):
     """Find metric anomalies by looking for the most extreme metric changes.
     
@@ -395,6 +397,10 @@ def find_anomalies(
     ----------
     data : anomeda.DataFrame
         Object containing data to be analyzed
+    p_large : float, [0, 1], default 1
+        What part of anomalies which are higher than usual values needs to be returned. For example, if you set it to 0.7, then only 70% of the anomalies with the largest values will be returned. Default is 1.
+    p_low : float, [0, 1], default 1
+        What part of anomalies which are lower than usual values needs to be returned. For example, if you set it to 0.5, then only 50% of the anomalies with the lowest values will be returned. Default is 1.
         
     Returns
     -------
@@ -436,11 +442,41 @@ def find_anomalies(
     clusterizator = LocalOutlierFactor(n_neighbors=min(len(y) - 1, 24), novelty=False)
     outliers = clusterizator.fit_predict(y_diff.reshape(-1, 1)) == -1
 
+    # Remove inliers, i.e. isolated points not from the left or right tail of values range
+    # We want to keep only the largest or the lowest differences
+    # We also keep only % of anomalies defined by p_low and p_large
+    indeces_sorted_by_y_diff = np.argsort(y_diff)
+    not_outliers_indeces = np.where(outliers[indeces_sorted_by_y_diff] == False)[0]
+    outliers[indeces_sorted_by_y_diff[np.min(not_outliers_indeces): np.max(not_outliers_indeces)]] = False
+    
+    sorted_outliers = outliers[indeces_sorted_by_y_diff]
+    
+    n_low_anomalies = 0
+    n_large_anomalies = 0
+    
+    low_anomalies = False
+    
+    for i in range(len(sorted_outliers)):
+        if i == 0 and sorted_outliers[i]:
+            low_anomalies = True
+        elif not sorted_outliers[i]:
+            low_anomalies = False
+    
+        if sorted_outliers[i]:
+            if low_anomalies:
+                n_low_anomalies += 1
+            else:
+                n_large_anomalies += 1
+    
+    outliers[indeces_sorted_by_y_diff[np.min(not_outliers_indeces) - int(n_low_anomalies * (1 - p_low)): np.max(not_outliers_indeces) + int(n_large_anomalies * (1 - p_large)) + 1]] = False
+
     return df[index_name].values, outliers
         
         
 def find_anomalies_by_clusters(
-    data
+    data,
+    p_large=1,
+    p_low=1
 ):
     """Find metric anomalies in each cluster.
     
@@ -450,8 +486,10 @@ def find_anomalies_by_clusters(
     ----------
     data : anomeda.DataFrame
         Object containing data to be analyzed
-    n : int
-        The number of index values the model looks back when gathering metric changes for a particular point to decide if it is an anomaly. Larger values will make the model mark a few point after the first anomaly as anomalies as well.
+    p_large : float, [0, 1], default 1
+        What part of anomalies which are higher than usual values needs to be returned. For example, if you set it to 0.7, then only 70% of the anomalies with the largest values will be returned. Default is 1.
+    p_low : float, [0, 1], default 1
+        What part of anomalies which are lower than usual values needs to be returned. For example, if you set it to 0.5, then only 50% of the anomalies with the lowest values will be returned. Default is 1.
         
     Returns
     -------
@@ -501,7 +539,7 @@ def find_anomalies_by_clusters(
         ydata = filtered_data[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
         
         if len(ydata) >= 2:
-            indeces, anomalies = find_anomalies(data.mod_data(unchanged_data_pandas.loc[filtered_data.index]))
+            indeces, anomalies = find_anomalies(data.mod_data(unchanged_data_pandas.loc[filtered_data.index]), p_large=p_large, p_low=p_low)
             
             cluster = dict(zip(measures_names, measures_values))
             

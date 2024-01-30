@@ -79,6 +79,6 @@ def test_find_anomalies():
         agg_func=agg_func
     )
 
-    anomeda.find_anomalies(anmd_df)
-    anomeda.find_anomalies_by_clusters(anmd_df)
+    anomeda.find_anomalies(anmd_df, p_large=0.9, p_low=0.9)
+    anomeda.find_anomalies_by_clusters(anmd_df, p_large=0.9, p_low=0.9)
 
