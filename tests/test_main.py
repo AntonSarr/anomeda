@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 import anomeda
 
@@ -81,4 +82,17 @@ def test_find_anomalies():
 
     anomeda.find_anomalies(anmd_df, p_large=0.9, p_low=0.9)
     anomeda.find_anomalies_by_clusters(anmd_df, p_large=0.9, p_low=0.9)
+
+
+def test_extract_trends():
+
+    x = np.arange(50)
+    y = 0.5 * x + 10 +  3 * np.random.randn(50)
+
+    anomeda.extract_trends(x=x, y=y, n_trends=10, var_cutoff=0.7, verbose=True)
+    anomeda.extract_trends(x=x, y=y, var_cutoff=0.7, verbose=True)
+    anomeda.extract_trends(x=x, y=y, var_cutoff=0., verbose=True)
+    anomeda.extract_trends(x=x, y=y, var_cutoff=1, verbose=True)
+    anomeda.extract_trends(x=x, y=y, n_trends=1, verbose=True)
+    anomeda.extract_trends(x=x, y=y, n_trends=1000, verbose=True)
 

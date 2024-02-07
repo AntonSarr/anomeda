@@ -82,31 +82,35 @@
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-level="2"><a href="#utils.describe_trend" class="nav-link">describe_trend()</a>
+            <li class="nav-item" data-level="2"><a href="#utils.describe_trend" class="nav-link">describe_trend</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-level="2"><a href="#utils.describe_trends_by_clusters" class="nav-link">describe_trends_by_clusters()</a>
+            <li class="nav-item" data-level="2"><a href="#utils.describe_trends_by_clusters" class="nav-link">describe_trends_by_clusters</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-level="2"><a href="#utils.describe_variance_by_clusters" class="nav-link">describe_variance_by_clusters()</a>
+            <li class="nav-item" data-level="2"><a href="#utils.describe_variance_by_clusters" class="nav-link">describe_variance_by_clusters</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-level="2"><a href="#utils.explain_values_difference" class="nav-link">explain_values_difference()</a>
+            <li class="nav-item" data-level="2"><a href="#utils.explain_values_difference" class="nav-link">explain_values_difference</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-level="2"><a href="#utils.explain_variance_difference" class="nav-link">explain_variance_difference()</a>
+            <li class="nav-item" data-level="2"><a href="#utils.explain_variance_difference" class="nav-link">explain_variance_difference</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-level="2"><a href="#utils.find_anomalies" class="nav-link">find_anomalies()</a>
+            <li class="nav-item" data-level="2"><a href="#utils.extract_trends" class="nav-link">extract_trends</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-level="2"><a href="#utils.find_anomalies_by_clusters" class="nav-link">find_anomalies_by_clusters()</a>
+            <li class="nav-item" data-level="2"><a href="#utils.find_anomalies" class="nav-link">find_anomalies</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#utils.find_anomalies_by_clusters" class="nav-link">find_anomalies_by_clusters</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -125,7 +129,7 @@
 
 
 
-<h2 class="doc doc-heading" id="DataFrame">
+<h2 id="DataFrame" class="doc doc-heading">
           <code>DataFrame</code>
 
 
@@ -148,8 +152,8 @@
 
 
 
-<h3 class="doc doc-heading" id="DataFrame.DataFrame">
-<code class="highlight language-python"><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">measures_names</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">measures_types</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">discretized_measures</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">index_name</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">metric_name</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">agg_func</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="s1">&#39;sum&#39;</span><span class="p">)</span></code>
+<h3 id="DataFrame.DataFrame" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">measures_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">measures_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">discretized_measures</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">index_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metric_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">agg_func</span><span class="o">=</span><span class="s1">&#39;sum&#39;</span><span class="p">)</span></code>
 
 </h3>
 
@@ -159,64 +163,78 @@
   
       <p>Data to be processed by anomeda package.</p>
 
+
+
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b>data</b>
-            (<code>pandas.<span title="pandas.DataFrame">DataFrame</span></code>)
+        <b><code>data</code></b>
+            (<code><span title="pandas.DataFrame">DataFrame</span></code>)
         –
         <div class="doc-md-description">
           <p>Underlying data must be pandas.DataFrame object.</p>
         </div>
       </li>
       <li class="field-body">
-        <b>measures_names</b>
-            (<code>list or tuple</code>)
+        <b><code>measures_names</code></b>
+            (<code>list or tuple</code>, default:
+                <code>None</code>
+)
         –
         <div class="doc-md-description">
           <p>List containing columns considered as measures in the data.</p>
         </div>
       </li>
       <li class="field-body">
-        <b>measures_types</b>
-            (<code>dict</code>)
+        <b><code>measures_types</code></b>
+            (<code>dict</code>, default:
+                <code>None</code>
+)
         –
         <div class="doc-md-description">
           <p>Dict containing 'categorical' and/or 'continuous' keys and list of measures as values. Continuous measures will be discretized automatically if not presented in discretized_measures parameter.</p>
         </div>
       </li>
       <li class="field-body">
-        <b>discretized_measures</b>
-            (<code>dict</code>)
+        <b><code>discretized_measures</code></b>
+            (<code>dict</code>, default:
+                <code>None</code>
+)
         –
         <div class="doc-md-description">
           <p>Dict containig name of the measure as key and array-like object containing discretized values of the measure of the same shape as original data. If measure is in 'continuous' list of measures_types parameter, it will be discretized automatically.</p>
         </div>
       </li>
       <li class="field-body">
-        <b>index_name</b>
-            (<code>str or list</code>)
+        <b><code>index_name</code></b>
+            (<code>str or list</code>, default:
+                <code>None</code>
+)
         –
         <div class="doc-md-description">
           <p>Columns to be considered as an index (usually a date or a timestamp)</p>
         </div>
       </li>
       <li class="field-body">
-        <b>metric_name</b>
-            (<code>str</code>)
+        <b><code>metric_name</code></b>
+            (<code>str</code>, default:
+                <code>None</code>
+)
         –
         <div class="doc-md-description">
           <p>Column with a metric to be analyzed</p>
         </div>
       </li>
       <li class="field-body">
-        <b>agg_func</b>
+        <b><code>agg_func</code></b>
         –
         <div class="doc-md-description">
           <p>Way of aggregating metric_name by measures. Can be 'sum', 'avg' or callable compatible with pandas.DataFrame.groupby</p>
         </div>
       </li>
   </ul>
+
+
 
 <p><strong>Examples:</strong></p>
     <pre><code class="language-python">anmd_df = anomeda.DataFrame(
@@ -233,7 +251,6 @@
 </code></pre>
 
 
-
   
 
   <div class="doc doc-children">
@@ -246,12 +263,13 @@
 
 
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.aspandas">
-<code class="highlight language-python"><span class="n">aspandas</span><span class="p">()</span></code>
+<h4 id="DataFrame.DataFrame.aspandas" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">aspandas</span><span class="p">()</span></code>
 
 </h4>
 
@@ -264,12 +282,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.copy">
-<code class="highlight language-python"><span class="n">copy</span><span class="p">()</span></code>
+<h4 id="DataFrame.DataFrame.copy" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">copy</span><span class="p">()</span></code>
 
 </h4>
 
@@ -282,12 +301,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.get_agg_func">
-<code class="highlight language-python"><span class="n">get_agg_func</span><span class="p">()</span></code>
+<h4 id="DataFrame.DataFrame.get_agg_func" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_agg_func</span><span class="p">()</span></code>
 
 </h4>
 
@@ -300,12 +320,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.get_discretization_mapping">
-<code class="highlight language-python"><span class="n">get_discretization_mapping</span><span class="p">()</span></code>
+<h4 id="DataFrame.DataFrame.get_discretization_mapping" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_discretization_mapping</span><span class="p">()</span></code>
 
 </h4>
 
@@ -314,6 +335,8 @@
   
       <p>Return a dict with a mapping between discrete values and actual ranges of continous measures.</p>
 <p>In some cases, there may be more than one interval for each discrete values</p>
+
+
 
 <p><strong>Examples:</strong></p>
     <pre><code class="language-python">&gt;&gt;&gt; anmd_df.get_discretization_mapping()
@@ -330,12 +353,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.get_discretized_measures">
-<code class="highlight language-python"><span class="n">get_discretized_measures</span><span class="p">()</span></code>
+<h4 id="DataFrame.DataFrame.get_discretized_measures" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_discretized_measures</span><span class="p">()</span></code>
 
 </h4>
 
@@ -348,12 +372,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.get_index_name">
-<code class="highlight language-python"><span class="n">get_index_name</span><span class="p">()</span></code>
+<h4 id="DataFrame.DataFrame.get_index_name" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_index_name</span><span class="p">()</span></code>
 
 </h4>
 
@@ -366,12 +391,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.get_measures_names">
-<code class="highlight language-python"><span class="n">get_measures_names</span><span class="p">()</span></code>
+<h4 id="DataFrame.DataFrame.get_measures_names" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_measures_names</span><span class="p">()</span></code>
 
 </h4>
 
@@ -384,12 +410,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.get_measures_types">
-<code class="highlight language-python"><span class="n">get_measures_types</span><span class="p">()</span></code>
+<h4 id="DataFrame.DataFrame.get_measures_types" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_measures_types</span><span class="p">()</span></code>
 
 </h4>
 
@@ -402,12 +429,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.get_metric_name">
-<code class="highlight language-python"><span class="n">get_metric_name</span><span class="p">()</span></code>
+<h4 id="DataFrame.DataFrame.get_metric_name" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_metric_name</span><span class="p">()</span></code>
 
 </h4>
 
@@ -420,12 +448,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.mod_data">
-<code class="highlight language-python"><span class="n">mod_data</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">inplace</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span></code>
+<h4 id="DataFrame.DataFrame.mod_data" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">mod_data</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h4>
 
@@ -434,19 +463,23 @@
   
       <p>Replace the pandas.DataFrame object underlying the anomeda.DataFrame with a new one</p>
 
+
+
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b>data</b>
-            (<code>pandas.<span title="pandas.DataFrame">DataFrame</span></code>)
+        <b><code>data</code></b>
+            (<code><span title="pandas.DataFrame">DataFrame</span></code>)
         –
         <div class="doc-md-description">
           <p>A new data object</p>
         </div>
       </li>
       <li class="field-body">
-        <b>inplace</b>
-            (<code>bool</code>)
+        <b><code>inplace</code></b>
+            (<code>bool</code>, default:
+                <code>False</code>
+)
         –
         <div class="doc-md-description">
           <p>If True, then no new object will be returned. Otherwise, create and return a new anomeda.DataFrame</p>
@@ -458,12 +491,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.set_agg_func">
-<code class="highlight language-python"><span class="n">set_agg_func</span><span class="p">(</span><span class="n">agg_func</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span></code>
+<h4 id="DataFrame.DataFrame.set_agg_func" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">set_agg_func</span><span class="p">(</span><span class="n">agg_func</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span></code>
 
 </h4>
 
@@ -472,11 +506,13 @@
   
       <p>Set a function to aggregate the metric by measures.</p>
 
+
+
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b>agg_func</b>
-            (<code>str, callable</code>)
+        <b><code>agg_func</code></b>
+            (<code>(str, callable)</code>)
         –
         <div class="doc-md-description">
           <p>Can be either 'sum', 'avg' or callable compatible with pandas.DataFrame.groupby</p>
@@ -488,12 +524,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.set_discretization_mapping">
-<code class="highlight language-python"><span class="n">set_discretization_mapping</span><span class="p">(</span><span class="n">discretized_measures_mapping</span><span class="p">)</span></code>
+<h4 id="DataFrame.DataFrame.set_discretization_mapping" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">set_discretization_mapping</span><span class="p">(</span><span class="n">discretized_measures_mapping</span><span class="p">)</span></code>
 
 </h4>
 
@@ -511,10 +548,12 @@
 }
 </code></pre>
 
+
+
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b>discretized_measures_mapping</b>
+        <b><code>discretized_measures_mapping</code></b>
             (<code>dict</code>)
         –
         <div class="doc-md-description">
@@ -522,6 +561,8 @@
         </div>
       </li>
   </ul>
+
+
 
 <p><strong>Examples:</strong></p>
     <pre><code class="language-python">anmd_df.set_discretization_mapping({
@@ -536,12 +577,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.set_discretized_measures">
-<code class="highlight language-python"><span class="n">set_discretized_measures</span><span class="p">(</span><span class="n">discretized_measures</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span></code>
+<h4 id="DataFrame.DataFrame.set_discretized_measures" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">set_discretized_measures</span><span class="p">(</span><span class="n">discretized_measures</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span></code>
 
 </h4>
 
@@ -550,10 +592,12 @@
   
       <p>Set custom discretization for continous measures.</p>
 
+
+
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b>discretized_measures</b>
+        <b><code>discretized_measures</code></b>
             (<code>dict</code>)
         –
         <div class="doc-md-description">
@@ -566,12 +610,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.set_index_name">
-<code class="highlight language-python"><span class="n">set_index_name</span><span class="p">(</span><span class="n">index_name</span><span class="p">)</span></code>
+<h4 id="DataFrame.DataFrame.set_index_name" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">set_index_name</span><span class="p">(</span><span class="n">index_name</span><span class="p">)</span></code>
 
 </h4>
 
@@ -580,10 +625,12 @@
   
       <p>Set a name of an index column.</p>
 
+
+
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b>index_name</b>
+        <b><code>index_name</code></b>
             (<code>str or list</code>)
         –
         <div class="doc-md-description">
@@ -596,12 +643,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.set_measures_names">
-<code class="highlight language-python"><span class="n">set_measures_names</span><span class="p">(</span><span class="n">measures_names</span><span class="p">)</span></code>
+<h4 id="DataFrame.DataFrame.set_measures_names" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">set_measures_names</span><span class="p">(</span><span class="n">measures_names</span><span class="p">)</span></code>
 
 </h4>
 
@@ -611,10 +659,12 @@
       <p>Let anomeda.DataFrame object know what columns are measures. </p>
 <p>Columns are picked from an underlying pandas.DataFrame object, so they must be present there.</p>
 
+
+
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b>measures_names</b>
+        <b><code>measures_names</code></b>
             (<code>list of str</code>)
         –
         <div class="doc-md-description">
@@ -627,12 +677,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.set_measures_types">
-<code class="highlight language-python"><span class="n">set_measures_types</span><span class="p">(</span><span class="n">measures_types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span></code>
+<h4 id="DataFrame.DataFrame.set_measures_types" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">set_measures_types</span><span class="p">(</span><span class="n">measures_types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span></code>
 
 </h4>
 
@@ -642,10 +693,12 @@
       <p>Set measures types. </p>
 <p>Measure can be either 'categorical' or 'continous'. Types are used to clusterize the data properly.</p>
 
+
+
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b>measures_types</b>
+        <b><code>measures_types</code></b>
             (<code>dict</code>)
         –
         <div class="doc-md-description">
@@ -653,6 +706,8 @@
         </div>
       </li>
   </ul>
+
+
 
 <p><strong>Examples:</strong></p>
     <pre><code class="language-python">anmd_df.set_measures_types({
@@ -665,12 +720,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h4 class="doc doc-heading" id="DataFrame.DataFrame.set_metric_name">
-<code class="highlight language-python"><span class="n">set_metric_name</span><span class="p">(</span><span class="n">metric_name</span><span class="p">)</span></code>
+<h4 id="DataFrame.DataFrame.set_metric_name" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">set_metric_name</span><span class="p">(</span><span class="n">metric_name</span><span class="p">)</span></code>
 
 </h4>
 
@@ -679,10 +735,12 @@
   
       <p>Set the name of a metric to be analyzed.</p>
 
+
+
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b>metric_name</b>
+        <b><code>metric_name</code></b>
             (<code>str</code>)
         –
         <div class="doc-md-description">
@@ -701,6 +759,7 @@
 
   </div>
 
+
 </div>
 
 
@@ -713,6 +772,7 @@
 </div>
 
 <div class="doc doc-object doc-module">
+
 
 
 
@@ -730,12 +790,13 @@
 
 
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h2 class="doc doc-heading" id="utils.describe_trend">
-<code class="highlight language-python"><span class="n">describe_trend</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
+<h2 id="utils.describe_trend" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">describe_trend</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
 
 </h2>
 
@@ -744,11 +805,13 @@
   
       <p>Fit and return parameters of a linear trend for the given metric.</p>
 
+
+
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b>data</b>
-            (<code>anomeda.<span title="anomeda.DataFrame">DataFrame</span></code>)
+        <b><code>data</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
         –
         <div class="doc-md-description">
           <p>Object containing data to be analyzed</p>
@@ -756,17 +819,19 @@
       </li>
   </ul>
 
+
+
   <p>Returns:</p>
   <ul>
       <li class="field-body">
-<b>a</b>(            <code>float</code>
+<b><code>a</code></b> (            <code>float</code>
 )        –
         <div class="doc-md-description">
           <p>Coefficient a of a line f(x) = a + b * x fitted to the metric, where x is time values and f(x) is metric values</p>
       </div>
       </li>
       <li class="field-body">
-<b>b</b>(            <code>float</code>
+<b><code>b</code></b> (            <code>float</code>
 )        –
         <div class="doc-md-description">
           <p>Coefficient b of a line f(x) = a + b * x fitted to the metric, where x is time values and f(x) is metric values</p>
@@ -778,12 +843,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h2 class="doc doc-heading" id="utils.describe_trends_by_clusters">
-<code class="highlight language-python"><span class="n">describe_trends_by_clusters</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
+<h2 id="utils.describe_trends_by_clusters" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">describe_trends_by_clusters</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
 
 </h2>
 
@@ -792,11 +858,13 @@
   
       <p>Fit and return parameters of a linear trend of each cluster for given metric. Output object type is a pandas.DataFrame object.</p>
 
+
+
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b>data</b>
-            (<code>anomeda.<span title="anomeda.DataFrame">DataFrame</span></code>)
+        <b><code>data</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
         –
         <div class="doc-md-description">
           <p>Object containing data to be analyzed</p>
@@ -804,10 +872,12 @@
       </li>
   </ul>
 
+
+
   <p>Returns:</p>
   <ul>
       <li class="field-body">
-<b>output</b>(            <code>pandas.<span title="pandas.DataFrame">DataFrame</span></code>
+<b><code>output</code></b> (            <code><span title="pandas.DataFrame">DataFrame</span></code>
 )        –
         <div class="doc-md-description">
           <p>Object describing the trends.</p>
@@ -819,12 +889,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h2 class="doc doc-heading" id="utils.describe_variance_by_clusters">
-<code class="highlight language-python"><span class="n">describe_variance_by_clusters</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
+<h2 id="utils.describe_variance_by_clusters" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">describe_variance_by_clusters</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></code>
 
 </h2>
 
@@ -833,11 +904,13 @@
   
       <p>Return variances of metric in each cluster in given data. Output object type is a pandas.DataFrame object.</p>
 
+
+
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b>data</b>
-            (<code>anomeda.<span title="anomeda.DataFrame">DataFrame</span></code>)
+        <b><code>data</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
         –
         <div class="doc-md-description">
           <p>Object containing data to be analyzed</p>
@@ -845,10 +918,12 @@
       </li>
   </ul>
 
+
+
   <p>Returns:</p>
   <ul>
       <li class="field-body">
-<b>output</b>(            <code>pandas.<span title="pandas.DataFrame">DataFrame</span></code>
+<b><code>output</code></b> (            <code><span title="pandas.DataFrame">DataFrame</span></code>
 )        –
         <div class="doc-md-description">
           <p>Object describing the variances.</p>
@@ -860,12 +935,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h2 class="doc doc-heading" id="utils.explain_values_difference">
-<code class="highlight language-python"><span class="n">explain_values_difference</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">,</span> <span class="n">measures_to_iterate</span> <span class="o">=</span> <span class="s1">&#39;shared&#39;</span><span class="p">)</span></code>
+<h2 id="utils.explain_values_difference" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">explain_values_difference</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">,</span> <span class="n">measures_to_iterate</span><span class="o">=</span><span class="s1">&#39;shared&#39;</span><span class="p">)</span></code>
 
 </h2>
 
@@ -875,32 +951,36 @@
       <p>Find clusters in data which caused the most significant changes of an average value of the metric.</p>
 <p>data1 and data2 must have a common metric and at least 1 common measure.</p>
 
+
+
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b>data1</b>
-            (<code>anomeda.<span title="anomeda.DataFrame">DataFrame</span></code>)
+        <b><code>data1</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
         –
         <div class="doc-md-description">
           <p>Object containing data to be analyzed</p>
         </div>
       </li>
       <li class="field-body">
-        <b>data2</b>
-            (<code>anomeda.<span title="anomeda.DataFrame">DataFrame</span></code>)
+        <b><code>data2</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
         –
         <div class="doc-md-description">
           <p>Object containing data to be analyzed</p>
         </div>
       </li>
       <li class="field-body">
-        <b>measures_to_iterate</b>
+        <b><code>measures_to_iterate</code></b>
         –
         <div class="doc-md-description">
           <p>Measures combinations used to create clusters to look for differences between metric values. If 'shared', then one set consisting of all measures shared between data objects is used. If 'combinations', then all possible combinations of measures are used. If list, then lists inside are used to create sets.</p>
         </div>
       </li>
   </ul>
+
+
 
 <p><strong>Examples:</strong></p>
     <pre><code class="language-python">anomeda.explain_values_difference(
@@ -914,10 +994,12 @@
 </code></pre>
       
 
+
+
   <p>Returns:</p>
   <ul>
       <li class="field-body">
-<b>output</b>(            <code>pandas.<span title="pandas.DataFrame">DataFrame</span></code>
+<b><code>output</code></b> (            <code><span title="pandas.DataFrame">DataFrame</span></code>
 )        –
         <div class="doc-md-description">
           <p>Object describing the clusters with the most significant changes of average value of a metric.</p>
@@ -929,12 +1011,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h2 class="doc doc-heading" id="utils.explain_variance_difference">
-<code class="highlight language-python"><span class="n">explain_variance_difference</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">)</span></code>
+<h2 id="utils.explain_variance_difference" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">explain_variance_difference</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">)</span></code>
 
 </h2>
 
@@ -943,19 +1026,21 @@
   
       <p>Find clusters in data which caused the most significant changes of variance of a metric when comparing data1 and data2. Output object type is a pandas.DataFrame object.</p>
 
+
+
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b>data1</b>
-            (<code>anomeda.<span title="anomeda.DataFrame">DataFrame</span></code>)
+        <b><code>data1</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
         –
         <div class="doc-md-description">
           <p>Object containing data to be analyzed</p>
         </div>
       </li>
       <li class="field-body">
-        <b>data2</b>
-            (<code>anomeda.<span title="anomeda.DataFrame">DataFrame</span></code>)
+        <b><code>data2</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
         –
         <div class="doc-md-description">
           <p>Object containing data to be analyzed</p>
@@ -963,10 +1048,12 @@
       </li>
   </ul>
 
+
+
   <p>Returns:</p>
   <ul>
       <li class="field-body">
-<b>output</b>(            <code>pandas.<span title="pandas.DataFrame">DataFrame</span></code>
+<b><code>output</code></b> (            <code><span title="pandas.DataFrame">DataFrame</span></code>
 )        –
         <div class="doc-md-description">
           <p>Object describing the clusters with the most significant changes of variance of a metric.</p>
@@ -978,12 +1065,97 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h2 class="doc doc-heading" id="utils.find_anomalies">
-<code class="highlight language-python"><span class="n">find_anomalies</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">p_large</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">p_low</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span></code>
+<h2 id="utils.extract_trends" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">extract_trends</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">n_trends</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">var_cutoff</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Fit and return parameters of a linear trend for the given metric.</p>
+
+
+
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b><code>x</code></b>
+            (<code><span title="numpy.array">array</span>[int]</code>)
+        –
+        <div class="doc-md-description">
+          <p>Indeces. Must start with 0 and increase sequentially.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>y</code></b>
+            (<code><span title="numpy.array">array</span>[float]</code>)
+        –
+        <div class="doc-md-description">
+          <p>Values</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>n_trends</code></b>
+            (<code>int or auto</code>, default:
+                <code>&#39;auto&#39;</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Number of trends to extract. If int, the method extracts this amount of trends or less. Less trends may be returned if no more trends are found or if the var_cutoff is reached (variance is already explaines by less amount of trends). If 'auto', the method defines the number of trends automatically using var_cutoff parameter. Default is 'auto'.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>var_cutoff</code></b>
+            (<code>float[0, 1] or None</code>, default:
+                <code>0.5</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Part of the approximation error variance that must be left comparing to the variance of the initial approximation with only one trend. Values closer to 0 will produce cause extracting more trends, since more trends reduce the variance better. Values closer to 1 will cause producing less trends. If n_trends is set and it is reached, the extraction finished regardless the value of the variance. If None, then not used. Default is 0.5.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>verbose</code></b>
+            (<code>bool</code>, default:
+                <code>False</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>If to produce more logs. Default False.</p>
+        </div>
+      </li>
+  </ul>
+
+
+
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+<b><code>trends</code></b> (            <code>dict</code>
+)        –
+        <div class="doc-md-description">
+          <p>Dict contains the extracted trends in the format {trend_id: (xmin_inc, xmax_exc, (trend_slope, trend_intersept)), ...}</p>
+      </div>
+      </li>
+  </ul>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="utils.find_anomalies" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">find_anomalies</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">p_large</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">p_low</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></code>
 
 </h2>
 
@@ -993,27 +1165,33 @@
       <p>Find metric anomalies by looking for the most extreme metric changes.</p>
 <p>The method finds differences between real metric and a fitted trend line, find points with the most unique differences as marks them as anomalies.</p>
 
+
+
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b>data</b>
-            (<code>anomeda.<span title="anomeda.DataFrame">DataFrame</span></code>)
+        <b><code>data</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
         –
         <div class="doc-md-description">
           <p>Object containing data to be analyzed</p>
         </div>
       </li>
       <li class="field-body">
-        <b>p_large</b>
-            (<code>float, [0, 1]</code>)
+        <b><code>p_large</code></b>
+            (<code>(float, [0, 1])</code>, default:
+                <code>1</code>
+)
         –
         <div class="doc-md-description">
           <p>What part of anomalies which are higher than usual values needs to be returned. For example, if you set it to 0.7, then only 70% of the anomalies with the largest values will be returned. Default is 1.</p>
         </div>
       </li>
       <li class="field-body">
-        <b>p_low</b>
-            (<code>float, [0, 1]</code>)
+        <b><code>p_low</code></b>
+            (<code>(float, [0, 1])</code>, default:
+                <code>1</code>
+)
         –
         <div class="doc-md-description">
           <p>What part of anomalies which are lower than usual values needs to be returned. For example, if you set it to 0.5, then only 50% of the anomalies with the lowest values will be returned. Default is 1.</p>
@@ -1021,17 +1199,19 @@
       </li>
   </ul>
 
+
+
   <p>Returns:</p>
   <ul>
       <li class="field-body">
-<b>index</b>(            <code>numpy.<span title="numpy.array">array</span></code>
+<b><code>index</code></b> (            <code><span title="numpy.array">array</span></code>
 )        –
         <div class="doc-md-description">
           <p>Array of unique indexes</p>
       </div>
       </li>
       <li class="field-body">
-<b>anomalies</b>(            <code>numpy.array of bool</code>
+<b><code>anomalies</code></b> (            <code>numpy.array of bool</code>
 )        –
         <div class="doc-md-description">
           <p>Bool array indicating if a metric was abnormal at a particar index point</p>
@@ -1043,12 +1223,13 @@
 
 </div>
 
+
 <div class="doc doc-object doc-function">
 
 
 
-<h2 class="doc doc-heading" id="utils.find_anomalies_by_clusters">
-<code class="highlight language-python"><span class="n">find_anomalies_by_clusters</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">p_large</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">p_low</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span></code>
+<h2 id="utils.find_anomalies_by_clusters" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">find_anomalies_by_clusters</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">p_large</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">p_low</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1058,27 +1239,33 @@
       <p>Find metric anomalies in each cluster.</p>
 <p>The method finds differences between real metric and a fitted trend line, find points with the most unique differences as marks them as anomalies. It skips clusters with less than 2 samples.</p>
 
+
+
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b>data</b>
-            (<code>anomeda.<span title="anomeda.DataFrame">DataFrame</span></code>)
+        <b><code>data</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
         –
         <div class="doc-md-description">
           <p>Object containing data to be analyzed</p>
         </div>
       </li>
       <li class="field-body">
-        <b>p_large</b>
-            (<code>float, [0, 1]</code>)
+        <b><code>p_large</code></b>
+            (<code>(float, [0, 1])</code>, default:
+                <code>1</code>
+)
         –
         <div class="doc-md-description">
           <p>What part of anomalies which are higher than usual values needs to be returned. For example, if you set it to 0.7, then only 70% of the anomalies with the largest values will be returned. Default is 1.</p>
         </div>
       </li>
       <li class="field-body">
-        <b>p_low</b>
-            (<code>float, [0, 1]</code>)
+        <b><code>p_low</code></b>
+            (<code>(float, [0, 1])</code>, default:
+                <code>1</code>
+)
         –
         <div class="doc-md-description">
           <p>What part of anomalies which are lower than usual values needs to be returned. For example, if you set it to 0.5, then only 50% of the anomalies with the lowest values will be returned. Default is 1.</p>
@@ -1086,10 +1273,12 @@
       </li>
   </ul>
 
+
+
   <p>Returns:</p>
   <ul>
       <li class="field-body">
-<b>clusters_anomalies</b>(            <code>list of dict</code>
+<b><code>clusters_anomalies</code></b> (            <code>list of dict</code>
 )        –
         <div class="doc-md-description">
           <p>List containing cluster and its anomalies. The keys in the cluster-dict are "cluster", "indeces", "anomalies"</p>

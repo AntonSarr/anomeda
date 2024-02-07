@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
 from scipy.stats import linregress
+from scipy.stats import beta
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.mixture import BayesianGaussianMixture
 
@@ -14,9 +15,166 @@ EMPTY_ARGUMENT_MSG = "If {0} is not provided, data's type must be anomeda.DataFr
 INVALID_DATA_TYPE_MSG = "Data type must be anomeda.DataFrame, while {0} is provided"
 
 
+def __regularizer(x):
+    return beta.pdf(x, 0.4, 0.4)
+
+
+def __find_trend_breaking_point(x, y):
+    metric_vals = []
+    points_candidates = x[2:-1]
+
+    if len(points_candidates) == 0:
+        return None
+    
+    for dt in range(len(x))[2:-1]:
+    
+        y_true1 = y[:dt]
+        x1 = np.arange(len(y_true1))
+    
+        y_true2 = y[dt:]
+        x2 = np.arange(len(y_true2))
+    
+        linreg_fitted1 = linregress(x1, y_true1)
+        y_pred1 = linreg_fitted1.slope * x1 + linreg_fitted1.intercept
+    
+        linreg_fitted2 = linregress(x2, y_true2)
+        y_pred2 = linreg_fitted2.slope * x2 + linreg_fitted2.intercept
+        
+        ratio1 = len(y_true1) / (len(y_true1) + len(y_true2))
+        ratio2 = len(y_true2) / (len(y_true1) + len(y_true2))
+    
+        metric = __regularizer(ratio1) * np.var(np.abs(y_pred1 - y_true1)) \
+        + __regularizer(ratio2) * np.var(np.abs(y_pred2 - y_true2))
+        
+        metric_vals.append(metric)
+    
+    return points_candidates[np.argmin(metric_vals)]
+
+
 def linreg(x, a, b):
     """Return the value of f(x) = a * x + b."""
     return a * x + b
+
+
+def extract_trends(x, y, n_trends='auto', var_cutoff=0.5, verbose=False):
+    """Fit and return parameters of a linear trend for the given metric.
+    
+    Parameters
+    ----------
+    x : np.array[int]
+        Indeces. Must start with 0 and increase sequentially.
+    y : np.array[float]
+        Values
+    n_trends : int or 'auto'
+        Number of trends to extract. If int, the method extracts this amount of trends or less. Less trends may be returned if no more trends are found or if the var_cutoff is reached (variance is already explaines by less amount of trends). If 'auto', the method defines the number of trends automatically using var_cutoff parameter. Default is 'auto'.
+    var_cutoff : float[0, 1] or None
+        Part of the approximation error variance that must be left comparing to the variance of the initial approximation with only one trend. Values closer to 0 will produce cause extracting more trends, since more trends reduce the variance better. Values closer to 1 will cause producing less trends. If n_trends is set and it is reached, the extraction finished regardless the value of the variance. If None, then not used. Default is 0.5.
+    verbose : bool
+        If to produce more logs. Default False.
+        
+    Returns
+    -------
+    trends : dict
+        Dict contains the extracted trends in the format {trend_id: (xmin_inc, xmax_exc, (trend_slope, trend_intersept)), ...}
+    """
+    if n_trends == 'auto':
+        if var_cutoff is None:
+            raise ValueError("Either n_trends or var_cutoff parameters must be set. n_trends='auto' and var_cutoff=None at the same time is not permitted.")
+        n_trends = np.inf
+
+    if var_cutoff is None:
+        var_cutoff = -np.inf
+    
+    linreg_fitted = linregress(x, y)
+    y_fitted = linreg_fitted.slope * x + linreg_fitted.intercept
+    
+    trends = {
+        0: (x[0], x[-1] + 1, (linreg_fitted.slope, linreg_fitted.intercept))
+    }
+    
+    best_vars = [np.var(np.abs(y_fitted - y))]
+
+    explain_variance = min(best_vars) / max(best_vars)
+    
+    n = len(trends.keys())
+    while n < n_trends and explain_variance > var_cutoff:
+    
+        min_var_diff = 0
+        best_id = None
+        best_dt = None
+        best_params = None
+        best_var = None
+        for id in trends.keys():
+            xmin, xmax, (a, b) = trends[id]
+            
+            dt = __find_trend_breaking_point(x[xmin: xmax], y[xmin: xmax])
+            
+            if dt is None:
+                continue
+    
+            y_true1 = y[xmin: dt]
+            x1 = np.arange(len(y_true1))
+            
+            y_true2 = y[dt: xmax]
+            x2 = np.arange(len(y_true2))
+            
+            linreg_fitted1 = linregress(x1, y_true1)
+            y_pred1 = linreg_fitted1.slope * x1 + linreg_fitted1.intercept
+            
+            linreg_fitted2 = linregress(x2, y_true2)
+            y_pred2 = linreg_fitted2.slope * x2 + linreg_fitted2.intercept
+    
+            y_base_diffs = []
+            y_new_diffs = []
+            for trend_id in trends.keys():
+                trend_xmin, trend_xmax, (trend_a, trend_b) = trends[trend_id]
+                y_trend_true = y[trend_xmin: trend_xmax]
+                y_trend_predicted = trend_a * np.arange(len(y_trend_true)) + trend_b
+                y_trend_diff = y_trend_predicted - y_trend_true
+                y_base_diffs.append(y_trend_diff)
+                
+                if trend_id == id:
+                    y_new_diffs.append(y_pred1 - y_true1)
+                    y_new_diffs.append(y_pred2 - y_true2)
+                else:
+                    y_new_diffs.append(y_trend_diff)
+                
+            y_base_diffs = np.concatenate(y_base_diffs)
+            y_new_diffs = np.concatenate(y_new_diffs)
+    
+            new_var = np.var(np.abs(y_new_diffs))
+            old_var = np.var(np.abs(y_base_diffs))
+            var_diff = new_var - old_var
+    
+            if var_diff < min_var_diff:
+                min_var_diff = var_diff
+                best_id = id
+                best_dt = dt
+                best_params = [(linreg_fitted1.slope, linreg_fitted1.intercept), (linreg_fitted2.slope, linreg_fitted2.intercept)]
+                best_var = new_var
+    
+        if best_id is not None:
+            left_trend = (trends[best_id][0], best_dt, best_params[0])
+            right_trend = (best_dt, trends[best_id][1], best_params[1])
+    
+            trends[best_id] = left_trend
+            trends[max(trends.keys()) + 1] = right_trend
+            best_vars.append(best_var)
+        else:
+            if verbose:
+                print('No more trends were found. Finish with {} trends.'.format(n))
+            break
+    
+        explain_variance = min(best_vars) / max(best_vars)
+        if explain_variance <= var_cutoff:
+            if verbose:
+                print('Variance reduced to {} of initial when {} is needed. Finish with {} trends'.format(explain_variance, var_cutoff, n))
+            break
+        
+        n += 1
+        continue
+
+    return trends
 
 
 def describe_trend(data):
