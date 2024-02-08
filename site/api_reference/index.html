@@ -1155,7 +1155,7 @@
 
 
 <h2 id="utils.find_anomalies" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">find_anomalies</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">p_large</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">p_low</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">find_anomalies</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">p_large</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">p_low</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">trend</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1163,7 +1163,7 @@
   <div class="doc doc-contents ">
   
       <p>Find metric anomalies by looking for the most extreme metric changes.</p>
-<p>The method finds differences between real metric and a fitted trend line, find points with the most unique differences as marks them as anomalies.</p>
+<p>The method finds differences between real metric and a fitted trend line, find points with the most extreme differences and marks them as anomalies.</p>
 
 
 
@@ -1195,6 +1195,16 @@
         –
         <div class="doc-md-description">
           <p>What part of anomalies which are lower than usual values needs to be returned. For example, if you set it to 0.5, then only 50% of the anomalies with the lowest values will be returned. Default is 1.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>trend</code></b>
+            (<code>(linear, adjusted - linear)</code>, default:
+                <code>&#39;linear&#39;</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>The way which is used to fit a trend of the metric. If 'linear', then one linear function is fitted. If 'adjusted-linear', then trends are extracted and fitted automatically, the anomeda.extract_trends method is used. Its parameters can be passed with **kwargs argument. Default is 'linear'.</p>
         </div>
       </li>
   </ul>
@@ -1237,7 +1247,7 @@
   <div class="doc doc-contents ">
   
       <p>Find metric anomalies in each cluster.</p>
-<p>The method finds differences between real metric and a fitted trend line, find points with the most unique differences as marks them as anomalies. It skips clusters with less than 2 samples.</p>
+<p>The method finds differences between real metric and a fitted trend line, find points with the most extreme differences and marks them as anomalies. It skips clusters with less than 2 samples.</p>
 
 
 

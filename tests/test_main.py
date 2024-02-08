@@ -81,6 +81,7 @@ def test_find_anomalies():
     )
 
     anomeda.find_anomalies(anmd_df, p_large=0.9, p_low=0.9)
+    anomeda.find_anomalies(anmd_df, p_large=0.9, p_low=0.9, trend='adjusted-linear', n_trends=3)
     anomeda.find_anomalies_by_clusters(anmd_df, p_large=0.9, p_low=0.9)
 
 
