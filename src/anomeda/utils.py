@@ -545,11 +545,13 @@ def explain_variance_difference(
 def find_anomalies(
     data,
     p_large=1,
-    p_low=1
+    p_low=1,
+    trend='linear',
+    **kwargs
 ):
     """Find metric anomalies by looking for the most extreme metric changes.
     
-    The method finds differences between real metric and a fitted trend line, find points with the most unique differences as marks them as anomalies.
+    The method finds differences between real metric and a fitted trend line, find points with the most extreme differences and marks them as anomalies.
     
     Parameters
     ----------
@@ -559,6 +561,8 @@ def find_anomalies(
         What part of anomalies which are higher than usual values needs to be returned. For example, if you set it to 0.7, then only 70% of the anomalies with the largest values will be returned. Default is 1.
     p_low : float, [0, 1], default 1
         What part of anomalies which are lower than usual values needs to be returned. For example, if you set it to 0.5, then only 50% of the anomalies with the lowest values will be returned. Default is 1.
+    trend : 'linear', 'adjusted-linear'
+        The way which is used to fit a trend of the metric. If 'linear', then one linear function is fitted. If 'adjusted-linear', then trends are extracted and fitted automatically, the anomeda.extract_trends method is used. Its parameters can be passed with **kwargs argument. Default is 'linear'.
         
     Returns
     -------
@@ -567,7 +571,8 @@ def find_anomalies(
     anomalies : numpy.array of bool
         Bool array indicating if a metric was abnormal at a particar index point
     """
-    m = 0
+    if trend not in ['linear', 'adjusted-linear']:
+        raise ValueError('trend parameter must be either "linear" or "adjusted-linear"')
     
     if type(data) != DataFrame:
         raise TypeError(INVALID_DATA_TYPE_MSG.format(type(data)))
@@ -592,10 +597,24 @@ def find_anomalies(
 
     y = df[metric_name].values
     x = np.arange(len(y))
-    
-    linreg_fitted = linregress(x, y)
-    y_fitted = linreg_fitted.slope * x + linreg_fitted.intercept
-    y_diff = y - y_fitted
+
+    if trend == 'adjusted-linear':
+        extracted  = extract_trends(x, y, **kwargs)
+        y_diff = []
+        x_labels = []
+        for t in extracted.values():
+            xmin, xmax, (slope, intercept) = t
+            y_fitted = slope * np.arange(xmax - xmin) + intercept
+            y_diff.append(y[xmin: xmax] - y_fitted)
+            x_labels.append(np.arange(xmin, xmax))
+        x_labels = np.concatenate(x_labels)
+        y_diff = np.concatenate(y_diff)
+        y_diff = y_diff[np.argsort(x_labels)]
+            
+    if trend == 'linear':
+        linreg_fitted = linregress(x, y)
+        y_fitted = linreg_fitted.slope * x + linreg_fitted.intercept
+        y_diff = y - y_fitted
     
     clusterizator = LocalOutlierFactor(n_neighbors=min(len(y) - 1, 24), novelty=False)
     outliers = clusterizator.fit_predict(y_diff.reshape(-1, 1)) == -1
@@ -638,7 +657,7 @@ def find_anomalies_by_clusters(
 ):
     """Find metric anomalies in each cluster.
     
-    The method finds differences between real metric and a fitted trend line, find points with the most unique differences as marks them as anomalies. It skips clusters with less than 2 samples.
+    The method finds differences between real metric and a fitted trend line, find points with the most extreme differences and marks them as anomalies. It skips clusters with less than 2 samples.
     
     Parameters
     ----------
