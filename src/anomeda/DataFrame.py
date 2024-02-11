@@ -6,7 +6,8 @@ from sklearn.mixture import BayesianGaussianMixture
 from sklearn.exceptions import ConvergenceWarning
 
 
-warnings.filterwarnings('ignore', category=ConvergenceWarning)
+warnings.filterwarnings('ignore')
+warnings.filterwarnings('default', module='anomeda', append=True)
 
 
 def _to_discrete_values(values, model=None):
@@ -14,11 +15,11 @@ def _to_discrete_values(values, model=None):
     
     Parameters
     ----------
-    values: : 1-dim numpy.array
+    values: : 1-dim numpy.ndarray
         Numeric values to be mapped to discrete values
     
     model
-        An object (sklearn object if preferable) which has fit_predict method taking the numeric numpy.array values of shape (n, 1) and returning mapped discrete values
+        An object (sklearn object if preferable) which has fit_predict method taking the numeric numpy.ndarray values of shape (n, 1) and returning mapped discrete values
     
     Returns
     -------
@@ -73,84 +74,103 @@ def _to_discrete_values(values, model=None):
     return labels, mapping_intervals
 
 
-class DataFrame:
-    """Data to be processed by anomeda package.
+class DataFrame(pd.DataFrame):
+    """Data to be processed by anomeda. The class inherits pandas.DataFrame.
+    
+    Please note that whenever the underlying pandas.DataFrame object is changed, you may need to apply the constructor again in order to keep some of the characteristics of the data consistent with the new object.
     
     Parameters
     ----------
-    data : pandas.DataFrame
-        Underlying data must be pandas.DataFrame object.
-    measures_names : list or tuple
+    *args, **kwargs
+        Parameters for initialization a pandas.DataFrame object. Other parameters must be passed as **kwargs only.
+    measures_names : 'list | tuple' = None
         List containing columns considered as measures in the data.
-    measures_types : dict
+    measures_types : 'dict'
         Dict containing 'categorical' and/or 'continuous' keys and list of measures as values. Continuous measures will be discretized automatically if not presented in discretized_measures parameter.
-    discretized_measures : dict
+    discretized_measures : 'dict' = None
         Dict containig name of the measure as key and array-like object containing discretized values of the measure of the same shape as original data. If measure is in 'continuous' list of measures_types parameter, it will be discretized automatically.
-    index_name : str or list
-        Columns to be considered as an index (usually a date or a timestamp)
-    metric_name : str
+    index_name : 'str | list | None' = None
+        Columns to be considered as an index (usually a date or a timestamp). Must be present among columns if provided. If None, index name from the pandas.DataFrame is taken.
+    metric_name : 'str' = None
         Column with a metric to be analyzed
-    agg_func: str
+    agg_func: 'sum | avg' = 'sum'
         Way of aggregating metric_name by measures. Can be 'sum', 'avg' or callable compatible with pandas.DataFrame.groupby
     
     Examples
     --------
     ```python
     anmd_df = anomeda.DataFrame(
-        data,
-        measures_names=['class', 'dummy_measure', 'dummy_numeric_measure'],
+        df,
+        measures_names=['dummy_measure_col', 'dummy_numeric_measure_col'],
         measures_types={
-            'categorical': ['class', 'dummy_measure'], 
-            'continuous': ['dummy_numeric_measure']
+            'categorical': ['dummy_measure_col'], 
+            'continuous': ['dummy_numeric_measure_col']
         },
         index_name='dt',
-        metric_name='metric',
+        metric_name='metric_col',
         agg_func='sum'
     )
     ```
     """
     
-    def __init__(
-        self, 
-        data: pd.DataFrame,
-        measures_names=None, 
-        measures_types=None, 
-        discretized_measures=None, 
-        index_name=None, 
-        metric_name=None, 
-        agg_func='sum'
-    ):
+    def __init__(self, *args, **kwargs):
         
-        self._data = data.copy()
+        filtered_kwargs = {}
+        for arg in kwargs:
+            if arg not in ['measures_names', 'measures_types', 'discretized_measures', 'index_name', 'metric_name', 'agg_func']:
+                filtered_kwargs[arg] = kwargs[arg]
         
+        super().__init__(pd.DataFrame(*args, **filtered_kwargs).copy())
+        
+        measures_names = kwargs.get('measures_names')
         self.set_measures_names(measures_names)
+        
+        measures_types = kwargs.get('measures_types')
         self.set_measures_types(measures_types)
+        
+        discretized_measures = kwargs.get('discretized_measures')
         self.set_discretized_measures(discretized_measures)
-        self.set_index_name(index_name)
+        
+        metric_name = kwargs.get('metric_name')
         self.set_metric_name(metric_name)
+        
+        agg_func = kwargs.get('agg_func')
         self.set_agg_func(agg_func)
         
+        index_name = kwargs.get('index_name')
+        curr_indeces = list(filter(lambda x: x is not None, self.index.names))
+        if index_name is None: 
+            if len(curr_indeces) >= 1:
+                self._index_name = curr_indeces
+            else:
+                self._index_name = None
+        else:
+            self.set_index(index_name, inplace=True)
+        
     def __copy__(self):
-        return self.copy()
-        
-    def aspandas(self):
-        """Return a copy of a pandas.DataFrame object underlying the anomeda.DataFrame"""
-        
-        return self._data.copy()
+        return self.copy_anomeda_df()
     
-    def mod_data(self, data: pd.DataFrame, inplace=False):
+    def mod_data(self, data : 'pandas.DataFrame', inplace=False):
         """Replace the pandas.DataFrame object underlying the anomeda.DataFrame with a new one
         
         Parameters
         ----------
         data : pandas.DataFrame
-            A new data object
+            A new data object.
         inplace : bool
             If True, then no new object will be returned. Otherwise, create and return a new anomeda.DataFrame
         """
         
         if inplace:
-            self._data = data.copy()
+            self = DataFrame(
+                data, 
+                measures_names=self._measures_names, 
+                measures_types=self._measures_types, 
+                discretized_measures=None,
+                index_name=self._index_name, 
+                metric_name=self._metric_name, 
+                agg_func=self._agg_func
+            )
         else:
             return DataFrame(
                 data, 
@@ -162,11 +182,11 @@ class DataFrame:
                 agg_func=self._agg_func
             )
         
-    def copy(self):
+    def copy_anomeda_df(self):
         """Return a copy of an anomeda.DataFrame object"""
         
         return DataFrame(
-                data=self._data, 
+                data=self, 
                 measures_names=self._measures_names, 
                 measures_types=self._measures_types, 
                 discretized_measures=self._discretized_measures,
@@ -174,6 +194,9 @@ class DataFrame:
                 metric_name=self._metric_name, 
                 agg_func=self._agg_func
             )
+
+    def to_pandas(self):
+        return pd.DataFrame(self)
     
     def get_discretization_mapping(self):
         """Return a dict with a mapping between discrete values and actual ranges of continous measures.
@@ -246,7 +269,7 @@ class DataFrame:
         """
         if measures_names is not None:
             for name in measures_names:
-                if name not in self._data.columns:
+                if name not in self.columns:
                     raise KeyError("All the names among measures_names must be present in the pandas.DataFrame underlying anomeda.DataFrame, but {} is cannot be found".format(name))
         self._measures_names = measures_names
     
@@ -254,7 +277,7 @@ class DataFrame:
         """Return the measures_types dict."""
         return self._measures_types
     
-    def set_measures_types(self, measures_types: dict):
+    def set_measures_types(self, measures_types : 'dict'):
         """Set measures types. 
         
         Measure can be either 'categorical' or 'continous'. Types are used to clusterize the data properly.
@@ -282,13 +305,13 @@ class DataFrame:
                 for measure in measures_types['continuous']:
                     if measure not in self._discretized_measures:
                         self._discretized_measures[measure], \
-                        self._discretized_measures_mapping[measure] = _to_discrete_values(self._data[measure].values)
+                        self._discretized_measures_mapping[measure] = _to_discrete_values(self[measure].values)
     
     def get_discretized_measures(self):
         """Return discretized versions of continous measures."""
         return self._discretized_measures
     
-    def set_discretized_measures(self, discretized_measures: dict):
+    def set_discretized_measures(self, discretized_measures : 'dict'):
         """Set custom discretization for continous measures.
         
         Parameters
@@ -305,7 +328,7 @@ class DataFrame:
             raise TypeError("discretized_measures argument must be dict in the format {'measure_name': [0, 1, 1, ...]}")
             
         for measure_name in discretized_measures.keys():
-            if len(discretized_measures[measure_name]) != len(self._data):
+            if len(discretized_measures[measure_name]) != len(self):
                 raise TypeError("Values for discretized_measures for anomeda.DataFrame must have the same length as the underlying pandas.DataFrame data")
         
         self._discretized_measures = discretized_measures
@@ -314,43 +337,35 @@ class DataFrame:
         """Return the name of an index column."""
         
         return self._index_name
-    
-    def set_index_name(self, index_name):
-        """Set a name of an index column.
-        
-        Parameters
-        ----------
-        index_name : str or list
-            Column name or list of columns names containing index values. Must be present in an underling pandas.DataFrame object. If index is currenly present in measures list, you need to change the measures list first
-        """
-        if index_name is not None:
-            if type(index_name) == list and len(index_name) == 0:
-                raise KeyError("If index_name is list, it must have length >= 1")
-        
-            if self.get_measures_names() is not None:
-                if type(index_name) != list:
-                    index_name_arr = [index_name]
-                else:
-                    index_name_arr = index_name
-                if len(set(index_name_arr).intersection(set(self.get_measures_names()))) > 0:
-                    raise KeyError("index_name {} must not be present among measures_names. Change measures_names first".format(index_name))
-            
-            if self._data.index.name is not None or len(self._data.index.names) > 1:
-                self._data = self._data.reset_index()
-            
-            self._data = self._data.set_index(index_name)
-            self._index_name = index_name
-            return
-        else:
-            if self._data.index.name is not None:
-                self._index_name = self._data.index.name
-                return
-            
-            if len(self._data.index.names) > 1:
-                self._index_name = list(self._data.index.names)
-                return
-            
-        self._index_name = None
+
+    def set_index(self, *args, **kwargs):
+
+        resp = super().set_index(*args, **kwargs)
+
+        if resp is not None:
+            return self.mod_data(resp, inplace=False)
+
+        index_names = list(filter(lambda x: x is not None, self.index.names))
+
+        if len(index_names) >= 1:
+            self._index_name = index_names
+
+    def reset_index(self, *args, **kwargs):
+
+        resp = super().reset_index(*args, **kwargs)
+
+        if resp is not None:
+            return DataFrame(
+                resp, 
+                measures_names=self._measures_names, 
+                measures_types=self._measures_types, 
+                discretized_measures=None,
+                index_name=None, 
+                metric_name=self._metric_name, 
+                agg_func=self._agg_func
+            )
+
+        self._index_name = None       
     
     def get_metric_name(self):
         """Return the name of a metric column."""
@@ -364,7 +379,7 @@ class DataFrame:
         metric_name : str
             Must be present among columns of an underlying pandas.DataFrame. If metric column is currently set as a measure, you need to change the list of measures first
         """
-        if metric_name is not None and metric_name not in self._data.columns:
+        if metric_name is not None and metric_name not in self.columns:
             raise KeyError("metric_name must be present among columns of the underlying pandas.DataFrame object")
         
         if self.get_measures_names() is not None and metric_name in self.get_measures_names():
@@ -376,7 +391,7 @@ class DataFrame:
         """Return the function used to aggregate the metric by measures."""
         return self._agg_func
     
-    def set_agg_func(self, agg_func: str):
+    def set_agg_func(self, agg_func : 'str'):
         """Set a function to aggregate the metric by measures.
         
         Parameters
