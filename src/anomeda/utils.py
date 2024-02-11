@@ -56,7 +56,7 @@ def linreg(x, a, b):
     return a * x + b
 
 
-def extract_trends(x, y, n_trends='auto', var_cutoff=0.5, verbose=False):
+def extract_trends(x, y, max_trends='auto', min_var_reduction=0.5, verbose=False):
     """Fit and return parameters of a linear trend for the given metric.
     
     Parameters
@@ -65,10 +65,10 @@ def extract_trends(x, y, n_trends='auto', var_cutoff=0.5, verbose=False):
         Indeces. Must start with 0 and increase sequentially.
     y : np.array[float]
         Values
-    n_trends : int or 'auto'
-        Number of trends to extract. If int, the method extracts this amount of trends or less. Less trends may be returned if no more trends are found or if the var_cutoff is reached (variance is already explaines by less amount of trends). If 'auto', the method defines the number of trends automatically using var_cutoff parameter. Default is 'auto'.
-    var_cutoff : float[0, 1] or None
-        Part of the approximation error variance that must be left comparing to the variance of the initial approximation with only one trend. Values closer to 0 will produce cause extracting more trends, since more trends reduce the variance better. Values closer to 1 will cause producing less trends. If n_trends is set and it is reached, the extraction finished regardless the value of the variance. If None, then not used. Default is 0.5.
+    max_trends : int | 'auto'
+        Number of trends to extract. If int, the method extracts this amount of trends or less. Less trends may be returned if no more trends are found or if the min_var_reduction is reached (variance is already explaines by less amount of trends). If 'auto', the method defines the number of trends automatically using min_var_reduction parameter. Default is 'auto'.
+    min_var_reduction : float[0, 1] or None
+        % of the variance of approximation error that must be reduced comparing to the variance of the initial approximation with only one trend. Values closer to 1 will produce cause extracting more trends, since more trends reduce the variance better. Values closer to 0 will cause producing less trends. If max_trends is set and it is reached, the extraction finished regardless the value of the variance. If None, then not used. Default is 0.5.
     verbose : bool
         If to produce more logs. Default False.
         
@@ -77,13 +77,13 @@ def extract_trends(x, y, n_trends='auto', var_cutoff=0.5, verbose=False):
     trends : dict
         Dict contains the extracted trends in the format {trend_id: (xmin_inc, xmax_exc, (trend_slope, trend_intersept)), ...}
     """
-    if n_trends == 'auto':
-        if var_cutoff is None:
-            raise ValueError("Either n_trends or var_cutoff parameters must be set. n_trends='auto' and var_cutoff=None at the same time is not permitted.")
-        n_trends = np.inf
+    if max_trends == 'auto':
+        if min_var_reduction is None:
+            raise ValueError("Either max_trends or min_var_reduction parameters must be set. max_trends='auto' and min_var_reduction=None at the same time is not permitted.")
+        max_trends = np.inf
 
-    if var_cutoff is None:
-        var_cutoff = -np.inf
+    if min_var_reduction is None:
+        min_var_reduction = np.inf
     
     linreg_fitted = linregress(x, y)
     y_fitted = linreg_fitted.slope * x + linreg_fitted.intercept
@@ -94,10 +94,13 @@ def extract_trends(x, y, n_trends='auto', var_cutoff=0.5, verbose=False):
     
     best_vars = [np.var(np.abs(y_fitted - y))]
 
-    explain_variance = min(best_vars) / max(best_vars)
+    if max(best_vars) == 0:
+        reducted_variance = 1
+    else:
+        reducted_variance = 1 - min(best_vars) / max(best_vars) # that much of variance we explained
     
     n = len(trends.keys())
-    while n < n_trends and explain_variance > var_cutoff:
+    while n < max_trends and reducted_variance < min_var_reduction:
     
         min_var_diff = 0
         best_id = None
@@ -165,10 +168,14 @@ def extract_trends(x, y, n_trends='auto', var_cutoff=0.5, verbose=False):
                 print('No more trends were found. Finish with {} trends.'.format(n))
             break
     
-        explain_variance = min(best_vars) / max(best_vars)
-        if explain_variance <= var_cutoff:
+        if max(best_vars) == 0:
+            reducted_variance = 1
+        else:
+            reducted_variance = 1 - min(best_vars) / max(best_vars) # that much of variance we explained
+        
+        if reducted_variance <= min_var_reduction:
             if verbose:
-                print('Variance reduced to {} of initial when {} is needed. Finish with {} trends'.format(explain_variance, var_cutoff, n))
+                print('Variance reduced by {} comparing to initial value, while the reduction of {} is needed. Finish with {} trends'.format(reducted_variance, min_var_reduction, n))
             break
         
         n += 1
@@ -195,7 +202,7 @@ def describe_trend(data):
     if type(data) != DataFrame:
         raise TypeError(INVALID_DATA_TYPE_MSG.format(type(data)))
     
-    data_pandas = data.aspandas() # get pandas.DataFrame
+    data_pandas = data.to_pandas() # get pandas.DataFrame
     
     if data.get_index_name() is None:
         raise KeyError('not-None "index_name" must be set for anomeda.DataFrame object')
@@ -263,7 +270,7 @@ def describe_trends_by_clusters(data):
         raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
     agg_func = data.get_agg_func()
     
-    data_pandas = data.aspandas() # get pandas.DataFrame
+    data_pandas = data.to_pandas() # get pandas.DataFrame
     data_pandas = data_pandas.reset_index()
     columns_to_use = np.append(index_name, metric_name)
     
@@ -330,7 +337,7 @@ def describe_variance_by_clusters(data):
         raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
     agg_func = data.get_agg_func()
     
-    data_pandas = data.aspandas() # get pandas.DataFrame
+    data_pandas = data.to_pandas() # get pandas.DataFrame
     data_pandas = data_pandas.reset_index()
     columns_to_use = np.append(index_name, metric_name)
     
@@ -516,8 +523,8 @@ def explain_variance_difference(
         raise KeyError('not-None "measure_names" must be set for anomeda.DataFrame object')
     measure_names2 = data2.get_measures_names()
         
-    data1_pd = data1.aspandas()
-    data2_pd = data2.aspandas()
+    data1_pd = data1.to_pandas()
+    data2_pd = data2.to_pandas()
     
     variances1 = describe_variance_by_clusters(data1)
     variances2 = describe_variance_by_clusters(data2)
@@ -566,9 +573,9 @@ def find_anomalies(
         
     Returns
     -------
-    index : numpy.array
+    index : numpy.ndarray
         Array of unique indexes
-    anomalies : numpy.array of bool
+    anomalies : numpy.ndarray of bool
         Bool array indicating if a metric was abnormal at a particar index point
     """
     if trend not in ['linear', 'adjusted-linear']:
@@ -589,7 +596,7 @@ def find_anomalies(
         raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
     agg_func = data.get_agg_func()
     
-    data_pandas = data.aspandas() # get pandas.DataFrame
+    data_pandas = data.to_pandas() # get pandas.DataFrame
     data_pandas = data_pandas.reset_index()
     columns_to_use = np.append(index_name, metric_name)
     
@@ -692,7 +699,7 @@ def find_anomalies_by_clusters(
         raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
     agg_func = data.get_agg_func()
     
-    data_pandas = data.aspandas() # get pandas.DataFrame
+    data_pandas = data.to_pandas() # get pandas.DataFrame
     data_pandas = data_pandas.reset_index()
     
     unchanged_data_pandas = data_pandas.copy()
@@ -727,3 +734,152 @@ def find_anomalies_by_clusters(
             })
         
     return clusters_anomalies
+
+
+def explore_ts(
+    data : 'anomeda.DataFrame | numpy.ndarray', 
+    trend_fitting_conf : 'dict' = {'max_trends': 'auto', 'min_var_reduction': 0.75},
+    filters : 'str' = None,
+    breakdown : "'no' | 'all-clusters' | list[str]" = 'no',
+    min_cluster_size : 'int | None' = None,
+    max_cluster_size : 'int | None' = None,
+    plot : 'bool' = True,
+    df : 'bool' = True,
+    verbose : 'bool' = True
+):
+    if min_cluster_size is None:
+        min_cluster_size = -np.inf
+    if max_cluster_size is None:
+        max_cluster_size = np.inf
+
+    if type(data) == DataFrame:
+        
+        index_name = data.get_index_name()
+        if index_name is None:
+            raise KeyError('not-None "index_name" must be set for anomeda.DataFrame object')
+        
+        metric_name = data.get_metric_name()
+        if metric_name is None:
+            raise KeyError('not-None "metric_name" must be set for anomeda.DataFrame object')
+        
+        agg_func = data.get_agg_func()
+        if agg_func is None:
+            raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
+    
+        if filters is not None:
+            data_pandas = data.to_pandas().query(filters).reset_index()
+        else:
+            data_pandas = data.to_pandas().reset_index()
+
+        if breakdown == 'all-clusters':
+            measures_names = data.get_measures_names()
+            if measures_names is None:
+                raise KeyError('not-None "measures_names" must be set for anomeda.DataFrame object')
+            measures_to_iterate = []
+            for i in range(1, len(measures_names) + 1):
+                for el in combinations(measures_names, i):
+                    measures_to_iterate.append(list(el))
+        elif type(breakdown) == list:
+            measures_to_iterate = breakdown.copy()
+        elif breakdown == 'no':
+            measures_to_iterate = []
+        else:
+            raise ValueError('Breakdown must be either "all-clusters", list or "no"')
+        
+        measures_types = data.get_measures_types()
+        if measures_types is not None and 'continuous' in measures_types:
+            for measure in measures_types['continuous']:
+                data_pandas[measure] = data.get_discretized_measures()[measure]
+        
+        res_values = []
+        skipped_clusters = 0
+        skipped_indeces = []
+        total_clusters = 0
+        columns_to_use = np.append(index_name, metric_name)
+
+        query = 'total'
+        ydata = data_pandas[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
+        xdata = np.arange(len(ydata)) 
+        trends = extract_trends(
+            xdata, ydata, 
+            max_trends=trend_fitting_conf.get('max_trends'), 
+            min_var_reduction=trend_fitting_conf.get('min_var_reduction')
+        )
+        res_values.append((query, trends))
+        
+        for measures_set in measures_to_iterate:
+            for measures_values in data_pandas[measures_set].drop_duplicates().values:
+                str_arr = []
+                for (measure_name, measure_value) in zip(measures_names, measures_values):
+                    str_arr.append('`' + measure_name + '`' + '==' + str(measure_value))
+                query = ' and '.join(str_arr)
+                
+                ydata = data_pandas.query(query)[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
+                xdata = np.arange(len(ydata)) 
+
+                total_clusters += 1
+                if ydata.shape[0] >= min_cluster_size and ydata.shape[0] <= max_cluster_size:
+                    if ydata.shape[0] == 1:
+                        res_values.append((query, {0: (0, 0, (1, ydata[0]))}))
+                    else:
+                        trends = extract_trends(
+                            xdata, ydata, 
+                            max_trends=trend_fitting_conf.get('max_trends'), 
+                            min_var_reduction=trend_fitting_conf.get('min_var_reduction')
+                        )
+                        res_values.append((query, trends))
+                else:
+                    skipped_clusters += 1
+                    skipped_indeces.append(ydata.index)
+        if skipped_clusters > 0:
+            skipped_indeces = np.unique(np.concatenate(skipped_indeces))
+
+            ydata = data_pandas.loc[skipped_indeces, columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
+            xdata = np.arange(len(ydata)) 
+
+            query = 'skipped'
+
+            if ydata.shape[0] == 1:
+                res_values.append((query, {0: (0, 0, (1, ydata[0]))}))
+            else:
+                trends = extract_trends(
+                    xdata, ydata, 
+                    max_trends=trend_fitting_conf.get('max_trends'), 
+                    min_var_reduction=trend_fitting_conf.get('min_var_reduction')
+                )
+                res_values.append((query, trends))
+
+        if verbose:
+            print('Skipped {} out of {} clusters'.format(skipped_clusters, total_clusters))
+        
+        return res_values
+
+    elif type(data) == np.ndarray:
+        if filters is not None:
+            raise ValueError('Filters may be passed only if provided data is anomeda.DataFrame')
+        if breakdown is not None and breakdown != 'no':
+            raise ValueError('Breakdown may be passed only if provided data is anomeda.DataFrame')
+        y = data
+        x = np.arange(len(y))
+        query = 'total'
+        res_values = []
+        if y.shape[0] >= min_cluster_size and y.shape[0] <= max_cluster_size:
+            if y.shape[0] == 1:
+                res_values.append((query, {0: (0, 0, (1, y[0]))}))
+            else:
+                trends = extract_trends(
+                    x, y, 
+                    max_trends=trend_fitting_conf.get('max_trends'), 
+                    min_var_reduction=trend_fitting_conf.get('min_var_reduction')
+                )
+                res_values.append((query, trends))
+        
+        return res_values
+    else:
+        raise ValueError('Data parameter must be either anomeda.DataFrame or numpy.ndarray with metric values')
+
+    
+    
+    return trends
+
+    
