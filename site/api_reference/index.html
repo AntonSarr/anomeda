@@ -153,33 +153,40 @@
 
 
 <h3 id="DataFrame.DataFrame" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">measures_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">measures_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">discretized_measures</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">index_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metric_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">agg_func</span><span class="o">=</span><span class="s1">&#39;sum&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">DataFrame</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 </h3>
 
 
   <div class="doc doc-contents ">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="pandas.DataFrame">DataFrame</span></code></p>
 
   
-      <p>Data to be processed by anomeda package.</p>
+      <p>Data to be processed by anomeda. The class inherits pandas.DataFrame.</p>
+<p>Please note that whenever the underlying pandas.DataFrame object is changed, you may need to apply the constructor again in order to keep some of the characteristics of the data consistent with the new object.</p>
 
 
 
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b><code>data</code></b>
-            (<code><span title="pandas.DataFrame">DataFrame</span></code>)
+        <b><code>*args</code></b>
         –
         <div class="doc-md-description">
-          <p>Underlying data must be pandas.DataFrame object.</p>
+          <p>Parameters for initialization a pandas.DataFrame object. Other parameters must be passed as **kwargs only.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>**kwargs</code></b>
+        –
+        <div class="doc-md-description">
+          <p>Parameters for initialization a pandas.DataFrame object. Other parameters must be passed as **kwargs only.</p>
         </div>
       </li>
       <li class="field-body">
         <b><code>measures_names</code></b>
-            (<code>list or tuple</code>, default:
-                <code>None</code>
-)
+            (<code>&#39;list | tuple&#39; = None</code>)
         –
         <div class="doc-md-description">
           <p>List containing columns considered as measures in the data.</p>
@@ -187,9 +194,7 @@
       </li>
       <li class="field-body">
         <b><code>measures_types</code></b>
-            (<code>dict</code>, default:
-                <code>None</code>
-)
+            (<code>dict</code>)
         –
         <div class="doc-md-description">
           <p>Dict containing 'categorical' and/or 'continuous' keys and list of measures as values. Continuous measures will be discretized automatically if not presented in discretized_measures parameter.</p>
@@ -197,9 +202,7 @@
       </li>
       <li class="field-body">
         <b><code>discretized_measures</code></b>
-            (<code>dict</code>, default:
-                <code>None</code>
-)
+            (<code>&#39;dict&#39; = None</code>)
         –
         <div class="doc-md-description">
           <p>Dict containig name of the measure as key and array-like object containing discretized values of the measure of the same shape as original data. If measure is in 'continuous' list of measures_types parameter, it will be discretized automatically.</p>
@@ -207,19 +210,15 @@
       </li>
       <li class="field-body">
         <b><code>index_name</code></b>
-            (<code>str or list</code>, default:
-                <code>None</code>
-)
+            (<code>&#39;str | list | None&#39; = None</code>)
         –
         <div class="doc-md-description">
-          <p>Columns to be considered as an index (usually a date or a timestamp)</p>
+          <p>Columns to be considered as an index (usually a date or a timestamp). Must be present among columns if provided. If None, index name from the pandas.DataFrame is taken.</p>
         </div>
       </li>
       <li class="field-body">
         <b><code>metric_name</code></b>
-            (<code>str</code>, default:
-                <code>None</code>
-)
+            (<code>&#39;str&#39; = None</code>)
         –
         <div class="doc-md-description">
           <p>Column with a metric to be analyzed</p>
@@ -238,14 +237,14 @@
 
 <p><strong>Examples:</strong></p>
     <pre><code class="language-python">anmd_df = anomeda.DataFrame(
-    data,
-    measures_names=['class', 'dummy_measure', 'dummy_numeric_measure'],
+    df,
+    measures_names=['dummy_measure_col', 'dummy_numeric_measure_col'],
     measures_types={
-        'categorical': ['class', 'dummy_measure'], 
-        'continuous': ['dummy_numeric_measure']
+        'categorical': ['dummy_measure_col'], 
+        'continuous': ['dummy_numeric_measure_col']
     },
     index_name='dt',
-    metric_name='metric',
+    metric_name='metric_col',
     agg_func='sum'
 )
 </code></pre>
@@ -268,27 +267,8 @@
 
 
 
-<h4 id="DataFrame.DataFrame.aspandas" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">aspandas</span><span class="p">()</span></code>
-
-</h4>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>Return a copy of a pandas.DataFrame object underlying the anomeda.DataFrame</p>
-
-  </div>
-
-</div>
-
-
-<div class="doc doc-object doc-function">
-
-
-
-<h4 id="DataFrame.DataFrame.copy" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">copy</span><span class="p">()</span></code>
+<h4 id="DataFrame.DataFrame.copy_anomeda_df" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">copy_anomeda_df</span><span class="p">()</span></code>
 
 </h4>
 
@@ -454,7 +434,7 @@
 
 
 <h4 id="DataFrame.DataFrame.mod_data" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">mod_data</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">mod_data</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h4>
 
@@ -472,7 +452,7 @@
             (<code><span title="pandas.DataFrame">DataFrame</span></code>)
         –
         <div class="doc-md-description">
-          <p>A new data object</p>
+          <p>A new data object.</p>
         </div>
       </li>
       <li class="field-body">
@@ -602,39 +582,6 @@
         –
         <div class="doc-md-description">
           <p>Dict containing discrete values of each measure in the format {'measure_name': [0, 1, 1, ...]}. Array of values must have same shape as original measure had.</p>
-        </div>
-      </li>
-  </ul>
-
-  </div>
-
-</div>
-
-
-<div class="doc doc-object doc-function">
-
-
-
-<h4 id="DataFrame.DataFrame.set_index_name" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">set_index_name</span><span class="p">(</span><span class="n">index_name</span><span class="p">)</span></code>
-
-</h4>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>Set a name of an index column.</p>
-
-
-
-  <p>Parameters:</p>
-  <ul>
-      <li class="field-body">
-        <b><code>index_name</code></b>
-            (<code>str or list</code>)
-        –
-        <div class="doc-md-description">
-          <p>Column name or list of columns names containing index values. Must be present in an underling pandas.DataFrame object. If index is currenly present in measures list, you need to change the measures list first</p>
         </div>
       </li>
   </ul>
@@ -1071,7 +1018,7 @@
 
 
 <h2 id="utils.extract_trends" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">extract_trends</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">n_trends</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">var_cutoff</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">extract_trends</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">max_trends</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">min_var_reduction</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1101,23 +1048,23 @@
         </div>
       </li>
       <li class="field-body">
-        <b><code>n_trends</code></b>
-            (<code>int or auto</code>, default:
+        <b><code>max_trends</code></b>
+            (<code>int | auto</code>, default:
                 <code>&#39;auto&#39;</code>
 )
         –
         <div class="doc-md-description">
-          <p>Number of trends to extract. If int, the method extracts this amount of trends or less. Less trends may be returned if no more trends are found or if the var_cutoff is reached (variance is already explaines by less amount of trends). If 'auto', the method defines the number of trends automatically using var_cutoff parameter. Default is 'auto'.</p>
+          <p>Number of trends to extract. If int, the method extracts this amount of trends or less. Less trends may be returned if no more trends are found or if the min_var_reduction is reached (variance is already explaines by less amount of trends). If 'auto', the method defines the number of trends automatically using min_var_reduction parameter. Default is 'auto'.</p>
         </div>
       </li>
       <li class="field-body">
-        <b><code>var_cutoff</code></b>
+        <b><code>min_var_reduction</code></b>
             (<code>float[0, 1] or None</code>, default:
                 <code>0.5</code>
 )
         –
         <div class="doc-md-description">
-          <p>Part of the approximation error variance that must be left comparing to the variance of the initial approximation with only one trend. Values closer to 0 will produce cause extracting more trends, since more trends reduce the variance better. Values closer to 1 will cause producing less trends. If n_trends is set and it is reached, the extraction finished regardless the value of the variance. If None, then not used. Default is 0.5.</p>
+          <p>% of the variance of approximation error that must be reduced comparing to the variance of the initial approximation with only one trend. Values closer to 1 will produce cause extracting more trends, since more trends reduce the variance better. Values closer to 0 will cause producing less trends. If max_trends is set and it is reached, the extraction finished regardless the value of the variance. If None, then not used. Default is 0.5.</p>
         </div>
       </li>
       <li class="field-body">
@@ -1214,14 +1161,14 @@
   <p>Returns:</p>
   <ul>
       <li class="field-body">
-<b><code>index</code></b> (            <code><span title="numpy.array">array</span></code>
+<b><code>index</code></b> (            <code><span title="numpy.ndarray">ndarray</span></code>
 )        –
         <div class="doc-md-description">
           <p>Array of unique indexes</p>
       </div>
       </li>
       <li class="field-body">
-<b><code>anomalies</code></b> (            <code>numpy.array of bool</code>
+<b><code>anomalies</code></b> (            <code>numpy.ndarray of bool</code>
 )        –
         <div class="doc-md-description">
           <p>Bool array indicating if a metric was abnormal at a particar index point</p>
