@@ -87,12 +87,17 @@ def extract_trends(x, y, max_trends='auto', min_var_reduction=0.5, verbose=False
     
     linreg_fitted = linregress(x, y)
     y_fitted = linreg_fitted.slope * x + linreg_fitted.intercept
+    error_var = np.var(np.abs(y_fitted - y))
     
     trends = {
-        0: (x[0], x[-1] + 1, (linreg_fitted.slope, linreg_fitted.intercept))
+        0: (
+            x[0], x[-1] + 1, 
+            (linreg_fitted.slope, linreg_fitted.intercept), 
+            (y.shape[0], np.mean(y), error_var, np.sum(y))
+        )
     }
     
-    best_vars = [np.var(np.abs(y_fitted - y))]
+    best_vars = [error_var]
 
     if max(best_vars) == 0:
         reducted_variance = 1
@@ -108,7 +113,7 @@ def extract_trends(x, y, max_trends='auto', min_var_reduction=0.5, verbose=False
         best_params = None
         best_var = None
         for id in trends.keys():
-            xmin, xmax, (a, b) = trends[id]
+            xmin, xmax, (a, b), _ = trends[id]
             
             dt = __find_trend_breaking_point(x[xmin: xmax], y[xmin: xmax])
             
@@ -130,7 +135,7 @@ def extract_trends(x, y, max_trends='auto', min_var_reduction=0.5, verbose=False
             y_base_diffs = []
             y_new_diffs = []
             for trend_id in trends.keys():
-                trend_xmin, trend_xmax, (trend_a, trend_b) = trends[trend_id]
+                trend_xmin, trend_xmax, (trend_a, trend_b), _ = trends[trend_id]
                 y_trend_true = y[trend_xmin: trend_xmax]
                 y_trend_predicted = trend_a * np.arange(len(y_trend_true)) + trend_b
                 y_trend_diff = y_trend_predicted - y_trend_true
@@ -155,10 +160,14 @@ def extract_trends(x, y, max_trends='auto', min_var_reduction=0.5, verbose=False
                 best_dt = dt
                 best_params = [(linreg_fitted1.slope, linreg_fitted1.intercept), (linreg_fitted2.slope, linreg_fitted2.intercept)]
                 best_var = new_var
+                best_aggs = [
+                    (y_true1.shape[0], np.mean(y_true1), np.var(np.abs(y_true1 - y_pred1)), np.sum(y_true1)),
+                    (y_true2.shape[0], np.mean(y_true2), np.var(np.abs(y_true2 - y_pred2)), np.sum(y_true2))
+                ]
     
         if best_id is not None:
-            left_trend = (trends[best_id][0], best_dt, best_params[0])
-            right_trend = (best_dt, trends[best_id][1], best_params[1])
+            left_trend = (trends[best_id][0], best_dt, best_params[0], best_aggs[0])
+            right_trend = (best_dt, trends[best_id][1], best_params[1], best_aggs[1])
     
             trends[best_id] = left_trend
             trends[max(trends.keys()) + 1] = right_trend
@@ -747,6 +756,15 @@ def explore_ts(
     df : 'bool' = True,
     verbose : 'bool' = True
 ):
+    def resp_to_df(resp):
+        flattened = []
+        for row in resp:
+            cluster, trends = row
+            for t in trends:
+                x_min, x_max, (slope, intercept), (cnt, mean, mae_var, y_sum) = trends[t]
+                flattened.append((cluster, x_min, x_max, slope, intercept, cnt, mean, mae_var, y_sum))
+        return pd.DataFrame(flattened, columns=['cluster', 'xmin', 'xmax', 'slope', 'intercept', 'cnt', 'mean', 'mae_var', 'sum'])
+    
     if min_cluster_size is None:
         min_cluster_size = -np.inf
     if max_cluster_size is None:
@@ -798,7 +816,7 @@ def explore_ts(
         columns_to_use = np.append(index_name, metric_name)
 
         query = 'total'
-        ydata = data_pandas[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
+        ydata = data_pandas[columns_to_use].groupby(index_name).agg(agg_func)[metric_name].values
         xdata = np.arange(len(ydata)) 
         trends = extract_trends(
             xdata, ydata, 
@@ -814,7 +832,9 @@ def explore_ts(
                     str_arr.append('`' + measure_name + '`' + '==' + str(measure_value))
                 query = ' and '.join(str_arr)
                 
-                ydata = data_pandas.query(query)[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
+                yseries = data_pandas.query(query)[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
+                yindex = yseries.index
+                ydata = yseries.values
                 xdata = np.arange(len(ydata)) 
 
                 total_clusters += 1
@@ -830,17 +850,26 @@ def explore_ts(
                         res_values.append((query, trends))
                 else:
                     skipped_clusters += 1
-                    skipped_indeces.append(ydata.index)
+                    skipped_indeces.append(yindex)
         if skipped_clusters > 0:
             skipped_indeces = np.unique(np.concatenate(skipped_indeces))
 
-            ydata = data_pandas.loc[skipped_indeces, columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
+            ydata = data_pandas.loc[skipped_indeces, columns_to_use].groupby(index_name).agg(agg_func)[metric_name].values
             xdata = np.arange(len(ydata)) 
 
             query = 'skipped'
 
             if ydata.shape[0] == 1:
-                res_values.append((query, {0: (0, 0, (1, ydata[0]))}))
+                res_values.append((
+                    query, 
+                    {
+                        0: (
+                            skipped_indeces[0], skipped_indeces[0] + 1, 
+                            (1, ydata[0]), 
+                            (1, ydata[0], 0, ydata[0])
+                        )
+                    }
+                ))
             else:
                 trends = extract_trends(
                     xdata, ydata, 
@@ -848,11 +877,9 @@ def explore_ts(
                     min_var_reduction=trend_fitting_conf.get('min_var_reduction')
                 )
                 res_values.append((query, trends))
-
-        if verbose:
-            print('Skipped {} out of {} clusters'.format(skipped_clusters, total_clusters))
         
-        return res_values
+        if df:
+            return resp_to_df(res_values)
 
     elif type(data) == np.ndarray:
         if filters is not None:
@@ -865,7 +892,16 @@ def explore_ts(
         res_values = []
         if y.shape[0] >= min_cluster_size and y.shape[0] <= max_cluster_size:
             if y.shape[0] == 1:
-                res_values.append((query, {0: (0, 0, (1, y[0]))}))
+                res_values.append((
+                    query, 
+                    {
+                        0: (
+                            0, 1, 
+                            (1, ydata[0]), 
+                            (1, ydata[0], 0, ydata[0])
+                        )
+                    }
+                ))
             else:
                 trends = extract_trends(
                     x, y, 
@@ -874,7 +910,8 @@ def explore_ts(
                 )
                 res_values.append((query, trends))
         
-        return res_values
+        if df:
+            return resp_to_df(res_values)
     else:
         raise ValueError('Data parameter must be either anomeda.DataFrame or numpy.ndarray with metric values')
 
