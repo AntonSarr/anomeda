@@ -619,7 +619,7 @@ def find_anomalies(
         y_diff = []
         x_labels = []
         for t in extracted.values():
-            xmin, xmax, (slope, intercept) = t
+            xmin, xmax, (slope, intercept), _ = t
             y_fitted = slope * np.arange(xmax - xmin) + intercept
             y_diff.append(y[xmin: xmax] - y_fitted)
             x_labels.append(np.arange(xmin, xmax))
