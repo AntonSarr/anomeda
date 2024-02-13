@@ -93,8 +93,8 @@ class DataFrame(pd.DataFrame):
         Columns to be considered as an index (usually a date or a timestamp). Must be present among columns if provided. If None, index name from the pandas.DataFrame is taken.
     metric_name : 'str' = None
         Column with a metric to be analyzed
-    agg_func: 'sum | avg' = 'sum'
-        Way of aggregating metric_name by measures. Can be 'sum', 'avg' or callable compatible with pandas.DataFrame.groupby
+    agg_func: '"sum" | "avg" | "count" | callable' = 'sum'
+        Way of aggregating metric_name by measures. Can be 'sum', 'avg', 'count' or callable compatible with pandas.DataFrame.groupby
     
     Examples
     --------
@@ -391,14 +391,22 @@ class DataFrame(pd.DataFrame):
         """Return the function used to aggregate the metric by measures."""
         return self._agg_func
     
-    def set_agg_func(self, agg_func : 'str'):
+    def set_agg_func(self, agg_func):
         """Set a function to aggregate the metric by measures.
         
         Parameters
         ----------
-        agg_func : str, callable
-            Can be either 'sum', 'avg' or callable compatible with pandas.DataFrame.groupby
+        agg_func: '"sum" | "avg" | "count" | callable' = 'sum'
+            Can be "sum", "avg", "count" or callable compatible with pandas.DataFrame.groupby
         """
-        self._agg_func = agg_func
+        
+        if agg_func == 'sum': 
+            self._agg_func = np.sum
+        if agg_func == 'avg': 
+            self._agg_func = np.mean
+        if agg_func == 'count': 
+            self._agg_func = len
+        else:
+            self._agg_func = agg_func
         
         

@@ -161,8 +161,18 @@ def extract_trends(x, y, max_trends='auto', min_var_reduction=0.5, verbose=False
                 best_params = [(linreg_fitted1.slope, linreg_fitted1.intercept), (linreg_fitted2.slope, linreg_fitted2.intercept)]
                 best_var = new_var
                 best_aggs = [
-                    (y_true1.shape[0], np.mean(y_true1), np.var(np.abs(y_true1 - y_pred1)), np.sum(y_true1)),
-                    (y_true2.shape[0], np.mean(y_true2), np.var(np.abs(y_true2 - y_pred2)), np.sum(y_true2))
+                    (
+                        y_true1.shape[0], 
+                        np.mean(y_true1), 
+                        np.var(np.abs(y_true1 - y_pred1)), 
+                        np.sum(y_true1)
+                    ),
+                    (
+                        y_true2.shape[0], 
+                        np.mean(y_true2), 
+                        np.var(np.abs(y_true2 - y_pred2)), 
+                        np.sum(y_true2)
+                    )
                 ]
     
         if best_id is not None:
@@ -763,7 +773,30 @@ def explore_ts(
             for t in trends:
                 x_min, x_max, (slope, intercept), (cnt, mean, mae_var, y_sum) = trends[t]
                 flattened.append((cluster, x_min, x_max, slope, intercept, cnt, mean, mae_var, y_sum))
-        return pd.DataFrame(flattened, columns=['cluster', 'xmin', 'xmax', 'slope', 'intercept', 'cnt', 'mean', 'mae_var', 'sum'])
+        return pd.DataFrame(flattened, columns=['cluster', 'tren_start_dt', 'trend_end_dt', 'slope', 'intercept', 'cnt', 'mean', 'mae_var', 'sum'])
+    
+    
+    def plot_trends(df):
+        clusters = df['cluster'].drop_duplicates()
+        cluster_c = {cluster: np.random.choice(list(CSS4_COLORS.keys())) for cluster in clusters}
+        for c in clusters:
+            df_tmp = df[df['cluster'] == c].sort_values(by='tren_start_dt')
+            x_cluster = []
+            y_trend_cluster = []
+            for trend in df_tmp.iterrows():
+                i, t = trend
+                cluster = t['cluster']
+                x = np.arange(t['tren_start_dt'], t['trend_end_dt'])
+                x_from_0 = x - t['tren_start_dt']
+                y_trend = x_from_0 * t['slope'] + t['intercept']
+
+                x_cluster.append(x)
+                y_trend_cluster.append(y_trend)
+
+            x_cluster = np.concatenate(x_cluster)
+            y_trend_cluster = np.concatenate(y_trend_cluster)
+            plt.plot(x_cluster, y_trend_cluster, label=cluster, color=cluster_c[cluster])
+        plt.legend()
     
     if min_cluster_size is None:
         min_cluster_size = -np.inf
@@ -840,7 +873,16 @@ def explore_ts(
                 total_clusters += 1
                 if ydata.shape[0] >= min_cluster_size and ydata.shape[0] <= max_cluster_size:
                     if ydata.shape[0] == 1:
-                        res_values.append((query, {0: (0, 0, (1, ydata[0]))}))
+                        res_values.append((
+                            query, 
+                            {
+                                0: (
+                                    yindex[0], yindex[0] + 1, 
+                                    (1, ydata[0]), 
+                                    (1, ydata[0], 0, ydata[0])
+                                )
+                            }
+                        ))
                     else:
                         trends = extract_trends(
                             xdata, ydata, 
@@ -878,6 +920,8 @@ def explore_ts(
                 )
                 res_values.append((query, trends))
         
+        if plot:
+            plot_trends(res_values)
         if df:
             return resp_to_df(res_values)
 
@@ -910,13 +954,13 @@ def explore_ts(
                 )
                 res_values.append((query, trends))
         
+        if plot:
+            plot_trends(res_values)
         if df:
             return resp_to_df(res_values)
     else:
         raise ValueError('Data parameter must be either anomeda.DataFrame or numpy.ndarray with metric values')
 
-    
-    
     return trends
 
     
