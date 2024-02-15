@@ -82,6 +82,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-level="2"><a href="#utils.NotFittedError" class="nav-link">NotFittedError</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-level="2"><a href="#utils.describe_trend" class="nav-link">describe_trend()</a>
               <ul class="nav flex-column">
               </ul>
@@ -111,6 +115,14 @@
               </ul>
             </li>
             <li class="nav-item" data-level="2"><a href="#utils.find_anomalies_by_clusters" class="nav-link">find_anomalies_by_clusters()</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#utils.fit_trends" class="nav-link">fit_trends()</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#utils.plot_trends" class="nav-link">plot_trends()</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -751,6 +763,32 @@
 
 
 
+<div class="doc doc-object doc-class">
+
+
+
+
+<h2 id="utils.NotFittedError" class="doc doc-heading">
+          <code>NotFittedError</code>
+
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+          <p class="doc doc-class-bases">
+            Bases: <code>ValueError</code>, <code>AttributeError</code></p>
+
+  
+      <p>Exception class to raise if an object is used before fitting.</p>
+<p>This class inherits from both ValueError and AttributeError to help with
+exception handling and backward compatibility.</p>
+
+
+  </div>
+
+</div>
+
 
 
 <div class="doc doc-object doc-function">
@@ -1262,6 +1300,213 @@
 )        –
         <div class="doc-md-description">
           <p>List containing cluster and its anomalies. The keys in the cluster-dict are "cluster", "indeces", "anomalies"</p>
+      </div>
+      </li>
+  </ul>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h2 id="utils.fit_trends" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">fit_trends</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">trend_fitting_conf</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;max_trends&#39;</span><span class="p">:</span> <span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="s1">&#39;min_var_reduction&#39;</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">},</span> <span class="n">filters</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">breakdown</span><span class="p">:</span> <span class="s1">&#39;no&#39;</span> <span class="o">|</span> <span class="s1">&#39;all-clusters&#39;</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;no&#39;</span><span class="p">,</span> <span class="n">min_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">max_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Fit trends for a time series.</p>
+<p>Fit trends using the data from an anomeda.DataFrame or an numpy.ndarray with metric values. If anomeda.DataFrame is passed, it stores the trends into _trends attribute of the class every time the method is called. You can fit trends for chosen clusters with anomeda.DataFrame. The method can return and/or plot fitted trends.</p>
+<p>If you want to pass a filtered anomeda.DataFrame object, pass the string for pandas.DataFrame.query method in "filters" argument instead.</p>
+
+
+
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b><code>data</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span> | <span title="numpy.ndarray">ndarray</span></code>)
+        –
+        <div class="doc-md-description">
+          <p>Object containing metric values. If numpy.ndarray, one point corresponds to one date point. In thjs way, date points are generated automatically.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>trend_fitting_conf</code></b>
+            (<code>dict</code>, default:
+                <code>{&#39;max_trends&#39;: &#39;auto&#39;, &#39;min_var_reduction&#39;: 0.75}</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Parameters for calling anomeda.extract_trends() function. It consists of 'max_trends' parameter, which is responsible for the maximum number of trends that you want to identify, and 'min_var_reduction' parameter, which describes what part of variance must be reduced by estimating trends. Values close to 1 will produce more trends since more trends reduce variance more signigicantly. Default is {'max_trends': 'auto', 'min_var_reduction': 0.75}.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>filters</code></b>
+            (<code>(str, None)</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Filters applied to the anomeda.DataFrame before fitting trends.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>breakdown</code></b>
+            (<code>no | all - clusters | list[str]</code>, default:
+                <code>&#39;no&#39;</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>If 'no', the metric is grouped by date points only. If 'all-clusters', then all combinations of measures are used to create clusters for fitting trends within them. If list[str], then only combinations of measures specified in the list are used.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>min_cluster_size</code></b>
+            (<code>bool</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Skip clusters whose total size among all date points is less than the value.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>max_cluster_size</code></b>
+            (<code>int</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Skip clusters whose total size among all date points is more than the value.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>plot</code></b>
+            (<code>bool</code>, default:
+                <code>True</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Indicator if to plot fitted trends. anomeda.plot_trends is responsibe for plotting if the flag is True.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>df</code></b>
+            (<code>bool</code>, default:
+                <code>True</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Indicator if to return a pandas.DataFrame containing fitted trends.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>verbose</code></b>
+            (<code>bool</code>, default:
+                <code>True</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Indicator if to print additional output.</p>
+        </div>
+      </li>
+  </ul>
+
+
+
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>None</code>
+        –
+        <div class="doc-md-description">
+          
+      </div>
+      </li>
+  </ul>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h2 id="utils.plot_trends" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">plot_trends</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="s1">&#39;anomeda.DataFrame | pandas.DataFrame returned from anomeda.fit_trends()&#39;</span><span class="p">,</span> <span class="n">clusters</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">colors</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">show_points</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Plot fitted trends.</p>
+<p>Plot trends either from anomeda.DataFrame instance or using a response from anomeda.fit_trends().</p>
+
+
+
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b><code>data</code></b>
+            (<code>anomeda.DataFrame | pandas.DataFrame returned from anomeda.fit_trends()</code>)
+        –
+        <div class="doc-md-description">
+          <p>Object containing trends to be plotted.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>clusters</code></b>
+            (<code>list</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>List of clusters to plot. The objects in the list are strings used in pandas.DataFrame.query.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>colors</code></b>
+            (<code>dict</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Dictionary with a mapping between clusters and colors used in matplotlib.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>show_points</code></b>
+            (<code>bool</code>, default:
+                <code>True</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Indicator if to show data points on plots.</p>
+        </div>
+      </li>
+  </ul>
+
+
+
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>None</code>
+        –
+        <div class="doc-md-description">
+          
       </div>
       </li>
   </ul>

@@ -3,16 +3,26 @@ from itertools import combinations
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from scipy.stats import linregress
 from scipy.stats import beta
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.mixture import BayesianGaussianMixture
+from matplotlib.colors import TABLEAU_COLORS
 
 from anomeda.DataFrame import DataFrame, _to_discrete_values
 
 EMPTY_ARGUMENT_MSG = "If {0} is not provided, data's type must be anomeda.DataFrame with provided {0}"
 INVALID_DATA_TYPE_MSG = "Data type must be anomeda.DataFrame, while {0} is provided"
+
+
+class NotFittedError(ValueError, AttributeError):
+    """Exception class to raise if an object is used before fitting.
+
+    This class inherits from both ValueError and AttributeError to help with
+    exception handling and backward compatibility.
+    """
 
 
 def __regularizer(x):
@@ -755,7 +765,75 @@ def find_anomalies_by_clusters(
     return clusters_anomalies
 
 
-def explore_ts(
+def plot_trends(
+    data: 'anomeda.DataFrame | pandas.DataFrame returned from anomeda.fit_trends()', 
+    clusters: 'list' = None, 
+    colors: 'dict' = None, 
+    show_points=True
+):
+    """Plot fitted trends.
+    
+    Plot trends either from anomeda.DataFrame instance or using a response from anomeda.fit_trends().
+    
+    Parameters
+    ----------
+    data : anomeda.DataFrame | pandas.DataFrame returned from anomeda.fit_trends()
+        Object containing trends to be plotted.
+    clusters : list, default None
+        List of clusters to plot. The objects in the list are strings used in pandas.DataFrame.query.
+    colors : dict, default None
+        Dictionary with a mapping between clusters and colors used in matplotlib.
+    show_points : bool, default True
+        Indicator if to show data points on plots.
+        
+    Returns
+    -------
+    None
+    """
+    if type(data) == DataFrame:
+        if '_trends' in dir(data):
+            df = data._trends.copy()
+        else:
+            raise NotFittedError('The anomeda.DataFrame instance has no fitted trends. Run anomeda.fit_trends() with prefered parameters first')
+    elif type(data) == pd.DataFrame:
+        df = data.copy()
+    else:
+        raise ValueError('"data" argument must be either anomeda.DataFrame or pandas.DataFrame returned by anomeda.fit_trends()')
+    
+    if clusters is None:
+        clusters = df['cluster'].drop_duplicates()
+    
+    if colors is None:
+        replace = len(clusters) >= len(TABLEAU_COLORS)
+        cluster_c = dict(zip(clusters, np.random.choice(list(TABLEAU_COLORS.keys()), size=len(clusters), replace=replace)))
+    
+    for c in clusters:
+        df_tmp = df[df['cluster'] == c].sort_values(by='tren_start_dt')
+        
+        x_cluster = []
+        y_trend_cluster = []
+        for trend in df_tmp.iterrows():
+            i, t = trend
+            cluster = t['cluster']
+            x = np.arange(t['tren_start_dt'], t['trend_end_dt'])
+            y_trend = x * t['slope'] + t['intercept']
+            
+            x_cluster.append(x)
+            y_trend_cluster.append(y_trend)
+        
+        x_cluster = np.concatenate(x_cluster)
+        y_trend_cluster = np.concatenate(y_trend_cluster)
+        plt.plot(x_cluster, y_trend_cluster, label=cluster, color=cluster_c[cluster])
+        
+        if show_points and type(data) == DataFrame:
+            if c not in ['total', 'skipped']:
+                full_data_tmp = data.query(c)
+                plt.scatter(full_data_tmp.index, full_data_tmp['metric'], color=cluster_c[cluster], marker='x')
+        
+    plt.legend()
+
+
+def fit_trends(
     data : 'anomeda.DataFrame | numpy.ndarray', 
     trend_fitting_conf : 'dict' = {'max_trends': 'auto', 'min_var_reduction': 0.75},
     filters : 'str' = None,
@@ -766,6 +844,36 @@ def explore_ts(
     df : 'bool' = True,
     verbose : 'bool' = True
 ):
+    """Fit trends for a time series.
+    
+    Fit trends using the data from an anomeda.DataFrame or an numpy.ndarray with metric values. If anomeda.DataFrame is passed, it stores the trends into _trends attribute of the class every time the method is called. You can fit trends for chosen clusters with anomeda.DataFrame. The method can return and/or plot fitted trends.
+    
+    If you want to pass a filtered anomeda.DataFrame object, pass the string for pandas.DataFrame.query method in "filters" argument instead.
+    
+    Parameters
+    ----------
+    data : anomeda.DataFrame | numpy.ndarray
+        Object containing metric values. If numpy.ndarray, one point corresponds to one date point. In thjs way, date points are generated automatically.
+    trend_fitting_conf : dict
+        Parameters for calling anomeda.extract_trends() function. It consists of 'max_trends' parameter, which is responsible for the maximum number of trends that you want to identify, and 'min_var_reduction' parameter, which describes what part of variance must be reduced by estimating trends. Values close to 1 will produce more trends since more trends reduce variance more signigicantly. Default is {'max_trends': 'auto', 'min_var_reduction': 0.75}.
+    filters : str, None
+        Filters applied to the anomeda.DataFrame before fitting trends.
+    breakdown : 'no' | 'all-clusters' | list[str], default 'no'
+        If 'no', the metric is grouped by date points only. If 'all-clusters', then all combinations of measures are used to create clusters for fitting trends within them. If list[str], then only combinations of measures specified in the list are used.
+    min_cluster_size : bool
+        Skip clusters whose total size among all date points is less than the value.
+    max_cluster_size : int, default None
+        Skip clusters whose total size among all date points is more than the value.
+    plot : bool
+        Indicator if to plot fitted trends. anomeda.plot_trends is responsibe for plotting if the flag is True.
+    df : bool
+        Indicator if to return a pandas.DataFrame containing fitted trends.
+    verbose : bool
+        Indicator if to print additional output.
+        
+    Returns
+    -------
+    None"""
     def resp_to_df(resp):
         flattened = []
         for row in resp:
@@ -774,29 +882,6 @@ def explore_ts(
                 x_min, x_max, (slope, intercept), (cnt, mean, mae_var, y_sum) = trends[t]
                 flattened.append((cluster, x_min, x_max, slope, intercept, cnt, mean, mae_var, y_sum))
         return pd.DataFrame(flattened, columns=['cluster', 'tren_start_dt', 'trend_end_dt', 'slope', 'intercept', 'cnt', 'mean', 'mae_var', 'sum'])
-    
-    
-    def plot_trends(df):
-        clusters = df['cluster'].drop_duplicates()
-        cluster_c = {cluster: np.random.choice(list(CSS4_COLORS.keys())) for cluster in clusters}
-        for c in clusters:
-            df_tmp = df[df['cluster'] == c].sort_values(by='tren_start_dt')
-            x_cluster = []
-            y_trend_cluster = []
-            for trend in df_tmp.iterrows():
-                i, t = trend
-                cluster = t['cluster']
-                x = np.arange(t['tren_start_dt'], t['trend_end_dt'])
-                x_from_0 = x - t['tren_start_dt']
-                y_trend = x_from_0 * t['slope'] + t['intercept']
-
-                x_cluster.append(x)
-                y_trend_cluster.append(y_trend)
-
-            x_cluster = np.concatenate(x_cluster)
-            y_trend_cluster = np.concatenate(y_trend_cluster)
-            plt.plot(x_cluster, y_trend_cluster, label=cluster, color=cluster_c[cluster])
-        plt.legend()
     
     if min_cluster_size is None:
         min_cluster_size = -np.inf
@@ -866,7 +951,7 @@ def explore_ts(
                 query = ' and '.join(str_arr)
                 
                 yseries = data_pandas.query(query)[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
-                yindex = yseries.index
+                yindex = yseries.index.values
                 ydata = yseries.values
                 xdata = np.arange(len(ydata)) 
 
@@ -885,7 +970,7 @@ def explore_ts(
                         ))
                     else:
                         trends = extract_trends(
-                            xdata, ydata, 
+                            yindex, ydata, 
                             max_trends=trend_fitting_conf.get('max_trends'), 
                             min_var_reduction=trend_fitting_conf.get('min_var_reduction')
                         )
@@ -896,7 +981,9 @@ def explore_ts(
         if skipped_clusters > 0:
             skipped_indeces = np.unique(np.concatenate(skipped_indeces))
 
-            ydata = data_pandas.loc[skipped_indeces, columns_to_use].groupby(index_name).agg(agg_func)[metric_name].values
+            yseries = data_pandas.loc[skipped_indeces, columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
+            yindex = yseries.index.values
+            ydata = yseries.values
             xdata = np.arange(len(ydata)) 
 
             query = 'skipped'
@@ -914,16 +1001,19 @@ def explore_ts(
                 ))
             else:
                 trends = extract_trends(
-                    xdata, ydata, 
+                    yindex, ydata, 
                     max_trends=trend_fitting_conf.get('max_trends'), 
                     min_var_reduction=trend_fitting_conf.get('min_var_reduction')
                 )
                 res_values.append((query, trends))
         
+        res_values = resp_to_df(res_values)
+        data._trends = res_values.copy()
+        
         if plot:
-            plot_trends(res_values)
+            plot_trends(data)
         if df:
-            return resp_to_df(res_values)
+            return res_values
 
     elif type(data) == np.ndarray:
         if filters is not None:
@@ -954,13 +1044,14 @@ def explore_ts(
                 )
                 res_values.append((query, trends))
         
+        res_values = resp_to_df(res_values)
+        
         if plot:
             plot_trends(res_values)
         if df:
-            return resp_to_df(res_values)
+            return res_values
     else:
         raise ValueError('Data parameter must be either anomeda.DataFrame or numpy.ndarray with metric values')
 
     return trends
-
     

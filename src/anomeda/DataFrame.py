@@ -29,7 +29,6 @@ def _to_discrete_values(values, model=None):
     mapping_intervals : dict
         Dict containing unique discrete values (keys) and numeric range from initial data that is mapped into this interval (values). If None, sklearn.mixture.BayesianGaussianMixture(n_components=5, weight_concentration_prior=1e-5, max_iter=200) is used
     """
-    
     if type(values) != np.ndarray:
         raise TypeError("Values to be discretized must be numpy.ndarray")
     
@@ -114,7 +113,6 @@ class DataFrame(pd.DataFrame):
     """
     
     def __init__(self, *args, **kwargs):
-        
         filtered_kwargs = {}
         for arg in kwargs:
             if arg not in ['measures_names', 'measures_types', 'discretized_measures', 'index_name', 'metric_name', 'agg_func']:
@@ -184,7 +182,6 @@ class DataFrame(pd.DataFrame):
         
     def copy_anomeda_df(self):
         """Return a copy of an anomeda.DataFrame object"""
-        
         return DataFrame(
                 data=self, 
                 measures_names=self._measures_names, 
@@ -216,7 +213,6 @@ class DataFrame(pd.DataFrame):
         }
         ```
         """
-        
         return self._discretized_measures_mapping
     
     def set_discretization_mapping(self, discretized_measures_mapping):
@@ -249,12 +245,10 @@ class DataFrame(pd.DataFrame):
         })
         ```
         """
-        
         self.discretized_measures_mapping = discretized_measures_mapping
     
     def get_measures_names(self):
         """Return a list of columns considered as measures."""
-        
         return self._measures_names
     
     def set_measures_names(self, measures_names):
@@ -335,25 +329,18 @@ class DataFrame(pd.DataFrame):
     
     def get_index_name(self):
         """Return the name of an index column."""
-        
         return self._index_name
 
     def set_index(self, *args, **kwargs):
-
         resp = super().set_index(*args, **kwargs)
-
         if resp is not None:
             return self.mod_data(resp, inplace=False)
-
         index_names = list(filter(lambda x: x is not None, self.index.names))
-
         if len(index_names) >= 1:
             self._index_name = index_names
 
     def reset_index(self, *args, **kwargs):
-
         resp = super().reset_index(*args, **kwargs)
-
         if resp is not None:
             return DataFrame(
                 resp, 
@@ -364,7 +351,6 @@ class DataFrame(pd.DataFrame):
                 metric_name=self._metric_name, 
                 agg_func=self._agg_func
             )
-
         self._index_name = None       
     
     def get_metric_name(self):
@@ -399,7 +385,6 @@ class DataFrame(pd.DataFrame):
         agg_func: '"sum" | "avg" | "count" | callable' = 'sum'
             Can be "sum", "avg", "count" or callable compatible with pandas.DataFrame.groupby
         """
-        
         if agg_func == 'sum': 
             self._agg_func = np.sum
         if agg_func == 'avg': 
@@ -408,5 +393,3 @@ class DataFrame(pd.DataFrame):
             self._agg_func = len
         else:
             self._agg_func = agg_func
-        
-        
