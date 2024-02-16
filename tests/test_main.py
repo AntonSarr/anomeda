@@ -80,9 +80,9 @@ def test_find_anomalies():
         agg_func=agg_func
     )
 
-    anomeda.find_anomalies(anmd_df, p_large=0.9, p_low=0.9)
-    anomeda.find_anomalies(anmd_df, p_large=0.9, p_low=0.9, trend='adjusted-linear', max_trends=3)
-    anomeda.find_anomalies_by_clusters(anmd_df, p_large=0.9, p_low=0.9)
+    anomeda.fit_trends(anmd_df)
+    anomeda.find_anomalies(anmd_df)
+    anomeda.find_anomalies(anmd_df, anomalies_conf={'p_large': 1, 'p_low': 1})
 
 
 def test_extract_trends():
