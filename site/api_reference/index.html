@@ -1162,7 +1162,7 @@ exception handling and backward compatibility.</p>
 
 
 <h2 id="utils.find_anomalies" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">find_anomalies</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">p_large</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">p_low</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">trend</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">find_anomalies</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">clusters</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">anomalies_conf</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;p_large&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;p_low&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span></code>
 
 </h2>
 
@@ -1170,7 +1170,7 @@ exception handling and backward compatibility.</p>
   <div class="doc doc-contents ">
   
       <p>Find metric anomalies by looking for the most extreme metric changes.</p>
-<p>The method finds differences between real metric and a fitted trend line, find points with the most extreme differences and marks them as anomalies.</p>
+<p>The method finds differences between real metric and a fitted trends, find points with extreme differences and marks them as anomalies. You can find anomalies for automatically extracted clusters only if passing an anomeda.DataFrame.</p>
 
 
 
@@ -1181,37 +1181,27 @@ exception handling and backward compatibility.</p>
             (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
         –
         <div class="doc-md-description">
-          <p>Object containing data to be analyzed</p>
+          <p>Object containing metric values to be analyzed. Trends must be fitted for the object with anomeda.fit_trends() method.</p>
         </div>
       </li>
       <li class="field-body">
-        <b><code>p_large</code></b>
-            (<code>(float, [0, 1])</code>, default:
-                <code>1</code>
+        <b><code>clusters</code></b>
+            (<code>list</code>, default:
+                <code>None</code>
 )
         –
         <div class="doc-md-description">
-          <p>What part of anomalies which are higher than usual values needs to be returned. For example, if you set it to 0.7, then only 70% of the anomalies with the largest values will be returned. Default is 1.</p>
+          <p>List of clusters to plot. The objects in the list are queries used in pandas.DataFrame.query.</p>
         </div>
       </li>
       <li class="field-body">
-        <b><code>p_low</code></b>
-            (<code>(float, [0, 1])</code>, default:
-                <code>1</code>
+        <b><code>anomalies_conf</code></b>
+            (<code>dict</code>, default:
+                <code>{&#39;p_large&#39;: 1., &#39;p_low&#39;: 1.}</code>
 )
         –
         <div class="doc-md-description">
-          <p>What part of anomalies which are lower than usual values needs to be returned. For example, if you set it to 0.5, then only 50% of the anomalies with the lowest values will be returned. Default is 1.</p>
-        </div>
-      </li>
-      <li class="field-body">
-        <b><code>trend</code></b>
-            (<code>(linear, adjusted - linear)</code>, default:
-                <code>&#39;linear&#39;</code>
-)
-        –
-        <div class="doc-md-description">
-          <p>The way which is used to fit a trend of the metric. If 'linear', then one linear function is fitted. If 'adjusted-linear', then trends are extracted and fitted automatically, the anomeda.extract_trends method is used. Its parameters can be passed with **kwargs argument. Default is 'linear'.</p>
+          <p>Dict containing 'p_large' and 'p_low' values. Both are float values between 0 and 1 corresponding to the % of the anomalies with largest and lowest metric values to be returned. For example, if you set 'p_low' to 0, no points with abnormally low metric values will be returned; if 0.5, then 50% of points with abnormally values will be returned, etc. If some of the keys is not present or None, 1 is assumed.</p>
         </div>
       </li>
   </ul>
@@ -1315,7 +1305,7 @@ exception handling and backward compatibility.</p>
 
 
 <h2 id="utils.fit_trends" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">fit_trends</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">trend_fitting_conf</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;max_trends&#39;</span><span class="p">:</span> <span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="s1">&#39;min_var_reduction&#39;</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">},</span> <span class="n">filters</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">breakdown</span><span class="p">:</span> <span class="s1">&#39;no&#39;</span> <span class="o">|</span> <span class="s1">&#39;all-clusters&#39;</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;no&#39;</span><span class="p">,</span> <span class="n">min_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">max_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">fit_trends</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">trend_fitting_conf</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;max_trends&#39;</span><span class="p">:</span> <span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="s1">&#39;min_var_reduction&#39;</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">},</span> <span class="n">save_trends</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">breakdown</span><span class="p">:</span> <span class="s1">&#39;no&#39;</span> <span class="o">|</span> <span class="s1">&#39;all-clusters&#39;</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;no&#39;</span><span class="p">,</span> <span class="n">min_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">max_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1323,8 +1313,8 @@ exception handling and backward compatibility.</p>
   <div class="doc doc-contents ">
   
       <p>Fit trends for a time series.</p>
-<p>Fit trends using the data from an anomeda.DataFrame or an numpy.ndarray with metric values. If anomeda.DataFrame is passed, it stores the trends into _trends attribute of the class every time the method is called. You can fit trends for chosen clusters with anomeda.DataFrame. The method can return and/or plot fitted trends.</p>
-<p>If you want to pass a filtered anomeda.DataFrame object, pass the string for pandas.DataFrame.query method in "filters" argument instead.</p>
+<p>Fit trends using the data from an anomeda.DataFrame or an numpy.ndarray with metric values. You can fit trends for automatically extracted clusters only if passing an anomeda.DataFrame. If anomeda.DataFrame is passed and "save_trends" is True, it stores the trends into anomeda.DataFrame._trends attribute of the class every time the method is called. The returns a pandas.DataFrame describing trends and/or plots the trends.</p>
+<p>If you want to pass a filtered anomeda.DataFrame object, pass a query suitable for the pandas.DataFrame.query method in "filters" argument.</p>
 
 
 
@@ -1332,10 +1322,10 @@ exception handling and backward compatibility.</p>
   <ul>
       <li class="field-body">
         <b><code>data</code></b>
-            (<code><span title="anomeda.DataFrame">DataFrame</span> | <span title="numpy.ndarray">ndarray</span></code>)
+            (<code><span title="anomeda.DataFrame">DataFrame</span> | (<span title="numpy.ndarray">ndarray</span>, <span title="numpy.ndarray">ndarray</span>)</code>)
         –
         <div class="doc-md-description">
-          <p>Object containing metric values. If numpy.ndarray, one point corresponds to one date point. In thjs way, date points are generated automatically.</p>
+          <p>Object containing metric values. If numpy.ndarray, a tuple of arrays corresponding to x (data points) and y (metric values) respectively.</p>
         </div>
       </li>
       <li class="field-body">
@@ -1349,13 +1339,13 @@ exception handling and backward compatibility.</p>
         </div>
       </li>
       <li class="field-body">
-        <b><code>filters</code></b>
-            (<code>(str, None)</code>, default:
-                <code>None</code>
+        <b><code>save_trends</code></b>
+            (<code>bool</code>, default:
+                <code>True</code>
 )
         –
         <div class="doc-md-description">
-          <p>Filters applied to the anomeda.DataFrame before fitting trends.</p>
+          <p>If False, return pandas.DataFrame with trends description without assigning it to the anomeda.DataFrame._trends.</p>
         </div>
       </li>
       <li class="field-body">
@@ -1370,7 +1360,7 @@ exception handling and backward compatibility.</p>
       </li>
       <li class="field-body">
         <b><code>min_cluster_size</code></b>
-            (<code>bool</code>, default:
+            (<code>int</code>, default:
                 <code>None</code>
 )
         –
@@ -1391,7 +1381,7 @@ exception handling and backward compatibility.</p>
       <li class="field-body">
         <b><code>plot</code></b>
             (<code>bool</code>, default:
-                <code>True</code>
+                <code>False</code>
 )
         –
         <div class="doc-md-description">
@@ -1411,7 +1401,7 @@ exception handling and backward compatibility.</p>
       <li class="field-body">
         <b><code>verbose</code></b>
             (<code>bool</code>, default:
-                <code>True</code>
+                <code>False</code>
 )
         –
         <div class="doc-md-description">
@@ -1425,10 +1415,10 @@ exception handling and backward compatibility.</p>
   <p>Returns:</p>
   <ul>
       <li class="field-body">
-            <code>None</code>
-        –
+<b><code>resp</code></b> (            <code><span title="pandas.DataFrame">DataFrame</span></code>
+)        –
         <div class="doc-md-description">
-          
+          <p>An object containing information about trends</p>
       </div>
       </li>
   </ul>
@@ -1473,7 +1463,7 @@ exception handling and backward compatibility.</p>
 )
         –
         <div class="doc-md-description">
-          <p>List of clusters to plot. The objects in the list are strings used in pandas.DataFrame.query.</p>
+          <p>List of clusters to plot. The objects in the list are queries used in pandas.DataFrame.query.</p>
         </div>
       </li>
       <li class="field-body">

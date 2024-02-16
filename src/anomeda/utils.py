@@ -579,26 +579,22 @@ def explain_variance_difference(
 
 
 def find_anomalies(
-    data,
-    p_large=1,
-    p_low=1,
-    trend='linear',
-    **kwargs
+    data: 'anomeda.DataFrame', 
+    clusters: 'list' = None, 
+    anomalies_conf : 'dict' = {'p_large': 1, 'p_low': 1}
 ):
     """Find metric anomalies by looking for the most extreme metric changes.
     
-    The method finds differences between real metric and a fitted trend line, find points with the most extreme differences and marks them as anomalies.
+    The method finds differences between real metric and a fitted trends, find points with extreme differences and marks them as anomalies. You can find anomalies for automatically extracted clusters only if passing an anomeda.DataFrame.
     
     Parameters
     ----------
     data : anomeda.DataFrame
-        Object containing data to be analyzed
-    p_large : float, [0, 1], default 1
-        What part of anomalies which are higher than usual values needs to be returned. For example, if you set it to 0.7, then only 70% of the anomalies with the largest values will be returned. Default is 1.
-    p_low : float, [0, 1], default 1
-        What part of anomalies which are lower than usual values needs to be returned. For example, if you set it to 0.5, then only 50% of the anomalies with the lowest values will be returned. Default is 1.
-    trend : 'linear', 'adjusted-linear'
-        The way which is used to fit a trend of the metric. If 'linear', then one linear function is fitted. If 'adjusted-linear', then trends are extracted and fitted automatically, the anomeda.extract_trends method is used. Its parameters can be passed with **kwargs argument. Default is 'linear'.
+        Object containing metric values to be analyzed. Trends must be fitted for the object with anomeda.fit_trends() method.
+    clusters : list, default None
+        List of clusters to plot. The objects in the list are queries used in pandas.DataFrame.query.
+    anomalies_conf : dict, default {'p_large': 1., 'p_low': 1.}
+        Dict containing 'p_large' and 'p_low' values. Both are float values between 0 and 1 corresponding to the % of the anomalies with largest and lowest metric values to be returned. For example, if you set 'p_low' to 0, no points with abnormally low metric values will be returned; if 0.5, then 50% of points with abnormally values will be returned, etc. If some of the keys is not present or None, 1 is assumed.
         
     Returns
     -------
@@ -607,83 +603,131 @@ def find_anomalies(
     anomalies : numpy.ndarray of bool
         Bool array indicating if a metric was abnormal at a particar index point
     """
-    if trend not in ['linear', 'adjusted-linear']:
-        raise ValueError('trend parameter must be either "linear" or "adjusted-linear"')
+    if type(data) == DataFrame:
+        if '_trends' in dir(data):
+            df = data._trends.copy()
+        else:
+            raise NotFittedError('The anomeda.DataFrame instance has no fitted trends. Run anomeda.fit_trends() with save_trends=True and prefered parameters first')
+    else:
+        raise TypeError('"data" argument must be anomeda.DataFrame')
     
-    if type(data) != DataFrame:
-        raise TypeError(INVALID_DATA_TYPE_MSG.format(type(data)))
-    
-    if data.get_index_name() is None:
-        raise KeyError('not-None "index_name" must be set for anomeda.DataFrame object')
     index_name = data.get_index_name()
+    if index_name is None:
+        raise KeyError('not-None "index_name" must be set for anomeda.DataFrame object')
     
-    if data.get_metric_name() is None:
-        raise KeyError('not-None "metric_name" must be set for anomeda.DataFrame object')
     metric_name = data.get_metric_name()
+    if metric_name is None:
+        raise KeyError('not-None "metric_name" must be set for anomeda.DataFrame object')
     
-    if data.get_agg_func() is None:
-        raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
     agg_func = data.get_agg_func()
+    if agg_func is None:
+        raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
     
-    data_pandas = data.to_pandas() # get pandas.DataFrame
-    data_pandas = data_pandas.reset_index()
+    
+    if anomalies_conf is not None:
+        p_large = anomalies_conf.get('p_large')
+        if p_large is None:
+            p_large = 1
+
+        p_low = anomalies_conf.get('p_low')
+        if p_low is None:
+            p_low = 1
+    else:
+        p_large = 1
+        p_low = 1
+    
+    if clusters is None:
+        clusters = df['cluster'].drop_duplicates()
+
+    data_pandas = data.to_pandas().sort_index().reset_index()
+    measures_types = data.get_measures_types()
+    if measures_types is not None and 'continuous' in measures_types:
+        for measure in measures_types['continuous']:
+            data_pandas[measure] = data.get_discretized_measures()[measure]
+    
     columns_to_use = np.append(index_name, metric_name)
+
+    resp = []
     
-    df = data_pandas[columns_to_use].groupby(index_name).agg(agg_func).reset_index().sort_values(by=index_name, ascending=True)
+    for c in clusters:
+        df_tmp = df[df['cluster'] == c]
 
-    y = df[metric_name].values
-    x = np.arange(len(y))
-
-    if trend == 'adjusted-linear':
-        extracted  = extract_trends(x, y, **kwargs)
-        y_diff = []
+        if c == 'total':
+            yseries = data_pandas[columns_to_use].groupby(index_name).agg(agg_func)[metric_name].sort_index()
+            yindex = yseries.index.values
+            ydata = yseries.values
+        elif c == 'skipped':
+            continue
+        else:
+            yseries = data_pandas.query(c)[columns_to_use].groupby(index_name).agg(agg_func)[metric_name].sort_index()
+            yindex = yseries.index.values
+            ydata = yseries.values
+        
+        y_fitted_list = []
+        y_diff_list = []
         x_labels = []
-        for t in extracted.values():
-            xmin, xmax, (slope, intercept), _ = t
-            y_fitted = slope * np.arange(xmax - xmin) + intercept
-            y_diff.append(y[xmin: xmax] - y_fitted)
-            x_labels.append(np.arange(xmin, xmax))
+        for trend in df_tmp.iterrows():
+            i, t = trend
+
+            xmin, xmax = t['trend_start_dt'], t['trend_end_dt']
+            slope, intercept = t['slope'], t['intercept']
+
+            cluster_indx = yindex[(yindex >= xmin) & (yindex < xmax)]
+            y_fitted = slope * cluster_indx + intercept
+            y_diff_list.append(yseries[cluster_indx] - y_fitted)
+            x_labels.append(cluster_indx)
+            y_fitted_list.append(y_fitted)
+
         x_labels = np.concatenate(x_labels)
-        y_diff = np.concatenate(y_diff)
-        y_diff = y_diff[np.argsort(x_labels)]
-            
-    if trend == 'linear':
-        linreg_fitted = linregress(x, y)
-        y_fitted = linreg_fitted.slope * x + linreg_fitted.intercept
-        y_diff = y - y_fitted
-    
-    clusterizator = LocalOutlierFactor(n_neighbors=min(len(y) - 1, 24), novelty=False)
-    outliers = clusterizator.fit_predict(y_diff.reshape(-1, 1)) == -1
+        y_diff = np.concatenate(y_diff_list)
+        y_fitted = np.concatenate(y_fitted_list)
 
-    # Remove inliers, i.e. isolated points not from the left or right tail of values range
-    # We want to keep only the largest or the lowest differences
-    # We also keep only % of anomalies defined by p_low and p_large
-    indeces_sorted_by_y_diff = np.argsort(y_diff)
-    not_outliers_indeces = np.where(outliers[indeces_sorted_by_y_diff] == False)[0]
-    outliers[indeces_sorted_by_y_diff[np.min(not_outliers_indeces): np.max(not_outliers_indeces)]] = False
-    
-    sorted_outliers = outliers[indeces_sorted_by_y_diff]
-    
-    n_low_anomalies = 0
-    n_large_anomalies = 0
-    
-    low_anomalies = False
-    
-    for i in range(len(sorted_outliers)):
-        if i == 0 and sorted_outliers[i]:
-            low_anomalies = True
-        elif not sorted_outliers[i]:
-            low_anomalies = False
-    
-        if sorted_outliers[i]:
-            if low_anomalies:
-                n_low_anomalies += 1
-            else:
-                n_large_anomalies += 1
-    
-    outliers[indeces_sorted_by_y_diff[np.min(not_outliers_indeces) - int(n_low_anomalies * (1 - p_low)): np.max(not_outliers_indeces) + int(n_large_anomalies * (1 - p_large)) + 1]] = False
+        sorted_ind = np.argsort(x_labels)
+        y_diff = y_diff[sorted_ind]
+        y_fitted = y_fitted[sorted_ind]
 
-    return df[index_name].values, outliers
+        clusterizator = LocalOutlierFactor(n_neighbors=min(len(ydata) - 1, 24), novelty=False)
+        outliers = clusterizator.fit_predict(y_diff.reshape(-1, 1)) == -1
+
+        # Remove inliers, i.e. isolated points not from the left or right tail of values range
+        # We want to keep only the largest or the lowest differences
+        # We also keep only % of anomalies defined by p_low and p_large
+        indeces_sorted_by_y_diff = np.argsort(y_diff)
+        not_outliers_indeces = np.where(outliers[indeces_sorted_by_y_diff] == False)[0]
+        outliers[indeces_sorted_by_y_diff[np.min(not_outliers_indeces): np.max(not_outliers_indeces)]] = False
+        
+        sorted_outliers = outliers[indeces_sorted_by_y_diff]
+        
+        n_low_anomalies = 0
+        n_large_anomalies = 0
+        
+        low_anomalies = False
+        
+        for i in range(len(sorted_outliers)):
+            if i == 0 and sorted_outliers[i]:
+                low_anomalies = True
+            elif not sorted_outliers[i]:
+                low_anomalies = False
+        
+            if sorted_outliers[i]:
+                if low_anomalies:
+                    n_low_anomalies += 1
+                else:
+                    n_large_anomalies += 1
+        
+        outliers[indeces_sorted_by_y_diff[np.min(not_outliers_indeces) - int(n_low_anomalies * (1 - p_low)): np.max(not_outliers_indeces) + int(n_large_anomalies * (1 - p_large)) + 1]] = False
+
+        res_df = pd.DataFrame({
+            'index': yindex, 
+            'metric_value': ydata, 
+            'fitted_trend_value': y_fitted, 
+            'anomaly': outliers
+        })
+        res_df['cluster'] = c
+        res_df = res_df[['cluster', 'index', 'metric_value', 'fitted_trend_value', 'anomaly']]
+        resp.append(res_df)
+
+    return pd.concat(resp).reset_index(drop=True)
         
         
 def find_anomalies_by_clusters(
@@ -780,7 +824,7 @@ def plot_trends(
     data : anomeda.DataFrame | pandas.DataFrame returned from anomeda.fit_trends()
         Object containing trends to be plotted.
     clusters : list, default None
-        List of clusters to plot. The objects in the list are strings used in pandas.DataFrame.query.
+        List of clusters to plot. The objects in the list are queries used in pandas.DataFrame.query.
     colors : dict, default None
         Dictionary with a mapping between clusters and colors used in matplotlib.
     show_points : bool, default True
@@ -794,7 +838,7 @@ def plot_trends(
         if '_trends' in dir(data):
             df = data._trends.copy()
         else:
-            raise NotFittedError('The anomeda.DataFrame instance has no fitted trends. Run anomeda.fit_trends() with prefered parameters first')
+            raise NotFittedError('The anomeda.DataFrame instance has no fitted trends. Run anomeda.fit_trends() with save_trends=True and prefered parameters first')
     elif type(data) == pd.DataFrame:
         df = data.copy()
     else:
@@ -808,14 +852,14 @@ def plot_trends(
         cluster_c = dict(zip(clusters, np.random.choice(list(TABLEAU_COLORS.keys()), size=len(clusters), replace=replace)))
     
     for c in clusters:
-        df_tmp = df[df['cluster'] == c].sort_values(by='tren_start_dt')
+        df_tmp = df[df['cluster'] == c].sort_values(by='trend_start_dt')
         
         x_cluster = []
         y_trend_cluster = []
         for trend in df_tmp.iterrows():
             i, t = trend
             cluster = t['cluster']
-            x = np.arange(t['tren_start_dt'], t['trend_end_dt'])
+            x = np.arange(t['trend_start_dt'], t['trend_end_dt'])
             y_trend = x * t['slope'] + t['intercept']
             
             x_cluster.append(x)
@@ -836,44 +880,46 @@ def plot_trends(
 def fit_trends(
     data : 'anomeda.DataFrame | numpy.ndarray', 
     trend_fitting_conf : 'dict' = {'max_trends': 'auto', 'min_var_reduction': 0.75},
-    filters : 'str' = None,
+    save_trends : 'bool' = True,
     breakdown : "'no' | 'all-clusters' | list[str]" = 'no',
     min_cluster_size : 'int | None' = None,
     max_cluster_size : 'int | None' = None,
-    plot : 'bool' = True,
+    plot : 'bool' = False,
     df : 'bool' = True,
-    verbose : 'bool' = True
+    verbose : 'bool' = False
 ):
     """Fit trends for a time series.
     
-    Fit trends using the data from an anomeda.DataFrame or an numpy.ndarray with metric values. If anomeda.DataFrame is passed, it stores the trends into _trends attribute of the class every time the method is called. You can fit trends for chosen clusters with anomeda.DataFrame. The method can return and/or plot fitted trends.
+    Fit trends using the data from an anomeda.DataFrame or an numpy.ndarray with metric values. You can fit trends for automatically extracted clusters only if passing an anomeda.DataFrame. If anomeda.DataFrame is passed and "save_trends" is True, it stores the trends into anomeda.DataFrame._trends attribute of the class every time the method is called. The returns a pandas.DataFrame describing trends and/or plots the trends.
     
-    If you want to pass a filtered anomeda.DataFrame object, pass the string for pandas.DataFrame.query method in "filters" argument instead.
+    If you want to pass a filtered anomeda.DataFrame object, pass a query suitable for the pandas.DataFrame.query method in "filters" argument.
     
     Parameters
     ----------
-    data : anomeda.DataFrame | numpy.ndarray
-        Object containing metric values. If numpy.ndarray, one point corresponds to one date point. In thjs way, date points are generated automatically.
-    trend_fitting_conf : dict
+    data : anomeda.DataFrame | (numpy.ndarray, numpy.ndarray)
+        Object containing metric values. If numpy.ndarray, a tuple of arrays corresponding to x (data points) and y (metric values) respectively.
+    trend_fitting_conf : dict, default {'max_trends': 'auto', 'min_var_reduction': 0.75}
         Parameters for calling anomeda.extract_trends() function. It consists of 'max_trends' parameter, which is responsible for the maximum number of trends that you want to identify, and 'min_var_reduction' parameter, which describes what part of variance must be reduced by estimating trends. Values close to 1 will produce more trends since more trends reduce variance more signigicantly. Default is {'max_trends': 'auto', 'min_var_reduction': 0.75}.
-    filters : str, None
-        Filters applied to the anomeda.DataFrame before fitting trends.
+    save_trends : 'bool', default True
+        If False, return pandas.DataFrame with trends description without assigning it to the anomeda.DataFrame._trends.
     breakdown : 'no' | 'all-clusters' | list[str], default 'no'
         If 'no', the metric is grouped by date points only. If 'all-clusters', then all combinations of measures are used to create clusters for fitting trends within them. If list[str], then only combinations of measures specified in the list are used.
-    min_cluster_size : bool
+    min_cluster_size : int, default None
         Skip clusters whose total size among all date points is less than the value.
     max_cluster_size : int, default None
         Skip clusters whose total size among all date points is more than the value.
-    plot : bool
+    plot : bool, default False
         Indicator if to plot fitted trends. anomeda.plot_trends is responsibe for plotting if the flag is True.
-    df : bool
+    df : bool, default True
         Indicator if to return a pandas.DataFrame containing fitted trends.
-    verbose : bool
+    verbose : bool, default False
         Indicator if to print additional output.
         
     Returns
     -------
-    None"""
+    resp : pandas.DataFrame
+        An object containing information about trends
+    """
     def resp_to_df(resp):
         flattened = []
         for row in resp:
@@ -881,7 +927,7 @@ def fit_trends(
             for t in trends:
                 x_min, x_max, (slope, intercept), (cnt, mean, mae_var, y_sum) = trends[t]
                 flattened.append((cluster, x_min, x_max, slope, intercept, cnt, mean, mae_var, y_sum))
-        return pd.DataFrame(flattened, columns=['cluster', 'tren_start_dt', 'trend_end_dt', 'slope', 'intercept', 'cnt', 'mean', 'mae_var', 'sum'])
+        return pd.DataFrame(flattened, columns=['cluster', 'trend_start_dt', 'trend_end_dt', 'slope', 'intercept', 'cnt', 'mean', 'mae_var', 'sum'])
     
     if min_cluster_size is None:
         min_cluster_size = -np.inf
@@ -902,10 +948,7 @@ def fit_trends(
         if agg_func is None:
             raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
     
-        if filters is not None:
-            data_pandas = data.to_pandas().query(filters).reset_index()
-        else:
-            data_pandas = data.to_pandas().reset_index()
+        data_pandas = data.to_pandas().sort_index().reset_index()
 
         if breakdown == 'all-clusters':
             measures_names = data.get_measures_names()
@@ -916,6 +959,7 @@ def fit_trends(
                 for el in combinations(measures_names, i):
                     measures_to_iterate.append(list(el))
         elif type(breakdown) == list:
+            measures_names = data.get_measures_names()
             measures_to_iterate = breakdown.copy()
         elif breakdown == 'no':
             measures_to_iterate = []
@@ -934,10 +978,13 @@ def fit_trends(
         columns_to_use = np.append(index_name, metric_name)
 
         query = 'total'
-        ydata = data_pandas[columns_to_use].groupby(index_name).agg(agg_func)[metric_name].values
-        xdata = np.arange(len(ydata)) 
+        
+        yseries = data_pandas[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
+        yindex = yseries.index.values
+        ydata = yseries.values
+        
         trends = extract_trends(
-            xdata, ydata, 
+            yindex, ydata,
             max_trends=trend_fitting_conf.get('max_trends'), 
             min_var_reduction=trend_fitting_conf.get('min_var_reduction')
         )
@@ -946,7 +993,7 @@ def fit_trends(
         for measures_set in measures_to_iterate:
             for measures_values in data_pandas[measures_set].drop_duplicates().values:
                 str_arr = []
-                for (measure_name, measure_value) in zip(measures_names, measures_values):
+                for (measure_name, measure_value) in zip(measures_set, measures_values):
                     str_arr.append('`' + measure_name + '`' + '==' + str(measure_value))
                 query = ' and '.join(str_arr)
                 
@@ -1008,20 +1055,23 @@ def fit_trends(
                 res_values.append((query, trends))
         
         res_values = resp_to_df(res_values)
-        data._trends = res_values.copy()
         
+        if save_trends:
+            data._trends = res_values.copy()
         if plot:
             plot_trends(data)
         if df:
             return res_values
 
-    elif type(data) == np.ndarray:
+    elif type(data) == tuple and type(data[0]) == np.ndarray and type(data[1]) == np.ndarray:
         if filters is not None:
             raise ValueError('Filters may be passed only if provided data is anomeda.DataFrame')
         if breakdown is not None and breakdown != 'no':
             raise ValueError('Breakdown may be passed only if provided data is anomeda.DataFrame')
-        y = data
-        x = np.arange(len(y))
+        x, y = data
+        sorted_indx = np.argsort(x)
+        x = x[sorted_indx]
+        y = y[sorted_indx]
         query = 'total'
         res_values = []
         if y.shape[0] >= min_cluster_size and y.shape[0] <= max_cluster_size:
