@@ -29,7 +29,21 @@ def __regularizer(x):
     return beta.pdf(x, 0.4, 0.4)
 
 
-def __find_trend_breaking_point(x, y):
+def __find_trend_breaking_point(x : 'numpy.ndarray[int]', y : 'numpy.ndarray[float]'):
+    """Find the point where the trend is the most likely to change.
+    
+    Parameters
+    ----------
+    x : numpy.ndarray[int]
+        Indeces corresponding to time points. Must be an increasing array of integers. Some of the values may be omitted, e.g such x is OK: [0, 1, 5, 10]. 
+    y : numpy.ndarray[float]
+        Metric values corresponding to time points.
+        
+    Returns
+    -------
+    points_candidates : numpy.ndarray
+        List of points sorted from the best candidate to the worst candidate.
+    """
     metric_vals = []
     points_candidates = x[2:-1]
 
@@ -61,25 +75,26 @@ def __find_trend_breaking_point(x, y):
     return points_candidates[np.argmin(metric_vals)]
 
 
-def linreg(x, a, b):
-    """Return the value of f(x) = a * x + b."""
-    return a * x + b
-
-
-def extract_trends(x, y, max_trends='auto', min_var_reduction=0.5, verbose=False):
+def extract_trends(
+    x : 'numpy.ndarray[int]', 
+    y : 'numpy.ndarray[float]', 
+    max_trends : "int | 'auto'"='auto', 
+    min_var_reduction : 'float[0, 1] | None'=0.5, 
+    verbose : 'bool'=False
+):
     """Fit and return parameters of a linear trend for the given metric.
     
     Parameters
     ----------
-    x : np.array[int]
-        Indeces. Must start with 0 and increase sequentially.
-    y : np.array[float]
-        Values
-    max_trends : int | 'auto'
-        Number of trends to extract. If int, the method extracts this amount of trends or less. Less trends may be returned if no more trends are found or if the min_var_reduction is reached (variance is already explaines by less amount of trends). If 'auto', the method defines the number of trends automatically using min_var_reduction parameter. Default is 'auto'.
-    min_var_reduction : float[0, 1] or None
-        % of the variance of approximation error that must be reduced comparing to the variance of the initial approximation with only one trend. Values closer to 1 will produce cause extracting more trends, since more trends reduce the variance better. Values closer to 0 will cause producing less trends. If max_trends is set and it is reached, the extraction finished regardless the value of the variance. If None, then not used. Default is 0.5.
-    verbose : bool
+    x : numpy.ndarray[int]
+        Indeces corresponding to time points. Must be an increasing array of integers. Some of the values may be omitted, e.g such x is OK: [0, 1, 5, 10]. 
+    y : numpy.ndarray[float]
+        Metric values corresponding to time points.
+    max_trends : int | "auto", default "auto"
+        Number of trends to extract. If int, the method extracts defined amount of trends or less. Less trends may be extracted if no more trends were found or if the min_var_reduction is reached. It would mean taht the variance is already explained by that amount of trends. If 'auto', the method defines the number of trends automatically using min_var_reduction parameter. Default is 'auto'.
+    min_var_reduction : float[0, 1] | None, default 0.5
+        % of the variance of approximation error that must be reduced by adding trends comparing to the variance of the initial approximation with one trend. Values closer to 1 will cause extracting more trends, since more trends reduce the variance better. Values closer to 0 will cause producing less trends. If max_trends is set and reached, the extraction finishes regardless the value of the variance. If None, then not used. Default is 0.5.
+    verbose : bool, default False
         If to produce more logs. Default False.
         
     Returns
@@ -211,189 +226,6 @@ def extract_trends(x, y, max_trends='auto', min_var_reduction=0.5, verbose=False
         continue
 
     return trends
-
-
-def describe_trend(data):
-    """Fit and return parameters of a linear trend for the given metric.
-    
-    Parameters
-    ----------
-    data : anomeda.DataFrame
-        Object containing data to be analyzed
-        
-    Returns
-    -------
-    a : float
-        Coefficient a of a line f(x) = a + b * x fitted to the metric, where x is time values and f(x) is metric values
-    b : float
-        Coefficient b of a line f(x) = a + b * x fitted to the metric, where x is time values and f(x) is metric values
-    """
-    if type(data) != DataFrame:
-        raise TypeError(INVALID_DATA_TYPE_MSG.format(type(data)))
-    
-    data_pandas = data.to_pandas() # get pandas.DataFrame
-    
-    if data.get_index_name() is None:
-        raise KeyError('not-None "index_name" must be set for anomeda.DataFrame object')
-    index_name = data.get_index_name()
-    
-    if data.get_metric_name() is None:
-        raise KeyError('not-None "metric_name" must be set for anomeda.DataFrame object')
-    metric_name = data.get_metric_name()
-    
-    if data.get_agg_func() is None:
-        raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
-    agg_func = data.get_agg_func()
-    
-    data_pandas = data_pandas.reset_index()
-    columns_to_use = np.append(index_name, metric_name)
-    
-    if data_pandas.shape[0] >= 2:
-        
-        ydata = data_pandas[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
-        xdata = np.arange(len(ydata)) 
-
-        coef, _ = curve_fit(linreg, xdata, ydata)
-        a, b = coef
-
-        return a, b
-    
-    elif data_pandas.shape[0] == 1:
-        a, b = 1, data_pandas[metric_name].mean()
-        
-        return a, b
-    
-    else:
-        return None, None 
-
-
-def describe_trends_by_clusters(data):
-    """Fit and return parameters of a linear trend of each cluster for given metric. Output object type is a pandas.DataFrame object.
-    
-    Parameters
-    ----------
-    data : anomeda.DataFrame
-        Object containing data to be analyzed
-        
-    Returns
-    -------
-    output : pandas.DataFrame
-        Object describing the trends. 
-    """
-    if type(data) != DataFrame:
-        raise TypeError(INVALID_DATA_TYPE_MSG.format(type(data)))
-         
-    if data.get_measures_names() is None:
-        raise KeyError('not-None "measures_names" must be set for anomeda.DataFrame object')
-    measures_names = data.get_measures_names()
-    
-    if data.get_index_name() is None:
-        raise KeyError('not-None "index_name" must be set for anomeda.DataFrame object')
-    index_name = data.get_index_name()
-    
-    if data.get_metric_name() is None:
-        raise KeyError('not-None "metric_name" must be set for anomeda.DataFrame object')
-    metric_name = data.get_metric_name()
-    
-    if data.get_agg_func() is None:
-        raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
-    agg_func = data.get_agg_func()
-    
-    data_pandas = data.to_pandas() # get pandas.DataFrame
-    data_pandas = data_pandas.reset_index()
-    columns_to_use = np.append(index_name, metric_name)
-    
-    measures_types = data.get_measures_types()
-    if measures_types is not None and 'continuous' in measures_types:
-        for measure in measures_types['continuous']:
-            data_pandas[measure] = data.get_discretized_measures()[measure]
-    
-    res_values = []
-    for measures_values in data_pandas[measures_names].drop_duplicates().values:
-        str_arr = []
-        for (measure_name, measure_value) in zip(measures_names, measures_values):
-            str_arr.append('`' + measure_name + '`' + '==' + str(measure_value))
-        query = ' and '.join(str_arr)
-        
-        ydata = data_pandas.query(query)[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
-        xdata = np.arange(len(ydata)) 
-        
-        if ydata.shape[0] >= 2:
-            coef, _ = curve_fit(linreg, xdata, ydata)
-            a, b = coef
-        else:
-            a, b = 1, data_pandas[metric_name].mean()
-            
-        res_values.append(np.append(measures_values, [a, b, np.mean(ydata), (int(a > 0) * 2 - 1) * abs(a * np.mean(ydata))]))
-
-    res = pd.DataFrame(
-        res_values, 
-        columns=np.append(measures_names, ['trend_coeff', 'trend_bias', 'avg_value', 'contribution_metric']))\
-    .sort_values(by='trend_coeff', ascending=False).reset_index(drop=True)
-
-    return res
-
-
-def describe_variance_by_clusters(data):
-    """Return variances of metric in each cluster in given data. Output object type is a pandas.DataFrame object.
-    
-    Parameters
-    ----------
-    data : anomeda.DataFrame
-        Object containing data to be analyzed
-        
-    Returns
-    -------
-    output : pandas.DataFrame
-        Object describing the variances. 
-    """
-    if type(data) != DataFrame:
-        raise TypeError(INVALID_DATA_TYPE_MSG.format(type(data)))
-        
-    if data.get_measures_names() is None:
-        raise KeyError('not-None "measures_names" must be set for anomeda.DataFrame object')
-    measures_names = data.get_measures_names()
-    
-    if data.get_index_name() is None:
-        raise KeyError('not-None "index_name" must be set for anomeda.DataFrame object')
-    index_name = data.get_index_name()
-    
-    if data.get_metric_name() is None:
-        raise KeyError('not-None "metric_name" must be set for anomeda.DataFrame object')
-    metric_name = data.get_metric_name()
-    
-    if data.get_agg_func() is None:
-        raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
-    agg_func = data.get_agg_func()
-    
-    data_pandas = data.to_pandas() # get pandas.DataFrame
-    data_pandas = data_pandas.reset_index()
-    columns_to_use = np.append(index_name, metric_name)
-    
-    measures_types = data.get_measures_types()
-    if measures_types is not None and 'continuous' in measures_types:
-        for measure in measures_types['continuous']:
-            data_pandas[measure] = data.get_discretized_measures()[measure]
-    
-    res_values = []
-    for measures_values in data_pandas[measures_names].drop_duplicates().values:
-        str_arr = []
-        for (measure_name, measure_value) in zip(measures_names, measures_values):
-            str_arr.append('`' + measure_name + '`' + '==' + str(measure_value))
-        query = ' and '.join(str_arr)
-        
-        ydata = data_pandas.query(query)[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
-
-        var = np.var(ydata)
-
-        res_values.append(np.append(measures_values, [var]))
-
-    res = pd.DataFrame(
-        res_values, 
-        columns=np.append(measures_names, ['variance']))\
-    .sort_values(by='variance', ascending=False).reset_index(drop=True)
-    
-    return res
 
 
 def explain_values_difference(
@@ -606,8 +438,8 @@ def find_anomalies(
     if type(data) == DataFrame:
         if '_trends' in dir(data):
             df = data._trends.copy()
-        else:
-            raise NotFittedError('The anomeda.DataFrame instance has no fitted trends. Run anomeda.fit_trends() with save_trends=True and prefered parameters first')
+        if '_trends' not in dir(data) or '_clusters' not in dir(data):
+            raise NotFittedError('The anomeda.DataFrame instance has no fitted trends or clusters. Run anomeda.fit_trends() with save_trends=True and prefered parameters first')
     else:
         raise TypeError('"data" argument must be anomeda.DataFrame')
     
@@ -644,24 +476,19 @@ def find_anomalies(
     if measures_types is not None and 'continuous' in measures_types:
         for measure in measures_types['continuous']:
             data_pandas[measure] = data.get_discretized_measures()[measure]
-    
-    columns_to_use = np.append(index_name, metric_name)
 
     resp = []
     
     for c in clusters:
+
+        # reorder features names in accordance to how they sorted in measures names
+        if c not in ['total', 'skipped']:
+            c = ' and '.join(sorted(c.split(' and '), key=lambda v: measures_names.index(v.split('==')[0])))
+
         df_tmp = df[df['cluster'] == c]
 
-        if c == 'total':
-            yseries = data_pandas[columns_to_use].groupby(index_name).agg(agg_func)[metric_name].sort_index()
-            yindex = yseries.index.values
-            ydata = yseries.values
-        elif c == 'skipped':
-            continue
-        else:
-            yseries = data_pandas.query(c)[columns_to_use].groupby(index_name).agg(agg_func)[metric_name].sort_index()
-            yindex = yseries.index.values
-            ydata = yseries.values
+        yindex = data._clusters[c]['index']
+        ydata = data._clusters[c]['values']
         
         y_fitted_list = []
         y_diff_list = []
@@ -674,7 +501,7 @@ def find_anomalies(
 
             cluster_indx = yindex[(yindex >= xmin) & (yindex < xmax)]
             y_fitted = slope * cluster_indx + intercept
-            y_diff_list.append(yseries[cluster_indx] - y_fitted)
+            y_diff_list.append(ydata[cluster_indx] - y_fitted)
             x_labels.append(cluster_indx)
             y_fitted_list.append(y_fitted)
 
@@ -729,85 +556,6 @@ def find_anomalies(
 
     return pd.concat(resp).reset_index(drop=True)
         
-        
-def find_anomalies_by_clusters(
-    data,
-    p_large=1,
-    p_low=1
-):
-    """Find metric anomalies in each cluster.
-    
-    The method finds differences between real metric and a fitted trend line, find points with the most extreme differences and marks them as anomalies. It skips clusters with less than 2 samples.
-    
-    Parameters
-    ----------
-    data : anomeda.DataFrame
-        Object containing data to be analyzed
-    p_large : float, [0, 1], default 1
-        What part of anomalies which are higher than usual values needs to be returned. For example, if you set it to 0.7, then only 70% of the anomalies with the largest values will be returned. Default is 1.
-    p_low : float, [0, 1], default 1
-        What part of anomalies which are lower than usual values needs to be returned. For example, if you set it to 0.5, then only 50% of the anomalies with the lowest values will be returned. Default is 1.
-        
-    Returns
-    -------
-    clusters_anomalies : list of dict
-        List containing cluster and its anomalies. The keys in the cluster-dict are "cluster", "indeces", "anomalies"
-    """
-    if type(data) != DataFrame:
-        raise TypeError(INVALID_DATA_TYPE_MSG.format(type(data)))
-        
-    if data.get_measures_names() is None:
-        raise KeyError('not-None "measures_names" must be set for anomeda.DataFrame object')
-    measures_names = data.get_measures_names()
-    
-    if data.get_index_name() is None:
-        raise KeyError('not-None "index_name" must be set for anomeda.DataFrame object')
-    index_name = data.get_index_name()
-    
-    if data.get_metric_name() is None:
-        raise KeyError('not-None "metric_name" must be set for anomeda.DataFrame object')
-    metric_name = data.get_metric_name()
-    
-    if data.get_agg_func() is None:
-        raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
-    agg_func = data.get_agg_func()
-    
-    data_pandas = data.to_pandas() # get pandas.DataFrame
-    data_pandas = data_pandas.reset_index()
-    
-    unchanged_data_pandas = data_pandas.copy()
-    
-    columns_to_use = np.append(index_name, metric_name)
-    
-    measures_types = data.get_measures_types()
-    if measures_types is not None and 'continuous' in measures_types:
-        for measure in measures_types['continuous']:
-            data_pandas[measure] = data.get_discretized_measures()[measure]
-    
-    clusters_anomalies = []
-    for measures_values in data_pandas[measures_names].drop_duplicates().values:
-        str_arr = []
-        for (measure_name, measure_value) in zip(measures_names, measures_values):
-            str_arr.append('`' + measure_name + '`' + '==' + str(measure_value))
-        query = ' and '.join(str_arr)
-        
-        filtered_data = data_pandas.query(query)
-        
-        ydata = filtered_data[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
-        
-        if len(ydata) >= 2:
-            indeces, anomalies = find_anomalies(data.mod_data(unchanged_data_pandas.loc[filtered_data.index]), p_large=p_large, p_low=p_low)
-            
-            cluster = dict(zip(measures_names, measures_values))
-            
-            clusters_anomalies.append({
-                'cluster': cluster,
-                'indeces': indeces,
-                'anomalies': anomalies
-            })
-        
-    return clusters_anomalies
-
 
 def plot_trends(
     data: 'anomeda.DataFrame | pandas.DataFrame returned from anomeda.fit_trends()', 
@@ -837,12 +585,16 @@ def plot_trends(
     if type(data) == DataFrame:
         if '_trends' in dir(data):
             df = data._trends.copy()
-        else:
-            raise NotFittedError('The anomeda.DataFrame instance has no fitted trends. Run anomeda.fit_trends() with save_trends=True and prefered parameters first')
+        if '_trends' not in dir(data) or '_clusters' not in dir(data):
+            raise NotFittedError('The anomeda.DataFrame instance has no fitted trends or clusters. Run anomeda.fit_trends() with save_trends=True and prefered parameters first')
     elif type(data) == pd.DataFrame:
         df = data.copy()
     else:
         raise ValueError('"data" argument must be either anomeda.DataFrame or pandas.DataFrame returned by anomeda.fit_trends()')
+
+    measures_names = data.get_measures_names()
+    if measures_names is None:
+        raise KeyError('not-None "measures_names" must be set for anomeda.DataFrame object')
     
     if clusters is None:
         clusters = df['cluster'].drop_duplicates()
@@ -852,6 +604,11 @@ def plot_trends(
         cluster_c = dict(zip(clusters, np.random.choice(list(TABLEAU_COLORS.keys()), size=len(clusters), replace=replace)))
     
     for c in clusters:
+        
+        # reorder features names in accordance to how they sorted in measures names
+        if c not in ['total', 'skipped']:
+            c = ' and '.join(sorted(c.split(' and '), key=lambda v: measures_names.index(v.split('==')[0])))
+
         df_tmp = df[df['cluster'] == c].sort_values(by='trend_start_dt')
         
         x_cluster = []
@@ -870,9 +627,9 @@ def plot_trends(
         plt.plot(x_cluster, y_trend_cluster, label=cluster, color=cluster_c[cluster])
         
         if show_points and type(data) == DataFrame:
-            if c not in ['total', 'skipped']:
-                full_data_tmp = data.query(c)
-                plt.scatter(full_data_tmp.index, full_data_tmp['metric'], color=cluster_c[cluster], marker='x')
+            if c not in ['total']:
+                cluster_info = data._clusters[c]
+                plt.scatter(cluster_info['index'], cluster_info['values'], color=cluster_c[cluster], marker='x')
         
     plt.legend()
 
@@ -976,12 +733,15 @@ def fit_trends(
         skipped_indeces = []
         total_clusters = 0
         columns_to_use = np.append(index_name, metric_name)
+        clusters_storage = {}
 
         query = 'total'
         
         yseries = data_pandas[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
         yindex = yseries.index.values
         ydata = yseries.values
+
+        clusters_storage[query] = {'index': yindex, 'values': ydata}
         
         trends = extract_trends(
             yindex, ydata,
@@ -994,13 +754,15 @@ def fit_trends(
             for measures_values in data_pandas[measures_set].drop_duplicates().values:
                 str_arr = []
                 for (measure_name, measure_value) in zip(measures_set, measures_values):
-                    str_arr.append('`' + measure_name + '`' + '==' + str(measure_value))
+                    quote = '"' if type(measure_value) == str else ''
+                    str_arr.append('`' + measure_name + '`' + '==' + quote + str(measure_value) + quote)
                 query = ' and '.join(str_arr)
                 
                 yseries = data_pandas.query(query)[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
                 yindex = yseries.index.values
                 ydata = yseries.values
-                xdata = np.arange(len(ydata)) 
+
+                clusters_storage[query] = {'index': yindex, 'values': ydata}
 
                 total_clusters += 1
                 if ydata.shape[0] >= min_cluster_size and ydata.shape[0] <= max_cluster_size:
@@ -1028,12 +790,13 @@ def fit_trends(
         if skipped_clusters > 0:
             skipped_indeces = np.unique(np.concatenate(skipped_indeces))
 
+            query = 'skipped'
+
             yseries = data_pandas.loc[skipped_indeces, columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
             yindex = yseries.index.values
             ydata = yseries.values
-            xdata = np.arange(len(ydata)) 
 
-            query = 'skipped'
+            clusters_storage[query] = {'index': yindex, 'values': ydata}
 
             if ydata.shape[0] == 1:
                 res_values.append((
@@ -1058,14 +821,15 @@ def fit_trends(
         
         if save_trends:
             data._trends = res_values.copy()
+            data._clusters = clusters_storage.copy()
         if plot:
             plot_trends(data)
         if df:
             return res_values
 
     elif type(data) == tuple and type(data[0]) == np.ndarray and type(data[1]) == np.ndarray:
-        if filters is not None:
-            raise ValueError('Filters may be passed only if provided data is anomeda.DataFrame')
+        #if filters is not None:
+        #s    raise ValueError('Filters may be passed only if provided data is anomeda.DataFrame')
         if breakdown is not None and breakdown != 'no':
             raise ValueError('Breakdown may be passed only if provided data is anomeda.DataFrame')
         x, y = data
