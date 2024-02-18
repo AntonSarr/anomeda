@@ -11,23 +11,25 @@ warnings.filterwarnings('default', module='anomeda', append=True)
 
 
 def _to_discrete_values(values, model=None):
-    """Transform continious values into discrete ones.
+    """Transform values from continious into discrete.
     
     Parameters
     ----------
-    values: : 1-dim numpy.ndarray
+    values : 1-dim numpy.ndarray
         Numeric values to be mapped to discrete values
     
-    model
-        An object (sklearn object if preferable) which has fit_predict method taking the numeric numpy.ndarray values of shape (n, 1) and returning mapped discrete values
+    model : 'Object with fit_predict method defined (sklearn API based)'
+        An object which has fit_predict method taking the numeric numpy.ndarray values of shape (n, 1) and returning mapped discrete 
+        values. Default is sklearn.mixture.BayesianGaussianMixture(n_components=5, weight_concentration_prior=1e-5, max_iter=200)
     
     Returns
     -------
-    labels : np.array
+    labels : numpy.ndarray
         Discrete labels of mapped values
     
     mapping_intervals : dict
-        Dict containing unique discrete values (keys) and numeric range from initial data that is mapped into this interval (values). If None, sklearn.mixture.BayesianGaussianMixture(n_components=5, weight_concentration_prior=1e-5, max_iter=200) is used
+        Dict containing unique discrete values (keys) and numeric range from initial data that is mapped into this interval (values). 
+        Lower bound is always including, higher bound is always excluding.
     """
     if type(values) != np.ndarray:
         raise TypeError("Values to be discretized must be numpy.ndarray")
@@ -35,7 +37,7 @@ def _to_discrete_values(values, model=None):
     if values.ndim != 1:
         raise TypeError("Values must have 1 dimension")
     
-    n_components = min(int(values.shape[0] / 3) + 1, 5) # not more than 5 clusters, at least 3 samples in each one
+    n_components = min(int(values.shape[0] / 3) + 1, 5) # not more than 5 descrete values, at least 3 samples corresponding to each one
     
     if model is None:
         model = BayesianGaussianMixture(n_components=n_components, weight_concentration_prior=1e-5, max_iter=200)
@@ -45,7 +47,11 @@ def _to_discrete_values(values, model=None):
     max_value = np.max(values)
     min_value = np.min(values)
     
-    mapping_values = np.arange(min_value, max_value, (max_value - min_value) / len(values))
+    mapping_values = np.arange(
+        min_value, 
+        max_value + (max_value - min_value) / (len(values) - 1), 
+        (max_value - min_value) / (len(values) - 1)
+    )
     mapped_values = model.predict(mapping_values.reshape(-1, 1))
     
     current_cluster = None
@@ -53,7 +59,7 @@ def _to_discrete_values(values, model=None):
     interval_bounds = [None, None]
     
     for i in range(len(mapped_values)):
-        if mapped_values[i] != current_cluster:
+        if mapped_values[i] != current_cluster: # when the mapped value changed, add new bounds to the mapping interval
             
             if current_cluster is not None:
                 mapping_intervals[current_cluster].append(interval_bounds)
@@ -64,9 +70,15 @@ def _to_discrete_values(values, model=None):
                 mapping_intervals[current_cluster] = []
             
             interval_bounds[0] = mapping_values[i]
-            interval_bounds[1] = mapping_values[i]
-        else:
-            interval_bounds[1] = mapping_values[i]
+            if i + 1 < len(mapped_values): # make right bound excluding, not including
+                interval_bounds[1] = mapping_values[i + 1]
+            else:
+                interval_bounds[1] = mapping_values[i] * 1.1
+        else: # when the mapped value does not change, just move the right bound
+            if i + 1 < len(mapped_values): # make right bound excluding, not including
+                interval_bounds[1] = mapping_values[i + 1]
+            else:
+                interval_bounds[1] = mapping_values[i] * 1.1
             
     mapping_intervals[current_cluster].append(interval_bounds)
             
@@ -86,6 +98,19 @@ class DataFrame(pd.DataFrame):
         List containing columns considered as measures in the data.
     measures_types : 'dict'
         Dict containing 'categorical' and/or 'continuous' keys and list of measures as values. Continuous measures will be discretized automatically if not presented in discretized_measures parameter.
+    discretized_measures_mapping : 'dict'
+        Dict with mapping between discrete value of the meause and corresponding continous values. Threshold must have the following format. 
+        As you can see, several different ranges of continuous values may be mapped into the same descrete values if you want.
+        The lower bound must be including, the higher bound must be excluding.
+        ```json
+        {
+            'measure_name': {
+                discrete_value: [[continuous_threshold_min_inc, continuous_threshold_max_excl], [..., ...], ...], 
+                ...
+                },
+            ...
+        }
+        ```
     discretized_measures : 'dict' = None
         Dict containig name of the measure as key and array-like object containing discretized values of the measure of the same shape as original data. If measure is in 'continuous' list of measures_types parameter, it will be discretized automatically.
     index_name : 'str | list | None' = None
@@ -115,7 +140,7 @@ class DataFrame(pd.DataFrame):
     def __init__(self, *args, **kwargs):
         filtered_kwargs = {}
         for arg in kwargs:
-            if arg not in ['measures_names', 'measures_types', 'discretized_measures', 'index_name', 'metric_name', 'agg_func']:
+            if arg not in ['measures_names', 'measures_types', 'discretized_measures_mapping', 'discretized_measures', 'index_name', 'metric_name', 'agg_func']:
                 filtered_kwargs[arg] = kwargs[arg]
         
         super().__init__(pd.DataFrame(*args, **filtered_kwargs).copy())
@@ -127,7 +152,13 @@ class DataFrame(pd.DataFrame):
         self.set_measures_types(measures_types)
         
         discretized_measures = kwargs.get('discretized_measures')
+        discretized_measures_mapping = kwargs.get('discretized_measures_mapping')
+
+        if discretized_measures is not None and discretized_measures_mapping is not None:
+            raise NotImplementedError('As for now "discretized_measures" and "discretized_measures_mapping" cannot be passed at the same time. Please choose either mapping or measures.')
+        
         self.set_discretized_measures(discretized_measures)
+        self.set_discretization_mapping(discretized_measures_mapping)
         
         metric_name = kwargs.get('metric_name')
         self.set_metric_name(metric_name)
@@ -148,8 +179,15 @@ class DataFrame(pd.DataFrame):
     def __copy__(self):
         return self.copy_anomeda_df()
     
-    def mod_data(self, data : 'pandas.DataFrame', inplace=False):
-        """Replace the pandas.DataFrame object underlying the anomeda.DataFrame with a new one
+    def replace_df(
+        self, 
+        data : 'pandas.DataFrame', 
+        inplace=False, 
+        keep_clusters : 'bool' = False, 
+        keep_trends : 'bool' = False, 
+        keep_discretization : 'bool' = False
+    ):
+        """Replace the pandas.DataFrame content, underlying the anomeda.DataFrame, with a new one
         
         Parameters
         ----------
@@ -158,39 +196,47 @@ class DataFrame(pd.DataFrame):
         inplace : bool
             If True, then no new object will be returned. Otherwise, create and return a new anomeda.DataFrame
         """
+        new_obj = DataFrame(
+            data, 
+            measures_names=self._measures_names, 
+            measures_types=self._measures_types, 
+            discretized_measures_mapping=(self._discretized_measures_mapping if keep_discretization else None),
+            discretized_measures=None,
+            index_name=self._index_name, 
+            metric_name=self._metric_name, 
+            agg_func=self._agg_func
+        )
+
+        if keep_clusters:
+            new_obj._clusters = self._clusters
+        if keep_trends:
+            new_obj._trends = self._trends
         
         if inplace:
-            self = DataFrame(
-                data, 
-                measures_names=self._measures_names, 
-                measures_types=self._measures_types, 
-                discretized_measures=None,
-                index_name=self._index_name, 
-                metric_name=self._metric_name, 
-                agg_func=self._agg_func
-            )
+            self = new_obj
         else:
-            return DataFrame(
-                data, 
-                measures_names=self._measures_names, 
-                measures_types=self._measures_types, 
-                discretized_measures=None,
-                index_name=self._index_name, 
-                metric_name=self._metric_name, 
-                agg_func=self._agg_func
-            )
+            return new_obj
         
     def copy_anomeda_df(self):
         """Return a copy of an anomeda.DataFrame object"""
-        return DataFrame(
-                data=self, 
-                measures_names=self._measures_names, 
-                measures_types=self._measures_types, 
-                discretized_measures=self._discretized_measures,
-                index_name=self._index_name, 
-                metric_name=self._metric_name, 
-                agg_func=self._agg_func
-            )
+        new_obj = DataFrame(
+            data=self, 
+            measures_names=self._measures_names, 
+            measures_types=self._measures_types, 
+            discretized_measures=self._discretized_measures,
+            index_name=self._index_name, 
+            metric_name=self._metric_name, 
+            agg_func=self._agg_func
+        )
+        
+        if hasattr(self, '_trends'):
+            new_obj._trends = self._trends.copy()
+        if hasattr(self, '_clusters'):
+            new_obj._clusters = self._clusters.copy()
+        if hasattr(self, '_trends_conf'):
+            new_obj._trends_conf = self._trends_conf.copy()
+
+        return new_obj
 
     def to_pandas(self):
         return pd.DataFrame(self)
@@ -207,49 +253,61 @@ class DataFrame(pd.DataFrame):
         
         {
             'dummy_numeric_measure': {
-                0: [[0.08506988648110014, 0.982366623262143]],
-                1: [[0.9855150328648835, 2.458970726947438]]
+                0: [[0.08506988648110014, 0.982366623262143]], # [[inc, exl)]
+                1: [[0.9855150328648835, 2.458970726947438]] # [[inc, exl)]
             }
         }
         ```
         """
-        return self._discretized_measures_mapping
+        return self._discretized_measures_mapping.copy()
     
-    def set_discretization_mapping(self, discretized_measures_mapping):
+    def set_discretization_mapping(self, discretized_measures_mapping, recalculate_measures=True):
         """Set custom thresholds for discretization.
-        
-        Threshold must have the following format
-        ```json
-        {
-            'measure_name': {
-                discrete_value: [[threshold1, threshold2], [threshold3, threshold4], ...], 
-                ...
-                },
-            ...
-        }
-        ```
         
         Parameters
         ----------
         discretized_measures_mapping : dict
-            Dict with mapping between discrete value of the meause and corresponding continous values. 
+            Dict with mapping between discrete value of the meause and corresponding continous values. Threshold must have the following format. 
+            As you can see, several different ranges of continuous values may be mapped into the same descrete values if you want.
+            The lower bound must be including, the higher bound must be excluding.
+            ```json
+            {
+                'measure_name': {
+                    discrete_value: [[continuous_threshold_min_inc, continuous_threshold_max_excl], [..., ...], ...], 
+                    ...
+                    },
+                ...
+            }
+            ```
             
         Examples
         --------
         ```python
         anmd_df.set_discretization_mapping({
             'dummy_numeric_measure': {
-                0: [[0.01, 0.98]],
-                1: [[0.99, 2.45]]
+                0: [[0.00, 0.05001], [0.95, 1.001]], # may correspond to "extreme" values; 0.05 are 1. are excluding bounds
+                1: [[0.5, 0.94999]] # may correspond to "normal" values; 94999 is an excluding bound
             }
         })
         ```
         """
-        self.discretized_measures_mapping = discretized_measures_mapping
+        if discretized_measures_mapping is not None:
+            self._discretized_measures_mapping = discretized_measures_mapping.copy()
+
+        if discretized_measures_mapping is not None and recalculate_measures:
+            self._discretized_measures = {}
+            for measure in discretized_measures_mapping.keys():
+                tmp_measure_values = self[measure].copy()
+                mapped_measure_values = pd.Series([None for i in range(tmp_measure_values.shape[0])], index=tmp_measure_values.index)
+                for discrete_value in discretized_measures_mapping[measure].keys():
+                    for interval in discretized_measures_mapping[measure][discrete_value]:
+                        x_min, x_max = interval
+                        mapped_measure_values[(tmp_measure_values >= x_min) & (tmp_measure_values < x_max)] = discrete_value
+                self._discretized_measures[measure] = mapped_measure_values.values
     
     def get_measures_names(self):
         """Return a list of columns considered as measures."""
-        return self._measures_names
+        return self._measures_names.copy()
     
     def set_measures_names(self, measures_names):
         """Let anomeda.DataFrame object know what columns are measures. 
@@ -269,7 +327,7 @@ class DataFrame(pd.DataFrame):
     
     def get_measures_types(self):
         """Return the measures_types dict."""
-        return self._measures_types
+        return self._measures_types.copy()
     
     def set_measures_types(self, measures_types : 'dict'):
         """Set measures types. 
@@ -303,7 +361,7 @@ class DataFrame(pd.DataFrame):
     
     def get_discretized_measures(self):
         """Return discretized versions of continous measures."""
-        return self._discretized_measures
+        return self._discretized_measures.copy()
     
     def set_discretized_measures(self, discretized_measures : 'dict'):
         """Set custom discretization for continous measures.
@@ -325,19 +383,30 @@ class DataFrame(pd.DataFrame):
             if len(discretized_measures[measure_name]) != len(self):
                 raise TypeError("Values for discretized_measures for anomeda.DataFrame must have the same length as the underlying pandas.DataFrame data")
         
-        self._discretized_measures = discretized_measures
+        self._discretized_measures = discretized_measures.copy()
     
     def get_index_name(self):
         """Return the name of an index column."""
         return self._index_name
 
     def set_index(self, *args, **kwargs):
-        resp = super().set_index(*args, **kwargs)
-        if resp is not None:
-            return self.mod_data(resp, inplace=False)
-        index_names = list(filter(lambda x: x is not None, self.index.names))
-        if len(index_names) >= 1:
-            self._index_name = index_names
+
+        index_name = args[0] if len(args) > 0 else kwargs.get('index_name')
+        curr_indeces = list(filter(lambda x: x is not None, self.index.names))
+
+        if type(index_name) != list:
+            index_name = [index_name]
+
+        if index_name != curr_indeces:
+            resp = super().reset_index()
+            resp = super().set_index(*args, **kwargs)
+            if resp is not None:
+                return self.replace_df(resp, inplace=False)
+            index_names = list(filter(lambda x: x is not None, self.index.names))
+            if len(index_names) >= 1:
+                self._index_name = index_names
+        else:
+            self._index_name = curr_indeces
 
     def reset_index(self, *args, **kwargs):
         resp = super().reset_index(*args, **kwargs)

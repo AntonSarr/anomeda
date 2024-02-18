@@ -90,11 +90,11 @@
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-level="2"><a href="#utils.explain_values_difference" class="nav-link">explain_values_difference</a>
+            <li class="nav-item" data-level="2"><a href="#utils.__regularizer" class="nav-link">__regularizer</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-level="2"><a href="#utils.explain_variance_difference" class="nav-link">explain_variance_difference</a>
+            <li class="nav-item" data-level="2"><a href="#utils.compare_clusters" class="nav-link">compare_clusters</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -198,6 +198,24 @@
         –
         <div class="doc-md-description">
           <p>Dict containing 'categorical' and/or 'continuous' keys and list of measures as values. Continuous measures will be discretized automatically if not presented in discretized_measures parameter.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>discretized_measures_mapping</code></b>
+            (<code>dict</code>)
+        –
+        <div class="doc-md-description">
+          <p>Dict with mapping between discrete value of the meause and corresponding continous values. Threshold must have the following format. 
+As you can see, several different ranges of continuous values may be mapped into the same descrete values if you want.
+The lower bound must be including, the higher bound must be excluding.</p>
+<pre><code class="language-json">{
+    'measure_name': {
+        discrete_value: [[continuous_threshold_min_inc, continuous_threshold_max_excl], [..., ...], ...], 
+        ...
+        },
+    ...
+}
+</code></pre>
         </div>
       </li>
       <li class="field-body">
@@ -323,8 +341,8 @@
 
 {
     'dummy_numeric_measure': {
-        0: [[0.08506988648110014, 0.982366623262143]],
-        1: [[0.9855150328648835, 2.458970726947438]]
+        0: [[0.08506988648110014, 0.982366623262143]], # [[inc, exl)]
+        1: [[0.9855150328648835, 2.458970726947438]] # [[inc, exl)]
     }
 }
 </code></pre>
@@ -433,15 +451,15 @@
 
 
 
-<h4 id="DataFrame.DataFrame.mod_data" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">mod_data</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+<h4 id="DataFrame.DataFrame.replace_df" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">replace_df</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">keep_clusters</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">keep_trends</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">keep_discretization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span></code>
 
 </h4>
 
 
   <div class="doc doc-contents ">
   
-      <p>Replace the pandas.DataFrame object underlying the anomeda.DataFrame with a new one</p>
+      <p>Replace the pandas.DataFrame content, underlying the anomeda.DataFrame, with a new one</p>
 
 
 
@@ -509,7 +527,7 @@
 
 
 <h4 id="DataFrame.DataFrame.set_discretization_mapping" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">set_discretization_mapping</span><span class="p">(</span><span class="n">discretized_measures_mapping</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">set_discretization_mapping</span><span class="p">(</span><span class="n">discretized_measures_mapping</span><span class="p">,</span> <span class="n">recalculate_measures</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 </h4>
 
@@ -517,15 +535,6 @@
   <div class="doc doc-contents ">
   
       <p>Set custom thresholds for discretization.</p>
-<p>Threshold must have the following format</p>
-<pre><code class="language-json">{
-    'measure_name': {
-        discrete_value: [[threshold1, threshold2], [threshold3, threshold4], ...], 
-        ...
-        },
-    ...
-}
-</code></pre>
 
 
 
@@ -536,7 +545,17 @@
             (<code>dict</code>)
         –
         <div class="doc-md-description">
-          <p>Dict with mapping between discrete value of the meause and corresponding continous values.</p>
+          <p>Dict with mapping between discrete value of the meause and corresponding continous values. Threshold must have the following format. 
+As you can see, several different ranges of continuous values may be mapped into the same descrete values if you want.
+The lower bound must be including, the higher bound must be excluding.</p>
+<pre><code class="language-json">{
+    'measure_name': {
+        discrete_value: [[continuous_threshold_min_inc, continuous_threshold_max_excl], [..., ...], ...], 
+        ...
+        },
+    ...
+}
+</code></pre>
         </div>
       </li>
   </ul>
@@ -546,8 +565,8 @@
 <p><strong>Examples:</strong></p>
     <pre><code class="language-python">anmd_df.set_discretization_mapping({
     'dummy_numeric_measure': {
-        0: [[0.01, 0.98]],
-        1: [[0.99, 2.45]]
+        0: [[0.00, 0.05001], [0.95, 1.001]], # may correspond to &quot;extreme&quot; values; 0.05 are 1. are excluding bounds
+        1: [[0.5, 0.94999]] # may correspond to &quot;normal&quot; values; 94999 is an excluding bound
     }
 })
 </code></pre>
@@ -775,7 +794,7 @@ exception handling and backward compatibility.</p>
 
   <div class="doc doc-contents ">
   
-      <p>Find the point where the trend is the most likely to change.</p>
+      <p>Find the point where the trend is the most likely to be different from before.</p>
 
 
 
@@ -812,6 +831,13 @@ exception handling and backward compatibility.</p>
       </li>
   </ul>
 
+
+
+<p><strong>Examples:</strong></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">__find_trend_breaking_point</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mf">11.2</span><span class="p">,</span> <span class="mf">10.4</span><span class="p">,</span> <span class="mf">3.4</span><span class="p">,</span> <span class="mf">3.1</span><span class="p">])</span>
+<span class="go">4</span>
+</code></pre></div>
+
   </div>
 
 </div>
@@ -821,23 +847,44 @@ exception handling and backward compatibility.</p>
 
 
 
-<h2 id="utils.explain_values_difference" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">explain_values_difference</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">,</span> <span class="n">measures_to_iterate</span><span class="o">=</span><span class="s1">&#39;shared&#39;</span><span class="p">)</span></code>
+<h2 id="utils.__regularizer" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">__regularizer</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></code>
 
 </h2>
 
 
   <div class="doc doc-contents ">
   
-      <p>Find clusters in data which caused the most significant changes of an average value of the metric.</p>
-<p>data1 and data2 must have a common metric and at least 1 common measure.</p>
+      <p>Penalize an alghorithm for choosing a trend breaking point so that so that x is the ratio of the dataset got in right of left part.   </p>
+<p>Used in in anomeda.__find_trend_breaking_point method. The more the value of the regularizer, the less the probabilty to choose a given point as a breaking point is.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="utils.compare_clusters" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">compare_clusters</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">period1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">period2</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">clusters</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Compare metric values for 2 periods.</p>
+<p>The method generates pandas.DataFrame object with descriptions for two periods, for each cluster. 
+You can use it to identify the cluster or set of clusters caused the differences in the overall metric values between two periods.</p>
 
 
 
   <p>Parameters:</p>
   <ul>
       <li class="field-body">
-        <b><code>data1</code></b>
+        <b><code>data</code></b>
             (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
         –
         <div class="doc-md-description">
@@ -845,102 +892,57 @@ exception handling and backward compatibility.</p>
         </div>
       </li>
       <li class="field-body">
-        <b><code>data2</code></b>
-            (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
+        <b><code>period1</code></b>
+            (<code>str</code>)
         –
         <div class="doc-md-description">
-          <p>Object containing data to be analyzed</p>
+          <p>Query to filter the first period. For example, 'dt &lt; 10'.</p>
         </div>
       </li>
       <li class="field-body">
-        <b><code>measures_to_iterate</code></b>
+        <b><code>period2</code></b>
+            (<code>str</code>)
         –
         <div class="doc-md-description">
-          <p>Measures combinations used to create clusters to look for differences between metric values. If 'shared', then one set consisting of all measures shared between data objects is used. If 'combinations', then all possible combinations of measures are used. If list, then lists inside are used to create sets.</p>
+          <p>Query to filter the second period. For example, 'dt &gt;= 10'.</p>
         </div>
+      </li>
+      <li class="field-body">
+        <b><code>clusters</code></b>
+            (<code>list</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>List of clusters to use in the comparison. The objects in the list are queries used in pandas.DataFrame.query. 
+If None, all clusters are used. Default is None.</p>
+        </div>
+      </li>
+  </ul>
+
+
+
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+<b><code>output</code></b> (            <code><span title="pandas.DataFrame">DataFrame</span></code>
+)        –
+        <div class="doc-md-description">
+          <p>Object describing the clusters and the changes in the metric behavior between them. </p>
+      </div>
       </li>
   </ul>
 
 
 
 <p><strong>Examples:</strong></p>
-    <pre><code class="language-python">anomeda.explain_values_difference(
-    data1,
-    data2,
-    measures_to_iterate=[
-        ['dummy_measure'], 
-        ['dummy_measure', 'dummy_numeric_measure']
-    ] # equivalent to measures_to_iterate='combinations' if data1 and data2 have only 'dummy_measure' and 'dummy_numeric_measure' in common
+    <pre><code class="language-python">anomeda.compare_clusters(
+    data,
+    period1='dt &lt; 10',
+    period2='dt &gt;= 10',
+    clusters=None # means all clusters
 )
 </code></pre>
-      
-
-
-
-  <p>Returns:</p>
-  <ul>
-      <li class="field-body">
-<b><code>output</code></b> (            <code><span title="pandas.DataFrame">DataFrame</span></code>
-)        –
-        <div class="doc-md-description">
-          <p>Object describing the clusters with the most significant changes of average value of a metric.</p>
-      </div>
-      </li>
-  </ul>
-
-  </div>
-
-</div>
-
-
-<div class="doc doc-object doc-function">
-
-
-
-<h2 id="utils.explain_variance_difference" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">explain_variance_difference</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">)</span></code>
-
-</h2>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>Find clusters in data which caused the most significant changes of variance of a metric when comparing data1 and data2. Output object type is a pandas.DataFrame object.</p>
-
-
-
-  <p>Parameters:</p>
-  <ul>
-      <li class="field-body">
-        <b><code>data1</code></b>
-            (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
-        –
-        <div class="doc-md-description">
-          <p>Object containing data to be analyzed</p>
-        </div>
-      </li>
-      <li class="field-body">
-        <b><code>data2</code></b>
-            (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
-        –
-        <div class="doc-md-description">
-          <p>Object containing data to be analyzed</p>
-        </div>
-      </li>
-  </ul>
-
-
-
-  <p>Returns:</p>
-  <ul>
-      <li class="field-body">
-<b><code>output</code></b> (            <code><span title="pandas.DataFrame">DataFrame</span></code>
-)        –
-        <div class="doc-md-description">
-          <p>Object describing the clusters with the most significant changes of variance of a metric.</p>
-      </div>
-      </li>
-  </ul>
 
   </div>
 
@@ -959,7 +961,9 @@ exception handling and backward compatibility.</p>
 
   <div class="doc doc-contents ">
   
-      <p>Fit and return parameters of a linear trend for the given metric.</p>
+      <p>Fit and return automatocally fitted linear trends for given X and Y.</p>
+<p>The method can extract more than 1 trend if the metric significantly changed its behavior. 
+The sensibility of the method to identify trend changes are set by parameters "max_trends" and "min_var_reduction".</p>
 
 
 
@@ -1021,10 +1025,31 @@ exception handling and backward compatibility.</p>
 <b><code>trends</code></b> (            <code>dict</code>
 )        –
         <div class="doc-md-description">
-          <p>Dict contains the extracted trends in the format {trend_id: (xmin_inc, xmax_exc, (trend_slope, trend_intersept)), ...}</p>
+          <p>Dict contains the extracted trends in the format
+    {
+        trend_id: (xmin_inc, xmax_exc, (trend_slope, trend_intersept), (n_samples, metric_mean, mae, metric_sum)), 
+        ...
+    }</p>
       </div>
       </li>
   </ul>
+
+
+
+<p><strong>Examples:</strong></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">11.2</span><span class="p">,</span> <span class="mf">10.4</span><span class="p">,</span> <span class="mf">3.4</span><span class="p">,</span> <span class="mf">3.1</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">extract_trends</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">max_trends</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="go">{</span>
+<span class="go">    0: (0, 4, (-0.7999999999999989, 11.2), (2, 10.8, 0.0, 21.6)), # trend 1, for date points from 0 (inc) to 4 (excl)</span>
+<span class="go">                                                                  # with slope -0.79 and intercept 11.2 </span>
+<span class="go">                                                                  # consisting of 2 samples, </span>
+<span class="go">                                                                  # metric mean over date points is 10.8,</span>
+<span class="go">                                                                  # mae for fitting trend over date points is 0.0</span>
+<span class="go">                                                                  # sum for all metric values is 21.6</span>
+<span class="go">    1: (4, 6, (-0.2999999999999998, 4.6), (2, 3.25, 0.0, 6.5))</span>
+<span class="go">}</span>
+</code></pre></div>
 
   </div>
 
@@ -1036,7 +1061,7 @@ exception handling and backward compatibility.</p>
 
 
 <h2 id="utils.find_anomalies" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">find_anomalies</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">clusters</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">anomalies_conf</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;p_large&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;p_low&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span></code>
+          <code class="highlight language-python"><span class="n">find_anomalies</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">float</span><span class="p">]),</span> <span class="n">clusters</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">anomalies_conf</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;p_large&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;p_low&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;n_neighbors&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span> <span class="n">return_all_points</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">trend_fitting_conf</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1044,7 +1069,8 @@ exception handling and backward compatibility.</p>
   <div class="doc doc-contents ">
   
       <p>Find metric anomalies by looking for the most extreme metric changes.</p>
-<p>The method finds differences between real metric and a fitted trends, find points with extreme differences and marks them as anomalies. You can find anomalies for automatically extracted clusters only if passing an anomeda.DataFrame.</p>
+<p>The method finds differences between real metric and a fitted trends, find points with extreme differences and marks them as anomalies. 
+You can find anomalies for automatically extracted clusters only if passing an anomeda.DataFrame.</p>
 
 
 
@@ -1052,10 +1078,10 @@ exception handling and backward compatibility.</p>
   <ul>
       <li class="field-body">
         <b><code>data</code></b>
-            (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
+            (<code><span title="anomeda.DataFrame">DataFrame</span> | (<span title="numpy.ndarray">ndarray</span>[int], <span title="numpy.ndarray">ndarray</span>[float])</code>)
         –
         <div class="doc-md-description">
-          <p>Object containing metric values to be analyzed. Trends must be fitted for the object with anomeda.fit_trends() method.</p>
+          <p>Object containing metric values to be analyzed. Trends must be fitted for the object with anomeda.fit_trends() method if anomeda.DataFrame is passed.</p>
         </div>
       </li>
       <li class="field-body">
@@ -1071,11 +1097,35 @@ exception handling and backward compatibility.</p>
       <li class="field-body">
         <b><code>anomalies_conf</code></b>
             (<code>dict</code>, default:
-                <code>{&#39;p_large&#39;: 1., &#39;p_low&#39;: 1.}</code>
+                <code>{&#39;p_large&#39;: 1., &#39;p_low&#39;: 1., &#39;n_neighbors&#39;: 3}</code>
 )
         –
         <div class="doc-md-description">
-          <p>Dict containing 'p_large' and 'p_low' values. Both are float values between 0 and 1 corresponding to the % of the anomalies with largest and lowest metric values to be returned. For example, if you set 'p_low' to 0, no points with abnormally low metric values will be returned; if 0.5, then 50% of points with abnormally values will be returned, etc. If some of the keys is not present or None, 1 is assumed.</p>
+          <p>Dict containing 'p_large' and 'p_low' values. Both are float values between 0 and 1 corresponding to the % of the anomalies with largest and lowest metric values to be returned.
+For example, if you set 'p_low' to 0, no points with abnormally low metric values will be returned; if 0.5, then 50% of points with abnormally values will be returned, etc. 
+If some of the keys is not present or None, 1 is assumed.
+'n_neighbors' means number of neighbors parameter for sklearn.neighbors.LocalOutlierFactor class. The class is used to find points with abnormally large MAE. The more the parameter, typically, the less sensitive the model to anomalies.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>return_all_points</code></b>
+            (<code>bool</code>, default:
+                <code>False</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>If False, only anomaly points are returned. If True, all points with anomalies marks are returned. Default False.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>trend_fitting_conf</code></b>
+            (<code>dict</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Used only if data is not anomeda.DataFrame, but numpy arrays, to run anomeda.fit_trends method for them. 
+Parameters are similar to those you would pass to the argument anomeda.fit_trends(..., trend_fitting_conf=...).</p>
         </div>
       </li>
   </ul>
@@ -1085,20 +1135,20 @@ exception handling and backward compatibility.</p>
   <p>Returns:</p>
   <ul>
       <li class="field-body">
-<b><code>index</code></b> (            <code><span title="numpy.ndarray">ndarray</span></code>
+<b><code>res</code></b> (            <code><span title="pandas.DataFrame">DataFrame</span></code>
 )        –
         <div class="doc-md-description">
-          <p>Array of unique indexes</p>
-      </div>
-      </li>
-      <li class="field-body">
-<b><code>anomalies</code></b> (            <code>numpy.ndarray of bool</code>
-)        –
-        <div class="doc-md-description">
-          <p>Bool array indicating if a metric was abnormal at a particar index point</p>
+          <p>A DataFrame containing fields 'cluster', 'index', 'metric_value', 'fitted_trend_value', 'anomaly'.</p>
       </div>
       </li>
   </ul>
+
+
+
+<p><strong>Examples:</strong></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">fit_trends</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">find_anomalies</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</code></pre></div>
 
   </div>
 
@@ -1110,7 +1160,7 @@ exception handling and backward compatibility.</p>
 
 
 <h2 id="utils.fit_trends" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">fit_trends</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">trend_fitting_conf</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;max_trends&#39;</span><span class="p">:</span> <span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="s1">&#39;min_var_reduction&#39;</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">},</span> <span class="n">save_trends</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">breakdown</span><span class="p">:</span> <span class="s1">&#39;no&#39;</span> <span class="o">|</span> <span class="s1">&#39;all-clusters&#39;</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;no&#39;</span><span class="p">,</span> <span class="n">min_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">max_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">fit_trends</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">float</span><span class="p">]),</span> <span class="n">trend_fitting_conf</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;max_trends&#39;</span><span class="p">:</span> <span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="s1">&#39;min_var_reduction&#39;</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">},</span> <span class="n">save_trends</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">breakdown</span><span class="p">:</span> <span class="s1">&#39;no&#39;</span> <span class="o">|</span> <span class="s1">&#39;all-clusters&#39;</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;no&#39;</span><span class="p">,</span> <span class="n">min_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">max_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span></code>
 
 </h2>
 
@@ -1118,8 +1168,10 @@ exception handling and backward compatibility.</p>
   <div class="doc doc-contents ">
   
       <p>Fit trends for a time series.</p>
-<p>Fit trends using the data from an anomeda.DataFrame or an numpy.ndarray with metric values. You can fit trends for automatically extracted clusters only if passing an anomeda.DataFrame. If anomeda.DataFrame is passed and "save_trends" is True, it stores the trends into anomeda.DataFrame._trends attribute of the class every time the method is called. The returns a pandas.DataFrame describing trends and/or plots the trends.</p>
-<p>If you want to pass a filtered anomeda.DataFrame object, pass a query suitable for the pandas.DataFrame.query method in "filters" argument.</p>
+<p>Fit trends using the data from an anomeda.DataFrame or an numpy.ndarray with metric values. 
+You can fit trends for automatically extracted clusters only if passing an anomeda.DataFrame. 
+If anomeda.DataFrame is passed and "save_trends" is True, it stores the trends into anomeda.DataFrame._trends attribute of the class every time the method is called. 
+The method returns a pandas.DataFrame describing trends and/or plots the trends.</p>
 
 
 
@@ -1228,6 +1280,12 @@ exception handling and backward compatibility.</p>
       </li>
   </ul>
 
+
+
+<p><strong>Examples:</strong></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">fitted_trends</span> <span class="o">=</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">fit_trends</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">trend_fitting_conf</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;max_trends&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span> <span class="n">min_cluster_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">df</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
   </div>
 
 </div>
@@ -1304,6 +1362,13 @@ exception handling and backward compatibility.</p>
       </div>
       </li>
   </ul>
+
+
+
+<p><strong>Examples:</strong></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">fit_trends</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">plot_trends</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</code></pre></div>
 
   </div>
 
