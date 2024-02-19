@@ -356,8 +356,20 @@ class DataFrame(pd.DataFrame):
                     self._discretized_measures_mapping = {}
                 for measure in measures_types['continuous']:
                     if measure not in self._discretized_measures:
-                        self._discretized_measures[measure], \
-                        self._discretized_measures_mapping[measure] = _to_discrete_values(self[measure].values)
+                        n_samples = self[measure].values.shape[0]
+                        print('AAAAA', n_samples)
+                        if n_samples >= 2:
+                            self._discretized_measures[measure], \
+                            self._discretized_measures_mapping[measure] = _to_discrete_values(self[measure].values)
+                        elif n_samples == 1:
+                            self._discretized_measures[measure] = [0]
+                            self._discretized_measures_mapping[measure] = {
+                                0: [[self[measure].values[0], self[measure].values[0]]]
+                            }
+                        else:
+                            self._discretized_measures[measure] = []
+                            self._discretized_measures_mapping[measure] = {}
+
     
     def get_discretized_measures(self):
         """Return discretized versions of continous measures."""
