@@ -310,8 +310,17 @@ def compare_clusters(
             if clusters[i] not in ['total', 'skipped']:
                 clusters[i] = ' and '.join(sorted(clusters[i].split(' and '), key=lambda v: measures_names.index(v.split('==')[0].replace('`', ''))))
 
-    data1 = data.replace_df(data.to_pandas().reset_index().query(period1).set_index(data.get_index_name()), keep_discretization=True)
-    data2 = data.replace_df(data.to_pandas().reset_index().query(period2).set_index(data.get_index_name()), keep_discretization=True)
+    
+    new_df1 = data.to_pandas().reset_index().query(period1).set_index(data.get_index_name())
+    if new_df1.shape[0] == 0:
+        raise ValueError(f'Failed to find data for period {period1}')
+
+    new_df2 = data.to_pandas().reset_index().query(period2).set_index(data.get_index_name())
+    if new_df2.shape[0] == 0:
+        raise ValueError(f'Failed to find data for period {period2}')
+
+    data1 = data.replace_df(new_df1, keep_discretization=True)
+    data2 = data.replace_df(new_df2, keep_discretization=True)
 
     clusters_info_1 = fit_trends(data1, trend_fitting_conf={'max_trends': 1}, breakdown='all-clusters', plot=False, df=True)
     clusters_info_2 = fit_trends(data2, trend_fitting_conf={'max_trends': 1}, breakdown='all-clusters', plot=False, df=True)
@@ -410,6 +419,10 @@ def find_anomalies(
         agg_func = data.get_agg_func()
         if agg_func is None:
             raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
+
+        if data.get_measures_names() is None:
+            raise KeyError('not-None "measure_names" must be set for anomeda.DataFrame object')
+        measures_names = data.get_measures_names()
         
         if clusters is None:
             clusters = df['cluster'].drop_duplicates()
@@ -432,6 +445,9 @@ def find_anomalies(
                 c = ' and '.join(sorted(c.split(' and '), key=lambda v: measures_names.index(v.split('==')[0].replace('`', ''))))
 
             df_tmp = df[df['cluster'] == c]
+
+            if df_tmp.shape[0] == 0:
+                raise ValueError(f'Failed to find cluster {c}. Make sure such a breakdown was set during trends fitting.')
 
             yindex = data._clusters[c]['index']
             ydata = data._clusters[c]['values']
@@ -460,8 +476,12 @@ def find_anomalies(
             y_diff = y_diff[sorted_ind]
             y_fitted = y_fitted[sorted_ind]
 
-            clusterizator = LocalOutlierFactor(n_neighbors=min(len(ydata) - 1, n_neighbors), novelty=False)
-            outliers = clusterizator.fit_predict(y_diff.reshape(-1, 1)) == -1
+            
+            if len(ydata) == 1:
+                outliers = np.array([False])
+            else:
+                clusterizator = LocalOutlierFactor(n_neighbors=max(min(len(ydata) - 1, n_neighbors), 1), novelty=False)
+                outliers = clusterizator.fit_predict(y_diff.reshape(-1, 1)) == -1
 
             # Remove inliers, i.e. isolated points not from the left or right tail of values range
             # We want to keep only the largest or the lowest differences
@@ -548,8 +568,11 @@ def find_anomalies(
         y_diff = y_diff[sorted_ind]
         y_fitted = y_fitted[sorted_ind]
 
-        clusterizator = LocalOutlierFactor(n_neighbors=min(len(ydata) - 1, n_neighbors), novelty=False)
-        outliers = clusterizator.fit_predict(y_diff.reshape(-1, 1)) == -1
+        if len(ydata) == 1:
+            outliers = np.array([False])
+        else:
+            clusterizator = LocalOutlierFactor(n_neighbors=max(min(len(ydata) - 1, n_neighbors), 1), novelty=False)
+            outliers = clusterizator.fit_predict(y_diff.reshape(-1, 1)) == -1
 
         # Remove inliers, i.e. isolated points not from the left or right tail of values range
         # We want to keep only the largest or the lowest differences
@@ -642,6 +665,9 @@ def plot_trends(
     else:
         raise ValueError('"data" argument must be either anomeda.DataFrame or pandas.DataFrame returned by anomeda.fit_trends()')
     
+    if df is None or len(df) == 0:
+        return None 
+    
     if clusters is None:
         clusters = df['cluster'].drop_duplicates()
     
@@ -658,7 +684,8 @@ def plot_trends(
 
         df_tmp = df[df['cluster'] == c].sort_values(by='trend_start_dt')
 
-        print(c, df_tmp, df)
+        if df_tmp.shape[0] == 0:
+            raise ValueError(f'Failed to find cluster {c}. Make sure such a breakdown was set during trends fitting.')
         
         x_cluster = []
         y_trend_cluster = []
@@ -795,6 +822,14 @@ def fit_trends(
         yindex = yseries.index.values
         ydata = yseries.values
 
+        if len(ydata) == 0:
+            if save_trends:
+                data._trends = {}
+                data._clusters = {}
+                data._trends_conf = {}
+            if df:
+                return None
+
         clusters_storage[query] = {'index': yindex, 'values': ydata}
         
         trends = extract_trends(
@@ -891,6 +926,10 @@ def fit_trends(
         if breakdown is not None and breakdown != 'no':
             raise ValueError('Breakdown may be passed only if provided data is anomeda.DataFrame')
         x, y = data
+
+        if len(y) == 0:
+            return None
+
         sorted_indx = np.argsort(x)
         x = x[sorted_indx]
         y = y[sorted_indx]
