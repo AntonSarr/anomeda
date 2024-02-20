@@ -112,15 +112,21 @@
 
 <h1 id="introduction-to-anomeda">Introduction to Anomeda</h1>
 <p><strong>anomeda package helps you analyze non-aggregated time-series data with Python</strong>.</p>
-<p>Here is a brief example of how it can work.</p>
+<p>Here is a brief example of how <strong>anomeda</strong> can work for you.</p>
 <blockquote>
-<p>"Why has the number of our website visits decreased a week ago? What kind of users caused that?" - anomeda will answer such questions quickly by processing <strong>non-aggregated</strong> visits of your website. </p>
-<p>It will show you, for instance, that users from the X country using the Y device suddenly stopped visiting your website. Not only that, even if you are not aware of any significant change of the number of visits, anomeda will highlight the cluster of events where it happened. </p>
-<p>Is it fraudulent activity, a paused marketing campaign or technical issues? It's up to you to investigate!</p>
+<p>"Why has the number of our website visits decreased a week ago? What kind of users caused that?" - anomeda will answer such questions quickly by processing <strong>non-aggregated</strong> visits of your website. <br><br>
+It will show you, for instance, that users from the X country using the Y device suddenly stopped visiting your website. Not only that, even if you are not aware of any significant change of the number of visits, anomeda will highlight the cluster of events where it happened. <br><br>
+Is it fraudulent activity, a paused marketing campaign or technical issues? It's up to you to investigate!</p>
 </blockquote>
-<p>The package is easy-to-use and adjustable enough to meet a wide range of real scenarios.</p>
-<p>Find project in its <a href="https://github.com/AntonSarr/anomeda">GitHub repo</a>.
-The <a href="https://anomeda.readthedocs.io/en/latest/">Documentation</a> is available.</p>
+<p>The package is easy-to-use and adjustable enough to meet a wide range of real scenarios. The basic object, <code>anomeda.DataFrame</code>, inherits <code>pandas.DataFrame</code>, so you will find the API familiar. In addition, there are different options for fine-tuning alghorithms used under the hood.</p>
+<p>Some of what <strong>anomeda</strong> can do for your <strong>non-aggregated data</strong>:</p>
+<ul>
+<li>Highlight time points and clusters when the trend, mean or variance changed</li>
+<li>Highlight time points and clusters if the anomalies there were observed</li>
+<li>Compare time periods and find clusters affecting an overall metric difference</li>
+</ul>
+<p>Find the project in its <a href="https://github.com/AntonSarr/anomeda">GitHub repo</a>.</p>
+<p>Explore the <a href="https://anomeda.readthedocs.io/en/latest/">Documentation of anomeda</a>.</p>
 <h1 id="basic-usage">Basic usage</h1>
 <p>Let's say your data contains two sets of columns. Firstly, values you want to track in an aggregated or non-aggregated way, like "visit a website", "purchase" events or rows with aggregated "number of errors per minute". In anomeda, we call it a <strong><em>metric</em></strong>. Secondly, corresponding characteristics, like "country", "device name", "goods category" or similar (we call it <strong><em>measures</em></strong>). If you know that the metric changed its values and you need to know the reason, with <strong>anomeda</strong> you can run a few lines of code:</p>
 <pre><code class="language-python">import anomeda
@@ -256,5 +262,5 @@ anomeda.explain_values_difference(
 
 <!--
 MkDocs version : 1.5.3
-Build Date UTC : 2024-02-20 15:20:54.533736+00:00
+Build Date UTC : 2024-02-20 18:13:42.428249+00:00
 -->

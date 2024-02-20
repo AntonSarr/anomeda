@@ -2,18 +2,23 @@
 
 **anomeda package helps you analyze non-aggregated time-series data with Python**.
 
-Here is a brief example of how it can work.
+Here is a brief example of how **anomeda** can work for you.
 
-> "Why has the number of our website visits decreased a week ago? What kind of users caused that?" - anomeda will answer such questions quickly by processing **non-aggregated** visits of your website. 
-
-> It will show you, for instance, that users from the X country using the Y device suddenly stopped visiting your website. Not only that, even if you are not aware of any significant change of the number of visits, anomeda will highlight the cluster of events where it happened. 
-
+> "Why has the number of our website visits decreased a week ago? What kind of users caused that?" - anomeda will answer such questions quickly by processing **non-aggregated** visits of your website. <br><br>
+> It will show you, for instance, that users from the X country using the Y device suddenly stopped visiting your website. Not only that, even if you are not aware of any significant change of the number of visits, anomeda will highlight the cluster of events where it happened. <br><br>
 > Is it fraudulent activity, a paused marketing campaign or technical issues? It's up to you to investigate!
 
-The package is easy-to-use and adjustable enough to meet a wide range of real scenarios.
+The package is easy-to-use and adjustable enough to meet a wide range of real scenarios. The basic object, `anomeda.DataFrame`, inherits `pandas.DataFrame`, so you will find the API familiar. In addition, there are different options for fine-tuning alghorithms used under the hood.
 
-Find project in its [GitHub repo](https://github.com/AntonSarr/anomeda).
-The [Documentation](https://anomeda.readthedocs.io/en/latest/) is available.
+Some of what **anomeda** can do for your **non-aggregated data**:
+
+- Highlight time points and clusters when the trend, mean or variance changed
+- Highlight time points and clusters if the anomalies there were observed
+- Compare time periods and find clusters affecting an overall metric difference
+
+Find the project in its [GitHub repo](https://github.com/AntonSarr/anomeda).
+
+Explore the [Documentation of anomeda](https://anomeda.readthedocs.io/en/latest/).
 
 # Basic usage
 
