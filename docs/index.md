@@ -4,7 +4,11 @@
 
 Here is a brief example of how it can work.
 
-> "Why has the number of our website visits decreased a week ago? What kind of users caused that?" - anomeda will answer such questions quickly by processing non-aggregated visits of your website. Specifically, it will show you, for instance, that users from the X country using the Y device suddenly stopped visiting your website. Not only that, even if you are not aware of any significant change of the number of visits, **anomeda** will highlight the cluster of events where it happened. Is it fraudulent activity, a paused marketing campaign or technical issues? It's up to you to investigate!
+> "Why has the number of our website visits decreased a week ago? What kind of users caused that?" - anomeda will answer such questions quickly by processing **non-aggregated** visits of your website. 
+
+> It will show you, for instance, that users from the X country using the Y device suddenly stopped visiting your website. Not only that, even if you are not aware of any significant change of the number of visits, anomeda will highlight the cluster of events where it happened. 
+
+> Is it fraudulent activity, a paused marketing campaign or technical issues? It's up to you to investigate!
 
 The package is easy-to-use and adjustable enough to meet a wide range of real scenarios.
 
