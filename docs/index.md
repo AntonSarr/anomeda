@@ -1,12 +1,19 @@
 # Introduction to Anomeda
 
-"Why has the number of visits of our website decreased this week? Who are the users who caused that?" - **anomeda** will help to answer such questions quickly and easily using Python with **pandas** package installed.
+**anomeda package helps you analyze non-aggregated time-series data with Python**.
 
-You are welcome to visit [GitHub repo](https://github.com/AntonSarr/anomeda) of the project!
+Here is a brief example of how it can work.
 
-**anomeda** is a Python package developed for Data Analysts, Data Scientists, BI Analysts and others. It helps to identify important metric changes and quickly find clusters in data which changed the trend of the metric or caused the anomaly. You just need to pass a `pandas.DataFrame` object to anomeda to start analyzing it.
+> "Why has the number of our website visits decreased a week ago? What kind of users caused that?" - anomeda will answer such questions quickly by processing non-aggregated visits of your website. Specifically, it will show you, for instance, that users from the X country using the Y device suddenly stopped visiting your website. Not only that, even if you are not aware of any significant change of the number of visits, **anomeda** will highlight the cluster of events where it happened. Is it fraudulent activity, a paused marketing campaign or technical issues? It's up to you to investigate!
 
-Let's say your data contains values you want to track in an aggregated or non-aggregated way, like "visit a website" or "purchase" events or rows with aggregated "number of errors per minute" (in anomeda, we call it a ***metric***) and corresponding characteristics, like "country", "device name", "goods category" (we call it ***measures***). If you already know that the metric changed its values and you need to know the reason, with **anomeda** you can run a few lines of code:
+The package is easy-to-use and adjustable enough to meet a wide range of real scenarios.
+
+Find project in its [GitHub repo](https://github.com/AntonSarr/anomeda).
+The [Documentation](https://anomeda.readthedocs.io/en/latest/) is available.
+
+# Basic usage
+
+Let's say your data contains two sets of columns. Firstly, values you want to track in an aggregated or non-aggregated way, like "visit a website", "purchase" events or rows with aggregated "number of errors per minute". In anomeda, we call it a ***metric***. Secondly, corresponding characteristics, like "country", "device name", "goods category" or similar (we call it ***measures***). If you know that the metric changed its values and you need to know the reason, with **anomeda** you can run a few lines of code:
 
 ```python
 import anomeda
@@ -37,17 +44,22 @@ abnormal_period = anomeda.DataFrame(
 
 anomeda.explain_values_difference(
     normal_period,
-    abnormal_period
+    abnormal_period,
+    measures_to_iterate='combinations'
 )
 ```
 
-This code will iterate over the values of the measures and return a pandas.DataFrame explaining which values of measures caused the abnormal values of your metric and what contribution precisely they made.
+Output will look like a pandas.DataFrame object containig **average values**, **trends** of the metric in every single cluster, the description of **how they differ** and **how the differences contribute** to the overall metric. It will let you easily find the culprits of anomalies and take actions rapidly.
 
 > As you might have noticed, anomeda is capable of processing **continous measures**, which means you still can them as measures! It is possible because of automatical discretization mechanism embedded in the package. However, you may pass your own discrete values of continous features.
 
+Visit the [Documentation](https://anomeda.readthedocs.io/en/latest/) page of the project to know more.
+
+# Use cases
+
 **anomeda** also lets do the following:
-- Detect metric's anomalies
-- Find clusters which make the metric increase or decrease (clusters where metric's values have a positive or a negative trend)
+- Detect metric's anomalies and find the clusters of rows, sharing common features, which caused that
+- Find clusters of rows sharing common features which make the metric increase or decrease (clusters where metric's values have a positive or a negative trend)
 
 See the [Usage](user_guide.md) page of the documentation for the details.
 

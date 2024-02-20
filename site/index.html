@@ -81,6 +81,16 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-level="1"><a href="#basic-usage" class="nav-link">Basic usage</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="1"><a href="#use-cases" class="nav-link">Use cases</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-level="1"><a href="#installing" class="nav-link">Installing</a>
               <ul class="nav flex-column">
               </ul>
@@ -101,10 +111,16 @@
                     <div class="col-md-9" role="main">
 
 <h1 id="introduction-to-anomeda">Introduction to Anomeda</h1>
-<p>"Why has the number of visits of our website decreased this week? Who are the users who caused that?" - <strong>anomeda</strong> will help to answer such questions quickly and easily using Python with <strong>pandas</strong> package installed.</p>
-<p>You are welcome to visit <a href="https://github.com/AntonSarr/anomeda">GitHub repo</a> of the project!</p>
-<p><strong>anomeda</strong> is a Python package developed for Data Analysts, Data Scientists, BI Analysts and others. It helps to identify important metric changes and quickly find clusters in data which changed the trend of the metric or caused the anomaly. You just need to pass a <code>pandas.DataFrame</code> object to anomeda to start analyzing it.</p>
-<p>Let's say your data contains values you want to track in an aggregated or non-aggregated way, like "visit a website" or "purchase" events or rows with aggregated "number of errors per minute" (in anomeda, we call it a <strong><em>metric</em></strong>) and corresponding characteristics, like "country", "device name", "goods category" (we call it <strong><em>measures</em></strong>). If you already know that the metric changed its values and you need to know the reason, with <strong>anomeda</strong> you can run a few lines of code:</p>
+<p><strong>anomeda package helps you analyze non-aggregated time-series data with Python</strong>.</p>
+<p>Here is a brief example of how it can work.</p>
+<blockquote>
+<p>"Why has the number of our website visits decreased a week ago? What kind of users caused that?" - anomeda will answer such questions quickly by processing non-aggregated visits of your website. Specifically, it will show you, for instance, that users from the X country using the Y device suddenly stopped visiting your website. Not only that, even if you are not aware of any significant change of the number of visits, <strong>anomeda</strong> will highlight the cluster of events where it happened. Is it fraudulent activity, a paused marketing campaign or technical issues? It's up to you to investigate!</p>
+</blockquote>
+<p>The package is easy-to-use and adjustable enough to meet a wide range of real scenarios.</p>
+<p>Find project in its <a href="https://github.com/AntonSarr/anomeda">GitHub repo</a>.
+The <a href="https://anomeda.readthedocs.io/en/latest/">Documentation</a> is also available.</p>
+<h1 id="basic-usage">Basic usage</h1>
+<p>Let's say your data contains two sets of columns. Firstly, values you want to track in an aggregated or non-aggregated way, like "visit a website", "purchase" events or rows with aggregated "number of errors per minute". In anomeda, we call it a <strong><em>metric</em></strong>. Secondly, corresponding characteristics, like "country", "device name", "goods category" or similar (we call it <strong><em>measures</em></strong>). If you know that the metric changed its values and you need to know the reason, with <strong>anomeda</strong> you can run a few lines of code:</p>
 <pre><code class="language-python">import anomeda
 
 normal_period = anomeda.DataFrame(
@@ -133,16 +149,19 @@ abnormal_period = anomeda.DataFrame(
 
 anomeda.explain_values_difference(
     normal_period,
-    abnormal_period
+    abnormal_period,
+    measures_to_iterate='combinations'
 )
 </code></pre>
-<p>This code will iterate over the values of the measures and return a pandas.DataFrame explaining which values of measures caused the abnormal values of your metric and what contribution precisely they made.</p>
+<p>Output will look like a pandas.DataFrame object containig <strong>average values</strong>, <strong>trends</strong> of the metric in every single cluster, the description of <strong>how they differ</strong> and <strong>how the differences contribute</strong> to the overall metric. It will let you easily find the culprits of anomalies and take actions rapidly.</p>
 <blockquote>
 <p>As you might have noticed, anomeda is capable of processing <strong>continous measures</strong>, which means you still can them as measures! It is possible because of automatical discretization mechanism embedded in the package. However, you may pass your own discrete values of continous features.</p>
 </blockquote>
+<p>Visit the <a href="https://anomeda.readthedocs.io/en/latest/">Documentation</a> page of the project to know more.</p>
+<h1 id="use-cases">Use cases</h1>
 <p><strong>anomeda</strong> also lets do the following:
-- Detect metric's anomalies
-- Find clusters which make the metric increase or decrease (clusters where metric's values have a positive or a negative trend)</p>
+- Detect metric's anomalies and find the clusters of rows, sharing common features, which caused that
+- Find clusters of rows sharing common features which make the metric increase or decrease (clusters where metric's values have a positive or a negative trend)</p>
 <p>See the <a href="user_guide/">Usage</a> page of the documentation for the details.</p>
 <h1 id="installing">Installing</h1>
 <p>The <a href="https://github.com/AntonSarr/anomeda">GitHub repo</a> contains the source distribution and built distribution files in <em>dist</em> folder.</p>
@@ -235,5 +254,5 @@ anomeda.explain_values_difference(
 
 <!--
 MkDocs version : 1.5.3
-Build Date UTC : 2024-02-19 20:28:32.980283+00:00
+Build Date UTC : 2024-02-20 15:17:04.538703+00:00
 -->
