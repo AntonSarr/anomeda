@@ -81,12 +81,7 @@
               </ul>
             </li>
             
-            <li class="nav-item" data-level="1"><a href="#basic-usage" class="nav-link">Basic usage</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            
-            <li class="nav-item" data-level="1"><a href="#use-cases" class="nav-link">Use cases</a>
+            <li class="nav-item" data-level="1"><a href="#quick-start" class="nav-link">Quick start</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -116,70 +111,87 @@
 <blockquote>
 <p>"Why has the number of our website visits decreased a week ago? What kind of users caused that?" - anomeda will answer such questions quickly by processing <strong>non-aggregated</strong> visits of your website. <br><br>
 It will show you, for instance, that users from the X country using the Y device suddenly stopped visiting your website. Not only that, even if you are not aware of any significant change of the number of visits, anomeda will highlight the cluster of events where it happened. <br><br>
-Is it fraudulent activity, a paused marketing campaign or technical issues? It's up to you to investigate!</p>
+Is it fraudulent activity, a paused marketing campaign or technical issues? It's up to you to investigate.</p>
 </blockquote>
 <p>The package is easy-to-use and adjustable enough to meet a wide range of real scenarios. The basic object, <code>anomeda.DataFrame</code>, inherits <code>pandas.DataFrame</code>, so you will find the API familiar. In addition, there are different options for fine-tuning alghorithms used under the hood.</p>
 <p>Some of what <strong>anomeda</strong> can do for your <strong>non-aggregated data</strong>:</p>
 <ul>
 <li>Highlight time points and clusters when the trend, mean or variance changed</li>
-<li>Highlight time points and clusters if the anomalies there were observed</li>
-<li>Compare time periods and find clusters affecting an overall metric difference</li>
+<li>Fit trends for any cluster considering the points where trends change</li>
+<li>Highlight time points and clusters if the anomalies were observed, considering trend at that moment</li>
+<li>Compare time periods and find clusters changing the metric</li>
 </ul>
 <p>Find the project in its <a href="https://github.com/AntonSarr/anomeda">GitHub repo</a>.</p>
 <p>Explore the <a href="https://anomeda.readthedocs.io/en/latest/">Documentation of anomeda</a>.</p>
-<h1 id="basic-usage">Basic usage</h1>
-<p>Let's say your data contains two sets of columns. Firstly, values you want to track in an aggregated or non-aggregated way, like "visit a website", "purchase" events or rows with aggregated "number of errors per minute". In anomeda, we call it a <strong><em>metric</em></strong>. Secondly, corresponding characteristics, like "country", "device name", "goods category" or similar (we call it <strong><em>measures</em></strong>). If you know that the metric changed its values and you need to know the reason, with <strong>anomeda</strong> you can run a few lines of code:</p>
+<h1 id="quick-start">Quick start</h1>
+<p>Let's imagine you oversee the number of visits of a website.</p>
+<p>You have a table with visits. Typically you just aggregate them by a datetime column and monitor from 3 to 5 dashboards with overall number of visits, as well as visits of important pages, visits from specific systems, visits of specific users clustes, etc. Here is what you would do with <strong>anomeda</strong>.</p>
+<p>Let's define an anomeda object.</p>
 <pre><code class="language-python">import anomeda
 
-normal_period = anomeda.DataFrame(
-    data1, # pandas.DataFrame
-    measures_names=['dummy_measure', 'dummy_continuous_measure'], # columns represending measures
+anomeda_df = anomeda.DataFrame(
+    df, # pandas.DataFrame
+    measures_names=['country', 'system', 'url', 'duration'], # columns represending measures or characteristics of your events
     measures_types={
-        'categorical': ['dummy_measure'], 
-        'continuous': ['dummy_continuous_measure']
+        'categorical': [;'country', 'system', 'url'], 
+        'continuous': ['duration'] # measures can also be continuous -  anomeda will take care of clustering them properly 
     },
     index_name='date',
-    metric_name='metric',
-    agg_func='sum' # function that is used to aggregate metric if more than 1 metric value will be found for a particular set of measure values
-)
-
-abnormal_period = anomeda.DataFrame(
-    data2, # pandas.DataFrame
-    measures_names=['dummy_measure', 'dummy_numeric_measure'], # columns represending measures
-    measures_types={
-        'categorical': ['dummy_measure'], 
-        'continuous': ['dummy_numeric_measure']
-    },
-    index_name='date',
-    metric_name='metric',
-    agg_func='sum' # function that is used to aggregate metric if more than 1 metric value will be found for a particular set of measure values
-)
-
-anomeda.explain_values_difference(
-    normal_period,
-    abnormal_period,
-    measures_to_iterate='combinations'
+    metric_name='visit', # dummy metric, always 1
+    agg_func='sum' # function that is used to aggregate metric
 )
 </code></pre>
-<p>Output will look like a pandas.DataFrame object containig <strong>average values</strong>, <strong>trends</strong> of the metric in every single cluster, the description of <strong>how they differ</strong> and <strong>how the differences contribute</strong> to the overall metric. It will let you easily find the culprits of anomalies and take actions rapidly.</p>
-<blockquote>
-<p>As you might have noticed, anomeda is capable of processing <strong>continous measures</strong>, which means you still can them as measures! It is possible because of automatical discretization mechanism embedded in the package. However, you may pass your own discrete values of continous features.</p>
-</blockquote>
-<p>Visit the <a href="https://anomeda.readthedocs.io/en/latest/">Documentation</a> page of the project to know more.</p>
-<h1 id="use-cases">Use cases</h1>
-<p><strong>anomeda</strong> also lets do the following:
-- Detect metric's anomalies and find the clusters of rows, sharing common features, which caused that
-- Find clusters of rows sharing common features which make the metric increase or decrease (clusters where metric's values have a positive or a negative trend)</p>
-<p>See the <a href="user_guide/">Usage</a> page of the documentation for the details.</p>
+<p><code>anomeda.DataFrame</code> inherits <code>pandas.DataFrame</code>, so you can treat them similarly. </p>
+<hr />
+<p><strong>NOTE</strong></p>
+<p>Some <em>pandas</em> methods are not yet adapted for <em>anomeda</em>. They return a new <code>pandas.DataFrame</code> instead of a <code>anomeda.DataFrame</code>. You just need to initialize an <em>anomeda</em> object with a returned object in that case. </p>
+<hr />
+<p>Let's try to extract trends for important clusters from the data.</p>
+<pre><code class="language-python">trends = anomeda.fit_trends(
+    anomeda_df,
+    trend_fitting_conf={'max_trends': 'auto', 'min_var_reduction': 0.75}, # set the number of trends automatically,
+                                                                          # try to reduce error variance compared to error of estimating values by 1-line trend by 75%
+    breakdown='all-clusters', # fit trends for clusters extracted from all possible sets of measures
+    min_cluster_size=3 # skip small clusters
+)
+</code></pre>
+<p>Typically you will see something like this:</p>
+<p><img alt="anomeda.fit_trends method" src="img/anomeda_fit_trends_1.png" title="anomeda.fit_trends method" /></p>
+<p>You can then plot the trends using the <code>plot_trends</code> method. You can choose a specific cluster or plot them all together.</p>
+<pre><code class="language-python">anomeda.plot_trends(anomeda_df, clusters=['`country`==&quot;Germany&quot;'])
+</code></pre>
+<p>The output will look like this:</p>
+<p><img alt="anomeda.plot_trends method" src="img/anomeda_plot_trends_1.png" title="anomeda.plot_trends method" /></p>
+<p>Of course, you may have no idea which cluster caused the problem and what to plot. Almost always you know only that there is a decrease of an overall metric and you need to find the culprits. Let's utilize another method -- <code>anomeda.compare_clusters</code>.</p>
+<pre><code class="language-python">anomeda.compare_clusters(
+    anomeda_df,
+    period1='date &lt; 30',
+    period2='date &gt;= 30'
+)
+</code></pre>
+<p>You see the clusters you fitted before and comparison between their characteristics. The result is quite hefty, but you can easily add your own metrics and sort clusters so that the cluster you are looking for will be on top. For example, look at how different means in the second cluster are. The second cluster corresponds to Germany (the first cluster consists of all events, so we are not interested in it now).</p>
+<p><img alt="anomeda.compare_clusters method" src="img/anomeda_compare_clusters_1.png" title="anomeda.compare_clusters method" /></p>
+<p>Finally, you can check if there are any point anomalies present in any of your clusters.</p>
+<pre><code class="language-python">anomeda.find_anomalies(
+    anomeda_df, 
+    anomalies_conf: {'p_large': 0, 'p_low': 1, 'n_neighbors': 3}
+)
+</code></pre>
+<p>There are some nuances of how to use <strong>anomeda</strong> wisely and powerfully. For example, you may use same anomeda methods simply with numpy arrays, without creating DataFrame's! See full <a href="https://anomeda.readthedocs.io/en/latest/">Documentation</a> for more details and hints.</p>
 <h1 id="installing">Installing</h1>
-<p>The <a href="https://github.com/AntonSarr/anomeda">GitHub repo</a> contains the source distribution and built distribution files in <em>dist</em> folder.</p>
-<p>You must have <em>pandas</em>, <em>numpy</em>, <em>sklearn</em>, <em>scipy</em> installed. </p>
+<p>The <a href="https://github.com/AntonSarr/anomeda">GitHub repo</a> contains the source and built distribution files in <em>dist</em> folder.</p>
+<p>You must have such packages be installed:</p>
+<ul>
+<li><em>pandas</em> </li>
+<li><em>numpy</em></li>
+<li><em>sklearn</em></li>
+<li><em>scipy</em></li>
+<li><em>matplotlib</em> </li>
+</ul>
 <h1 id="contribution">Contribution</h1>
-<p>You are very welcome to contribute to the project!</p>
+<p>You are very welcome to contribute to the project. The contribution guide is coming soon.</p>
 <h1 id="contacts">Contacts</h1>
-<p>If you have any questions related to <strong>anomeda</strong> project, feel free reaching out to the author:</p>
-<p>Anton Saroka, Data Scientist</p>
-<p>anton.soroka.1313@gmail.com</p></div>
+<p>If you have any questions related to <strong>anomeda</strong> project, feel free reaching out to the author.</p></div>
             </div>
         </div>
 
@@ -262,5 +274,5 @@ anomeda.explain_values_difference(
 
 <!--
 MkDocs version : 1.5.3
-Build Date UTC : 2024-02-20 18:13:42.428249+00:00
+Build Date UTC : 2024-02-21 19:41:44.858174+00:00
 -->
