@@ -1,6 +1,110 @@
-# User Guide
+# Usage Guide
 
-After the library is installed, you can pass the pandas.DataFrame object with events to anomeda and look for insights about the metric's behavior. 
+## What is anomeda.DataFrame
+
+`anomeda.DataFrame` is class used to store the time-series data and its metadata. It inherits `pandas.DataFrame`. One of the implications of that fact is that `anomeda.DataFrame.__init__` processes the same parameters as its ancestor and *a few more*. Specifically:
+
+::: DataFrame.DataFrame
+    options:
+      heading_level: 5
+      show_docstring_classes: false
+      merge_init_into_class: true
+      show_root_heading: false
+      show_root_full_path: false
+      show_docstring_examples: false
+      show_docstring_description: false
+      show_bases: false
+      members:
+      - __init__
+    
+As you may have noticed, most of the parameters are optional. If you don't specify a parameter, a default value will be used. Or you will be notified once you use `anomeda.fit_trends`, `anomeda.find_anomalies` or other methods that you need to specify something additionally.
+
+Here is some examples of how you can initialize a new `anomeda.DataFrame`:
+
+```python
+# With just a pandas.DataFrame and metric name
+anomeda.DataFrame(pandas_df, metric_name='my_metric')
+
+# With some measures
+anomeda.DataFrame(pandas_df, measures_names=['A', 'B', 'C'], metric_name='my_metric')
+
+# In a pandas.DataFrame style
+anomeda.DataFrame(
+    {
+        'A': [0, 1, 2],
+        'B': [3, 4, 5],
+        'C': [6, 7, 8],
+        'my_metric': [10, 20, 30]
+    }
+    measures_names=['A', 'B', 'C'], 
+    metric_name='my_metric'
+)
+
+
+# With a discretization mappging
+anomeda.DataFrame(
+    pandas_df, 
+    measures_names=['A', 'B', 'C'], 
+    metric_name='my_metric',
+    discretized_measures_mapping={
+        'A': {
+            0: [[20, 80]],           # map values from 20 to 80 to 0 - "normal values"
+            1: [[0, 20], [80, 100]], # map values from 0 and 20 or between 80 and 100 to 1 - "abnormal values"
+        }
+    }
+)
+
+# And many more...
+```
+
+---
+**NOTE 1**
+
+Some *pandas* methods are not yet adapted for *anomeda*. They return a new `pandas.DataFrame` instead of a `anomeda.DataFrame`. You just need to initialize an *anomeda* object with a returned object in that case. 
+
+---
+
+---
+**NOTE 2**
+
+The scale of undex increments is extracted automatically. It can be 1 (*Integer*, if your index are integers) or a part of a timestamp (*second*, *minute*, *hour*, etc). 
+
+For example, if your index consists of two values ['2024-01-01 00:00:00', '2024-01-01 00:01:00'], the step is *hour*. However, the step may become *minute* once you add only one value - ['2024-01-01 00:00:00', '2024-01-01 00:01:00', '2024-01-01 00:01:**01**'], since *minute* is the smallest increment now.
+
+By default, anomeda does not fill the missing index values. So if there are infrequent index values, anomeda will use only them to use fit trends.
+
+*TODO in new versions: add filling options*
+
+---
+
+A list of methods available to manipulate `anomeda.DataFrame`, such as *getters*, *setters*, *copying*, *modifying the object*, etc. Please follow [anomeda.DataFrame API Reference](dataframe_api.md) for the details. Her is the full list:
+
+::: DataFrame.DataFrame
+    options:
+      heading_level: 6
+      show_docstring_classes: false
+      merge_init_into_class: false
+      show_root_heading: false
+      show_root_full_path: false
+      show_docstring_examples: false
+      show_docstring_description: false
+      show_docstring_parameters: false
+      show_docstring_examples: false
+      show_docstring_returns: false
+      show_signature: false
+      show_bases: false
+
+## How we handle continuous measures
+
+Text
+
+## How we fit trends
+
+Text
+
+## How we detect anomalies
+
+Text
 
 ## Create an anomeda.DataFrame object
 
