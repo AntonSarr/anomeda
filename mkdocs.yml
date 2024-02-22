@@ -1,9 +1,11 @@
 site_name: Anomeda Python Package
 
 nav:
-  - Overview: index.md 
-  - Usage: user_guide.md 
-  - API Reference: api_reference.md
+  - Overview: index.md
+  - Usage Guide: usage_guide.md 
+  - API Reference: 
+    - Anomeda DataFrame: dataframe_api.md
+    - Anomeda methods: anomeda_api.md
   
 plugins:
   - search

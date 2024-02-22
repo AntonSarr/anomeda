@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../img/favicon.ico">
-        <title>Usage - Anomeda Python Package</title>
+        <title>Usage Guide - Anomeda Python Package</title>
         <link href="../css/bootstrap.min.css" rel="stylesheet">
         <link href="../css/font-awesome.min.css" rel="stylesheet">
         <link href="../css/base.css" rel="stylesheet">
@@ -35,10 +35,20 @@
                                 <a href=".." class="nav-link">Overview</a>
                             </li>
                             <li class="navitem active">
-                                <a href="./" class="nav-link">Usage</a>
+                                <a href="./" class="nav-link">Usage Guide</a>
                             </li>
-                            <li class="navitem">
-                                <a href="../api_reference/" class="nav-link">API Reference</a>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">API Reference <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../dataframe_api/" class="dropdown-item">Anomeda DataFrame</a>
+</li>
+                                    
+<li>
+    <a href="../anomeda_api/" class="dropdown-item">Anomeda methods</a>
+</li>
+                                </ul>
                             </li>
                         </ul>
 
@@ -54,7 +64,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="../api_reference/" class="nav-link">
+                                <a rel="next" href="../dataframe_api/" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -76,8 +86,24 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-level="1"><a href="#user-guide" class="nav-link">User Guide</a>
+            <li class="nav-item" data-level="1"><a href="#usage-guide" class="nav-link">Usage Guide</a>
               <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#what-is-anomedadataframe" class="nav-link">What is anomeda.DataFrame</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#how-we-handle-continuous-measures" class="nav-link">How we handle continuous measures</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#how-we-fit-trends" class="nav-link">How we fit trends</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#how-we-detect-anomalies" class="nav-link">How we detect anomalies</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-level="2"><a href="#create-an-anomedadataframe-object" class="nav-link">Create an anomeda.DataFrame object</a>
               <ul class="nav flex-column">
               </ul>
@@ -101,8 +127,477 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<h1 id="user-guide">User Guide</h1>
-<p>After the library is installed, you can pass the pandas.DataFrame object with events to anomeda and look for insights about the metric's behavior. </p>
+<h1 id="usage-guide">Usage Guide</h1>
+<h2 id="what-is-anomedadataframe">What is anomeda.DataFrame</h2>
+<p><code>anomeda.DataFrame</code> is class used to store the time-series data and its metadata. It inherits <code>pandas.DataFrame</code>. One of the implications of that fact is that <code>anomeda.DataFrame.__init__</code> processes the same parameters as its ancestor and <em>a few more</em>. Specifically:</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<a id="DataFrame.DataFrame"></a>
+  <div class="doc doc-contents first">
+
+  
+
+
+
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b><code>*args</code></b>
+        –
+        <div class="doc-md-description">
+          <p>Parameters for initialization a pandas.DataFrame object. Other parameters must be passed as **kwargs only.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>**kwargs</code></b>
+        –
+        <div class="doc-md-description">
+          <p>Parameters for initialization a pandas.DataFrame object. Other parameters must be passed as **kwargs only.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>measures_names</code></b>
+            (<code>&#39;list | tuple&#39; = None</code>)
+        –
+        <div class="doc-md-description">
+          <p>A list containing columns considered as measures. If None, your data is supposed to have no measures.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>measures_types</code></b>
+            (<code>&#39;dict&#39; = None</code>)
+        –
+        <div class="doc-md-description">
+          <p>A dictionary containing 'categorical' and/or 'continuous' keys and list of measures as values. Continuous measures will be discretized automatically if not presented in discretized_measures parameter. If your data has any measures, you must provide its' types.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>discretized_measures_mapping</code></b>
+            (<code>&#39;dict&#39; = None</code>)
+        –
+        <div class="doc-md-description">
+          <p>Custom dictionary with a mapping between a discrete value of the meauser and corresponding continous ranges. The lower bound must be including, the higher bound must be excluding. It uses the following format:</p>
+<pre><code class="language-json">{
+    'measure_name': {
+        discrete_value_1: [[continuous_threshold_min_inc, continuous_threshold_max_excl], [...]],
+        descrete_value_2: ... 
+    }
+}
+</code></pre>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>discretized_measures</code></b>
+            (<code>&#39;dict&#39; = None</code>)
+        –
+        <div class="doc-md-description">
+          <p>A dictionary containig names of the measures as keys and array-like objects containing customly discretized values of the measure. If not provided, continuous measures will be discretized automatically.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>index_name</code></b>
+            (<code>&#39;str | list | None&#39; = None</code>)
+        –
+        <div class="doc-md-description">
+          <p>An index column (usually a date or a timestamp). If None, index is taken from the pandas.DataFrame.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>metric_name</code></b>
+            (<code>str</code>)
+        –
+        <div class="doc-md-description">
+          <p>A metric column.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>agg_func</code></b>
+        –
+        <div class="doc-md-description">
+          <p>Way of aggregating metric_name by measures. Can be 'sum', 'avg', 'count' or callable compatible with pandas.DataFrame.groupby.</p>
+        </div>
+      </li>
+  </ul>
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  </div>
+
+
+</div><p>As you may have noticed, most of the parameters are optional. If you don't specify a parameter, a default value will be used. Or you will be notified once you use <code>anomeda.fit_trends</code>, <code>anomeda.find_anomalies</code> or other methods that you need to specify something additionally.</p>
+<p>Here is some examples of how you can initialize a new <code>anomeda.DataFrame</code>:</p>
+<pre><code class="language-python"># With just a pandas.DataFrame and metric name
+anomeda.DataFrame(pandas_df, metric_name='my_metric')
+
+# With some measures
+anomeda.DataFrame(pandas_df, measures_names=['A', 'B', 'C'], metric_name='my_metric')
+
+# In a pandas.DataFrame style
+anomeda.DataFrame(
+    {
+        'A': [0, 1, 2],
+        'B': [3, 4, 5],
+        'C': [6, 7, 8],
+        'my_metric': [10, 20, 30]
+    }
+    measures_names=['A', 'B', 'C'], 
+    metric_name='my_metric'
+)
+
+
+# With a discretization mappging
+anomeda.DataFrame(
+    pandas_df, 
+    measures_names=['A', 'B', 'C'], 
+    metric_name='my_metric',
+    discretized_measures_mapping={
+        'A': {
+            0: [[20, 80]],           # map values from 20 to 80 to 0 - &quot;normal values&quot;
+            1: [[0, 20], [80, 100]], # map values from 0 and 20 or between 80 and 100 to 1 - &quot;abnormal values&quot;
+        }
+    }
+)
+
+# And many more...
+</code></pre>
+<hr />
+<p><strong>NOTE 1</strong></p>
+<p>Some <em>pandas</em> methods are not yet adapted for <em>anomeda</em>. They return a new <code>pandas.DataFrame</code> instead of a <code>anomeda.DataFrame</code>. You just need to initialize an <em>anomeda</em> object with a returned object in that case. </p>
+<hr />
+<hr />
+<p><strong>NOTE 2</strong></p>
+<p>The scale of undex increments is extracted automatically. It can be 1 (<em>Integer</em>, if your index are integers) or a part of a timestamp (<em>second</em>, <em>minute</em>, <em>hour</em>, etc). </p>
+<p>For example, if your index consists of two values ['2024-01-01 00:00:00', '2024-01-01 00:01:00'], the step is <em>hour</em>. However, the step may become <em>minute</em> once you add only one value - ['2024-01-01 00:00:00', '2024-01-01 00:01:00', '2024-01-01 00:01:<strong>01</strong>'], since <em>minute</em> is the smallest increment now.</p>
+<p>By default, anomeda does not fill the missing index values. So if there are infrequent index values, anomeda will use only them to use fit trends.</p>
+<p><em>TODO in new versions: add filling options</em></p>
+<hr />
+<p>A list of methods available to manipulate <code>anomeda.DataFrame</code>, such as <em>getters</em>, <em>setters</em>, <em>copying</em>, <em>modifying the object</em>, etc. Please follow <a href="../dataframe_api/">anomeda.DataFrame API Reference</a> for the details. Her is the full list:</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<a id="DataFrame.DataFrame"></a>
+  <div class="doc doc-contents first">
+
+  
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="DataFrame.DataFrame.copy_anomeda_df" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">copy_anomeda_df</span></code>
+
+</h6>
+
+
+  <div class="doc doc-contents ">
+  
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="DataFrame.DataFrame.get_agg_func" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_agg_func</span></code>
+
+</h6>
+
+
+  <div class="doc doc-contents ">
+  
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="DataFrame.DataFrame.get_discretization_mapping" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_discretization_mapping</span></code>
+
+</h6>
+
+
+  <div class="doc doc-contents ">
+  
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="DataFrame.DataFrame.get_discretized_measures" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_discretized_measures</span></code>
+
+</h6>
+
+
+  <div class="doc doc-contents ">
+  
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="DataFrame.DataFrame.get_index_name" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_index_name</span></code>
+
+</h6>
+
+
+  <div class="doc doc-contents ">
+  
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="DataFrame.DataFrame.get_measures_names" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_measures_names</span></code>
+
+</h6>
+
+
+  <div class="doc doc-contents ">
+  
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="DataFrame.DataFrame.get_measures_types" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_measures_types</span></code>
+
+</h6>
+
+
+  <div class="doc doc-contents ">
+  
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="DataFrame.DataFrame.get_metric_name" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_metric_name</span></code>
+
+</h6>
+
+
+  <div class="doc doc-contents ">
+  
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="DataFrame.DataFrame.replace_df" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">replace_df</span></code>
+
+</h6>
+
+
+  <div class="doc doc-contents ">
+  
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="DataFrame.DataFrame.set_agg_func" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">set_agg_func</span></code>
+
+</h6>
+
+
+  <div class="doc doc-contents ">
+  
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="DataFrame.DataFrame.set_discretization_mapping" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">set_discretization_mapping</span></code>
+
+</h6>
+
+
+  <div class="doc doc-contents ">
+  
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="DataFrame.DataFrame.set_discretized_measures" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">set_discretized_measures</span></code>
+
+</h6>
+
+
+  <div class="doc doc-contents ">
+  
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="DataFrame.DataFrame.set_measures_names" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">set_measures_names</span></code>
+
+</h6>
+
+
+  <div class="doc doc-contents ">
+  
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="DataFrame.DataFrame.set_measures_types" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">set_measures_types</span></code>
+
+</h6>
+
+
+  <div class="doc doc-contents ">
+  
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h6 id="DataFrame.DataFrame.set_metric_name" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">set_metric_name</span></code>
+
+</h6>
+
+
+  <div class="doc doc-contents ">
+  
+
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+
+</div><h2 id="how-we-handle-continuous-measures">How we handle continuous measures</h2>
+<p>Text</p>
+<h2 id="how-we-fit-trends">How we fit trends</h2>
+<p>Text</p>
+<h2 id="how-we-detect-anomalies">How we detect anomalies</h2>
+<p>Text</p>
 <h2 id="create-an-anomedadataframe-object">Create an anomeda.DataFrame object</h2>
 <p>The base object anomeda is working with is the DataFrame. It is based on pandas.DataFrame object which contains events represented by rows or time series (aggregated events). It may contain:
 - Index

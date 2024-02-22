@@ -95,30 +95,27 @@ class DataFrame(pd.DataFrame):
     *args, **kwargs
         Parameters for initialization a pandas.DataFrame object. Other parameters must be passed as **kwargs only.
     measures_names : 'list | tuple' = None
-        List containing columns considered as measures in the data.
-    measures_types : 'dict'
-        Dict containing 'categorical' and/or 'continuous' keys and list of measures as values. Continuous measures will be discretized automatically if not presented in discretized_measures parameter.
-    discretized_measures_mapping : 'dict'
-        Dict with mapping between discrete value of the meause and corresponding continous values. Threshold must have the following format. 
-        As you can see, several different ranges of continuous values may be mapped into the same descrete values if you want.
-        The lower bound must be including, the higher bound must be excluding.
+        A list containing columns considered as measures. If None, your data is supposed to have no measures.
+    measures_types : 'dict' = None
+        A dictionary containing 'categorical' and/or 'continuous' keys and list of measures as values. Continuous measures will be discretized automatically if not presented in discretized_measures parameter. If your data has any measures, you must provide its' types.
+    discretized_measures_mapping : 'dict' = None
+        Custom dictionary with a mapping between a discrete value of the meauser and corresponding continous ranges. The lower bound must be including, the higher bound must be excluding. It uses the following format:
         ```json
         {
             'measure_name': {
-                discrete_value: [[continuous_threshold_min_inc, continuous_threshold_max_excl], [..., ...], ...], 
-                ...
-                },
-            ...
+                discrete_value_1: [[continuous_threshold_min_inc, continuous_threshold_max_excl], [...]],
+                descrete_value_2: ... 
+            }
         }
         ```
     discretized_measures : 'dict' = None
-        Dict containig name of the measure as key and array-like object containing discretized values of the measure of the same shape as original data. If measure is in 'continuous' list of measures_types parameter, it will be discretized automatically.
+        A dictionary containig names of the measures as keys and array-like objects containing customly discretized values of the measure. If not provided, continuous measures will be discretized automatically.
     index_name : 'str | list | None' = None
-        Columns to be considered as an index (usually a date or a timestamp). Must be present among columns if provided. If None, index name from the pandas.DataFrame is taken.
-    metric_name : 'str' = None
-        Column with a metric to be analyzed
+        An index column (usually a date or a timestamp). If None, index is taken from the pandas.DataFrame.
+    metric_name : 'str'
+        A metric column.
     agg_func: '"sum" | "avg" | "count" | callable' = 'sum'
-        Way of aggregating metric_name by measures. Can be 'sum', 'avg', 'count' or callable compatible with pandas.DataFrame.groupby
+        Way of aggregating metric_name by measures. Can be 'sum', 'avg', 'count' or callable compatible with pandas.DataFrame.groupby.
     
     Examples
     --------
@@ -369,7 +366,6 @@ class DataFrame(pd.DataFrame):
                             self._discretized_measures[measure] = []
                             self._discretized_measures_mapping[measure] = {}
 
-    
     def get_discretized_measures(self):
         """Return discretized versions of continous measures."""
         return self._discretized_measures.copy()

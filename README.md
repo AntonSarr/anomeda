@@ -99,9 +99,17 @@ Finally, you can check if there are any point anomalies present in any of your c
 ```python
 anomeda.find_anomalies(
     anomeda_df, 
-    anomalies_conf: {'p_large': 0, 'p_low': 1, 'n_neighbors': 3}
+    anomalies_conf: {'p_large': 1, 'p_low': 1, 'n_neighbors': 3}
 )
 ```
+
+The output will look like this:
+
+![anomeda.find_anomalies method](docs/img/anomeda_anomalies_2.png "anomeda.find_anomalies method")
+
+If you plot the metric with its clusters, it would look quite reasonable.
+
+![anomeda.find_anomalies method](docs/img/anomeda_anomalies_1.png "anomeda.find_anomalies method")
 
 There are some nuances of how to use **anomeda** wisely and powerfully. For example, you may use same anomeda methods simply with numpy arrays, without creating DataFrame's! See full [Documentation](https://anomeda.readthedocs.io/en/latest/) for more details and hints.
 

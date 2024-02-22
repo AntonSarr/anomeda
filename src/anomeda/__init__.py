@@ -19,7 +19,7 @@ from anomeda.DataFrame import *
 from anomeda.utils import *
 
 __doc__ = """
-anomeda - a Python library for exploratory analysis of anomalies and its causes
+anomeda - a Python library for unaggregated time series analysis
 ===============================================================================
 
 The library helps to identify important metric changes and quickly find clusters in data which changed the trend of the metric or caused the anomaly.

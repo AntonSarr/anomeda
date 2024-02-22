@@ -35,10 +35,20 @@
                                 <a href="." class="nav-link">Overview</a>
                             </li>
                             <li class="navitem">
-                                <a href="user_guide/" class="nav-link">Usage</a>
+                                <a href="usage_guide/" class="nav-link">Usage Guide</a>
                             </li>
-                            <li class="navitem">
-                                <a href="api_reference/" class="nav-link">API Reference</a>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">API Reference <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="dataframe_api/" class="dropdown-item">Anomeda DataFrame</a>
+</li>
+                                    
+<li>
+    <a href="anomeda_api/" class="dropdown-item">Anomeda methods</a>
+</li>
+                                </ul>
                             </li>
                         </ul>
 
@@ -54,7 +64,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="user_guide/" class="nav-link">
+                                <a rel="next" href="usage_guide/" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -174,9 +184,13 @@ anomeda_df = anomeda.DataFrame(
 <p>Finally, you can check if there are any point anomalies present in any of your clusters.</p>
 <pre><code class="language-python">anomeda.find_anomalies(
     anomeda_df, 
-    anomalies_conf: {'p_large': 0, 'p_low': 1, 'n_neighbors': 3}
+    anomalies_conf: {'p_large': 1, 'p_low': 1, 'n_neighbors': 3}
 )
 </code></pre>
+<p>The output will look like this:</p>
+<p><img alt="anomeda.find_anomalies method" src="img/anomeda_anomalies_2.png" title="anomeda.find_anomalies method" /></p>
+<p>If you plot the metric with its clusters, it would look quite reasonable.</p>
+<p><img alt="anomeda.find_anomalies method" src="img/anomeda_anomalies_1.png" title="anomeda.find_anomalies method" /></p>
 <p>There are some nuances of how to use <strong>anomeda</strong> wisely and powerfully. For example, you may use same anomeda methods simply with numpy arrays, without creating DataFrame's! See full <a href="https://anomeda.readthedocs.io/en/latest/">Documentation</a> for more details and hints.</p>
 <h1 id="installing">Installing</h1>
 <p>The <a href="https://github.com/AntonSarr/anomeda">GitHub repo</a> contains the source and built distribution files in <em>dist</em> folder.</p>
@@ -274,5 +288,5 @@ anomeda_df = anomeda.DataFrame(
 
 <!--
 MkDocs version : 1.5.3
-Build Date UTC : 2024-02-21 19:41:44.858174+00:00
+Build Date UTC : 2024-02-22 20:28:16.434146+00:00
 -->
