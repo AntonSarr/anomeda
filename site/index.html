@@ -106,6 +106,11 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-level="1"><a href="#reporting-issues" class="nav-link">Reporting issues</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-level="1"><a href="#contacts" class="nav-link">Contacts</a>
               <ul class="nav flex-column">
               </ul>
@@ -203,7 +208,41 @@ anomeda_df = anomeda.DataFrame(
 <li><em>matplotlib</em> </li>
 </ul>
 <h1 id="contribution">Contribution</h1>
-<p>You are very welcome to contribute to the project. The contribution guide is coming soon.</p>
+<p>You are very welcome to participate in developing to the project. You may solve the current issues or add new functionality - it is up for you to decide.</p>
+<p>Here is how your flow may look like:</p>
+<ol>
+<li>
+<p>Preparing your Fork</p>
+<ul>
+<li>Click ‘Fork’ on Github, creating e.g. yourname/theproject.</li>
+<li>Clone your project: git clone git@github.com:yourname/theproject.</li>
+<li>cd theproject</li>
+<li>Create and activate a virtual environment.</li>
+<li>Install the development requirements: pip install -r dev-requirements.txt.</li>
+<li>Create a branch: git checkout -b my_branch</li>
+</ul>
+</li>
+<li>
+<p>Making your Changes</p>
+<ul>
+<li>Make the changes</li>
+<li>Write tests checking your code works for different scenarious</li>
+<li>Run tests, make sure they pass.</li>
+<li>Commit your changes: git commit -m "Foo the bars"</li>
+</ul>
+</li>
+<li>
+<p>Creating Pull Requests</p>
+<ul>
+<li>Push your commit to get it back up to your fork: git push origin HEAD</li>
+<li>Visit Github, click handy “Pull request” button that it will make upon noticing your new branch.</li>
+<li>In the description field, write down issue number (if submitting code fixing an existing issue) or describe the issue + your fix (if submitting a wholly new bugfix).</li>
+<li>Hit ‘submit’!</li>
+</ul>
+</li>
+</ol>
+<h1 id="reporting-issues">Reporting issues</h1>
+<p>To report an issue, you should use <a href="https://github.com/AntonSarr/anomeda/issues">Issues section</a> of the project's page on Github. We will try to solve the issue as soon as possible.</p>
 <h1 id="contacts">Contacts</h1>
 <p>If you have any questions related to <strong>anomeda</strong> project, feel free reaching out to the author.</p></div>
             </div>
@@ -288,5 +327,5 @@ anomeda_df = anomeda.DataFrame(
 
 <!--
 MkDocs version : 1.5.3
-Build Date UTC : 2024-02-23 20:58:01.439658+00:00
+Build Date UTC : 2024-02-23 21:32:43.497454+00:00
 -->

@@ -127,7 +127,33 @@ You must have such packages be installed:
 
 # Contribution
 
-You are very welcome to contribute to the project. The contribution guide is coming soon.
+You are very welcome to participate in developing to the project. You may solve the current issues or add new functionality - it is up for you to decide.
+
+Here is how your flow may look like:
+
+1. Preparing your Fork
+    - Click ‘Fork’ on Github, creating e.g. yourname/theproject.
+    - Clone your project: git clone git@github.com:yourname/theproject.
+    - cd theproject
+    - Create and activate a virtual environment.
+    - Install the development requirements: pip install -r dev-requirements.txt.
+    - Create a branch: git checkout -b my_branch
+
+2. Making your Changes
+    - Make the changes
+    - Write tests checking your code works for different scenarious
+    - Run tests, make sure they pass.
+    - Commit your changes: git commit -m "Foo the bars"
+
+3. Creating Pull Requests
+    - Push your commit to get it back up to your fork: git push origin HEAD
+    - Visit Github, click handy “Pull request” button that it will make upon noticing your new branch.
+    - In the description field, write down issue number (if submitting code fixing an existing issue) or describe the issue + your fix (if submitting a wholly new bugfix).
+    - Hit ‘submit’!
+
+# Reporting issues
+
+To report an issue, you should use [Issues section](https://github.com/AntonSarr/anomeda/issues) of the project's page on Github. We will try to solve the issue as soon as possible.
 
 # Contacts
 
