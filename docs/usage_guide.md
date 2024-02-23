@@ -117,7 +117,7 @@ The underlying algorithm starts with one trend. It estimates the parameters of a
 
 After one trend is fitted, the algorithm tries to find a point which will reduce the total VAE if we "break" the trend there and reestimate trends for the left and the right part of a time-series. The left and right trends which reduce the VAE the most are now our current trends. If we already fitted enough trends, defined by `max_n_trends`, or the current VAE is at least by `min_var_reduction` lower from what we saw using one trend, the algorithm stops and returns the trends. Otherwise, it starts to "break" each trend into two pieces the same way as described.
 
-When a breaking point is being searched, all the points with presented data are used as candidates. What is important, some kind of a *regularization* is used during the search. Choosing a point located closer to the ends of a considered range is penalized more to balance the number of samples in the left and right parts of the range. The low number of samples in one of the parts may cause a lower error variance there, which will hinder extracting long and consistent trends. 
+When a breaking point is being searched, either all points with presented data or a randomly sampled points are used as candidates. What is important, a kind of a *regularization* is used during the search. Choosing a point located closer to the ends of an index range is penalized more than closer to the center. It was made to balance the number of samples in the left and right parts of the range. The low number of samples in one of the parts may cause a lower error variance there, which will hinder extracting long and consistent trends. 
 
 The method returns all the trends and the breaking points:
 
