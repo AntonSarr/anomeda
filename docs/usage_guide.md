@@ -64,7 +64,6 @@ Some *pandas* methods are not yet adapted for *anomeda*. They return a new `pand
 
 ---
 
----
 **NOTE 2**
 
 The scale of undex increments is extracted automatically. It can be 1 (*Integer*, if your index are integers) or a part of a timestamp (*second*, *minute*, *hour*, etc). 
@@ -96,99 +95,52 @@ A list of methods available to manipulate `anomeda.DataFrame`, such as *getters*
 
 ## How we handle continuous measures
 
-Text
+Measures with continuous values are mapped to discrete ones by [`sklearn.mixture.BayesianGaussianMixture`](https://scikit-learn.org/stable/modules/generated/sklearn.mixture.BayesianGaussianMixture.html) by default. It helps to divide the data into interpretable clusters. Usually the mapped values represent more or less isolated ranges where the feature is concentrated, like "tiny", "medium", "large" or other categories. The `anomeda._to_discrete_values` is responsible for the transformation, you may redefine it if needed.
+
+You can pass specific discrete values of a continuous measure both when creating an anomeda.DataFrame object and later. See `discretized_measures` parameter of `anomeda.DataFrame.__init__` or `anomeda.DataFrame.set_discretized_measures`. Alternatively, you may pass a mapping describing how to transform your continuous values into discrete ones, see the `discretized_measures_mapping` parameter of `anomeda.DataFrame.__init__` or `anomeda.DataFrame.set_discretization_mapping`.
+
+You can then access the mapping and the discretized values by `anomeda.DataFrame.get_discretization_mapping` and `anomeda.DataFrame.get_discretized_measures` respectively.
 
 ## How we fit trends
 
-Text
+Anomeda can fit trends of a time-series. Why trends, but not a trend? Becuase it can automatically identify when a trend changes and return not one, but actual number of trend. 
+
+All the work is made by `anomeda.fit_trends` method. It can fit trends, plot them and assign it to the `anomeda.DataFrame._trends` attribute for reusing.
+
+::: utils.fit_trends
+    options:
+      heading_level: 5
+      show_docstring_description: false
+      show_root_heading: false
+
+The underlying algorithm starts with one trend. It estimates the parameters of a linear function by optimizing *variance of an absolute error (VAE)*. It is a bit different from the metrics used usually, such as *MAE*, *MPE* and others. The reason for choosing such a metric is that it we are aiming to find the most *equidistant* line, and the *VAE* metric describes this process well.
+
+After one trend is fitted, the algorithm tries to find a point which will reduce the total VAE if we "break" the trend there and reestimate trends for the left and the right part of a time-series. The left and right trends which reduce the VAE the most are now our current trends. If we already fitted enough trends, defined by `max_n_trends`, or the current VAE is at least by `min_var_reduction` lower from what we saw using one trend, the algorithm stops and returns the trends. Otherwise, it starts to "break" each trend into two pieces the same way as described.
+
+When a breaking point is being searched, all the points with presented data are used as candidates. What is important, some kind of a *regularization* is used during the search. Choosing a point located closer to the ends of a considered range is penalized more to balance the number of samples in the left and right parts of the range. The low number of samples in one of the parts may cause a lower error variance there, which will hinder extracting long and consistent trends. 
+
+The method returns all the trends and the breaking points:
+
+![anomeda.fit_trends method](img/anomeda_fit_trends_1.png "anomeda.fit_trends method")
+
+If you plot one of them with `anomeda.plot_trends`, you may see what the result looks like:
+
+![anomeda.plot_trends method](img/anomeda_plot_trends_1.png "anomeda.plot_trends method")
 
 ## How we detect anomalies
 
-Text
+The algorithm of detecting anomalies is based on comparing observed values with values of a fitted trend. Sounds simple, doesn't it?. The interesting part is how the anomalies are identified based on its differences from a trend.
 
-## Create an anomeda.DataFrame object
+Once differences between observed values and fitted trend are calculated, we apply the [`Local Outlier Factor`](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.LocalOutlierFactor.html) algorithm with a provided `n_neighbors`. It identifies "isolated" (without many neighbors) points or clusters and mark them as outliers. So, we find differences which are too rare, i.e. little or no points have similar difference. Such an alghorithm let us handle data with a high variance where lot's of differences are far from the trend. Once we identified abnormal clusters, we filter points with only *the lowest* and *the highest* differences, meaning for each *low-value anomaly* there must be no normal points with a difference lower than given, and similarly for the *high-value anomalies* - no points must have a difference higher than given. Finally, the amount of points to return is customized with `p_large` and `p_low` parameters which set the fraction of the most extreme points to return. The parameters vary from 0 to 1.
 
-The base object anomeda is working with is the DataFrame. It is based on pandas.DataFrame object which contains events represented by rows or time series (aggregated events). It may contain:
-- Index
-    - Usually a datetime of a corresponding event
-- Measures
-    - Columns which describes an event, like "country", "region", "client category", etc. Measures can be numerical and categorical
-- Metric
-    - Metric you want to track, can be either aggregated, like "count of visits in a period", or non-aggregated, like "fact of visit"
+Anomalies are identified with `anomeda.find_anomalies` method.
 
-```python
-anmd_df = anomeda.DataFrame(
-    data, # pandas.DataFrame
-    measures_names=['dummy_measure', 'dummy_numeric_measure'], # columns represending measures
-    measures_types={
-        'categorical': ['dummy_measure'], 
-        'continuous': ['dummy_numeric_measure']
-    },
-    index_name='dt',
-    metric_name='metric',
-    agg_func='sum' # function that is used to aggregate metric if more than 1 metric value will be found for a particular set of measure values
-)
-```
+::: utils.find_anomalies
+    options:
+      heading_level: 5
+      show_docstring_description: false
+      show_root_heading: false
 
-Each of the parameters can be changed with corresponding method, like `anomeda.DataFrame.set_measures_names`, `anomeda.DataFrame.set_measures_types`, `anomeda.DataFrame.set_index_name`, etc. The parameters can be retrieved with a corresponding getter, like `anomeda.DataFrame.get_measures_names`, `anomeda.DataFrame.get_measures_types`, `anomeda.DataFrame.get_index_name`, etc.
+![anomeda.find_anomalies method](img/anomeda_anomalies_2.png "anomeda.find_anomalies method")
 
-The underlying pandas.DataFrame object can be changed without creating a new instance of anomeda.DataFrame with `mod_data` method.
-
-IF you need to get the pandas.DataFrame representation of an object, you can use `aspandas` method.
-
-### Discretization of numeric measures
-
-When continuous measures are passed, they will be mapped to discrete values by sklearn.mixture.BayesianGaussianMixture by default. You can pass your own discrete values of continuous measure when creating an anomeda.DataFrame object (see `discretized_measures` parameter of `anomeda.DataFrame` constructor) or later on (see method `anomeda.DataFrame.set_discretized_measures`)
-
-If you need to see the discretized values, you can use `anomeda.DataFrame.get_discretization_mapping` method
-
-## Find an anomaly change of the metric
-
-`anomeda.find_anomalies` and `anomeda.find_anomalies_by_clusters` are responsible for looking for unusual metric changes in the data. They both currently use a method based of fitting a generic trend line and analyzing differences from a trend.
-
-There are some parameters for the method which represent which part of anomalies from both tailes to present:
-
-```python
-p_large = 1 # 100% of anomalies with high values will be returned
-p_low = 1 # 100% of anomalies with low values will be returned
-```
-
-The output is unique and sorted index values and an indication if total metric value is an anomaly or not. The values are aggregated using `agg_func` parameter.
-```
-index_values, anomalies_flag = anomeda.find_anomalies(anmd_df, n=n, p=p, normal_whole_window=normal_whole_window, read_deltas_consequently=read_deltas_consequently)
-```
-
-The methods use an alghorithm based on analyzing the **historical changes** of metric values in order to decide if the current point is an anomaly. The parameters mentioned before can tune the method for your needs.
-
-## Find the root cause of an anomaly change of the metric
-
-When you found an unusual period (whether by using `anomeda.find_anomalies` or by yourself), you can compare it to other period in order to find which events caused the difference between metric values.
-
-All you need to do is to call `anomeda.explain_values_difference` with 2 anomeda.DataFrame objects containing data you want to compare. It will automatically detect clusters of events using measure values, compare the metric values and return the result.
-
-```python
-anomeda.explain_values_difference(
-    anmd_df1,
-    anmd_df2
-)
-```
-
-The output is a pandas.DataFrame with average metric value in each cluster in both periods and the *differences* between them. Thus, sorting by the absolute or relative differences and average values, you can find the most important clusters in terms of its contribution to the overall metric's change. 
-
-## Find clusters of events which make your metric rise or decrease
-
-Anomeda can calculate trends of the metric for each cluster in your data and show the most significat positive and negative contributions. It aggregates metric values by index, fit a line a * x + b, where x is index numeric value, and produce the output.
-
-```python
-anomeda.describe_trends_by_clusters(anmd_df)
-```
-
-The output is a pandas.DataFrame with the following columns:
-- Measures
-- trend_coeff
-    - Coefficient *a* of a fitted line a * x + b
-- trend_bias
-    - Coefficient *b* of a fitted line a * x + b
-- avg_value 
-- contribution_metric 
-    - Coefficient which describes how important the cluster for the total metric is. It is calculated as follows: `sign(a) * abs(a * avg_value)`, where a is coefficient *a* of a fitted line a * x + b
+![anomeda.find_anomalies method](img/anomeda_anomalies_1.png "anomeda.find_anomalies method")

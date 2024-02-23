@@ -104,22 +104,6 @@
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-level="2"><a href="#create-an-anomedadataframe-object" class="nav-link">Create an anomeda.DataFrame object</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#find-an-anomaly-change-of-the-metric" class="nav-link">Find an anomaly change of the metric</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#find-the-root-cause-of-an-anomaly-change-of-the-metric" class="nav-link">Find the root cause of an anomaly change of the metric</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#find-clusters-of-events-which-make-your-metric-rise-or-decrease" class="nav-link">Find clusters of events which make your metric rise or decrease</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
               </ul>
             </li>
         </ul>
@@ -242,7 +226,6 @@
 
   </div>
 
-
 </div><p>As you may have noticed, most of the parameters are optional. If you don't specify a parameter, a default value will be used. Or you will be notified once you use <code>anomeda.fit_trends</code>, <code>anomeda.find_anomalies</code> or other methods that you need to specify something additionally.</p>
 <p>Here is some examples of how you can initialize a new <code>anomeda.DataFrame</code>:</p>
 <pre><code class="language-python"># With just a pandas.DataFrame and metric name
@@ -283,7 +266,6 @@ anomeda.DataFrame(
 <p><strong>NOTE 1</strong></p>
 <p>Some <em>pandas</em> methods are not yet adapted for <em>anomeda</em>. They return a new <code>pandas.DataFrame</code> instead of a <code>anomeda.DataFrame</code>. You just need to initialize an <em>anomeda</em> object with a returned object in that case. </p>
 <hr />
-<hr />
 <p><strong>NOTE 2</strong></p>
 <p>The scale of undex increments is extracted automatically. It can be 1 (<em>Integer</em>, if your index are integers) or a part of a timestamp (<em>second</em>, <em>minute</em>, <em>hour</em>, etc). </p>
 <p>For example, if your index consists of two values ['2024-01-01 00:00:00', '2024-01-01 00:01:00'], the step is <em>hour</em>. However, the step may become <em>minute</em> once you add only one value - ['2024-01-01 00:00:00', '2024-01-01 00:01:00', '2024-01-01 00:01:<strong>01</strong>'], since <em>minute</em> is the smallest increment now.</p>
@@ -320,6 +302,7 @@ anomeda.DataFrame(
 
 
 
+
 <h6 id="DataFrame.DataFrame.copy_anomeda_df" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">copy_anomeda_df</span></code>
 
@@ -335,6 +318,7 @@ anomeda.DataFrame(
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -356,6 +340,7 @@ anomeda.DataFrame(
 
 
 
+
 <h6 id="DataFrame.DataFrame.get_discretization_mapping" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">get_discretization_mapping</span></code>
 
@@ -371,6 +356,7 @@ anomeda.DataFrame(
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -392,6 +378,7 @@ anomeda.DataFrame(
 
 
 
+
 <h6 id="DataFrame.DataFrame.get_index_name" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">get_index_name</span></code>
 
@@ -407,6 +394,7 @@ anomeda.DataFrame(
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -428,6 +416,7 @@ anomeda.DataFrame(
 
 
 
+
 <h6 id="DataFrame.DataFrame.get_measures_types" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">get_measures_types</span></code>
 
@@ -443,6 +432,7 @@ anomeda.DataFrame(
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -464,6 +454,7 @@ anomeda.DataFrame(
 
 
 
+
 <h6 id="DataFrame.DataFrame.replace_df" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">replace_df</span></code>
 
@@ -479,6 +470,7 @@ anomeda.DataFrame(
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -500,6 +492,7 @@ anomeda.DataFrame(
 
 
 
+
 <h6 id="DataFrame.DataFrame.set_discretization_mapping" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">set_discretization_mapping</span></code>
 
@@ -515,6 +508,7 @@ anomeda.DataFrame(
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -536,6 +530,7 @@ anomeda.DataFrame(
 
 
 
+
 <h6 id="DataFrame.DataFrame.set_measures_names" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">set_measures_names</span></code>
 
@@ -554,6 +549,7 @@ anomeda.DataFrame(
 
 
 
+
 <h6 id="DataFrame.DataFrame.set_measures_types" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">set_measures_types</span></code>
 
@@ -569,6 +565,7 @@ anomeda.DataFrame(
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -591,71 +588,243 @@ anomeda.DataFrame(
 
   </div>
 
-
 </div><h2 id="how-we-handle-continuous-measures">How we handle continuous measures</h2>
-<p>Text</p>
+<p>Measures with continuous values are mapped to discrete ones by <a href="https://scikit-learn.org/stable/modules/generated/sklearn.mixture.BayesianGaussianMixture.html"><code>sklearn.mixture.BayesianGaussianMixture</code></a> by default. It helps to divide the data into interpretable clusters. Usually the mapped values represent more or less isolated ranges where the feature is concentrated, like "tiny", "medium", "large" or other categories. The <code>anomeda._to_discrete_values</code> is responsible for the transformation, you may redefine it if needed.</p>
+<p>You can pass specific discrete values of a continuous measure both when creating an anomeda.DataFrame object and later. See <code>discretized_measures</code> parameter of <code>anomeda.DataFrame.__init__</code> or <code>anomeda.DataFrame.set_discretized_measures</code>. Alternatively, you may pass a mapping describing how to transform your continuous values into discrete ones, see the <code>discretized_measures_mapping</code> parameter of <code>anomeda.DataFrame.__init__</code> or <code>anomeda.DataFrame.set_discretization_mapping</code>.</p>
+<p>You can then access the mapping and the discretized values by <code>anomeda.DataFrame.get_discretization_mapping</code> and <code>anomeda.DataFrame.get_discretized_measures</code> respectively.</p>
 <h2 id="how-we-fit-trends">How we fit trends</h2>
-<p>Text</p>
+<p>Anomeda can fit trends of a time-series. Why trends, but not a trend? Becuase it can automatically identify when a trend changes and return not one, but actual number of trend. </p>
+<p>All the work is made by <code>anomeda.fit_trends</code> method. It can fit trends, plot them and assign it to the <code>anomeda.DataFrame._trends</code> attribute for reusing.</p>
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<a id="utils.fit_trends"></a>
+  <div class="doc doc-contents first">
+  
+
+
+
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b><code>data</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span> | (<span title="numpy.ndarray">ndarray</span>, <span title="numpy.ndarray">ndarray</span>)</code>)
+        –
+        <div class="doc-md-description">
+          <p>Object containing metric values. If numpy.ndarray, a tuple of arrays corresponding to x (data points) and y (metric values) respectively.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>trend_fitting_conf</code></b>
+            (<code>dict</code>, default:
+                <code>{&#39;max_trends&#39;: &#39;auto&#39;, &#39;min_var_reduction&#39;: 0.75}</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Parameters for calling anomeda.extract_trends() function. It consists of 'max_trends' parameter, which is responsible for the maximum number of trends that you want to identify, and 'min_var_reduction' parameter, which describes what part of variance must be reduced by estimating trends. Values close to 1 will produce more trends since more trends reduce variance more signigicantly. Default is {'max_trends': 'auto', 'min_var_reduction': 0.75}.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>save_trends</code></b>
+            (<code>bool</code>, default:
+                <code>True</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>If False, return pandas.DataFrame with trends description without assigning it to the anomeda.DataFrame._trends.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>breakdown</code></b>
+            (<code>no | all - clusters | list[str]</code>, default:
+                <code>&#39;no&#39;</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>If 'no', the metric is grouped by date points only. If 'all-clusters', then all combinations of measures are used to create clusters for fitting trends within them. If list[str], then only combinations of measures specified in the list are used.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>min_cluster_size</code></b>
+            (<code>int</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Skip clusters whose total size among all date points is less than the value.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>max_cluster_size</code></b>
+            (<code>int</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Skip clusters whose total size among all date points is more than the value.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>plot</code></b>
+            (<code>bool</code>, default:
+                <code>False</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Indicator if to plot fitted trends. anomeda.plot_trends is responsibe for plotting if the flag is True.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>df</code></b>
+            (<code>bool</code>, default:
+                <code>True</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Indicator if to return a pandas.DataFrame containing fitted trends.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>verbose</code></b>
+            (<code>bool</code>, default:
+                <code>False</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Indicator if to print additional output.</p>
+        </div>
+      </li>
+  </ul>
+
+
+
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+<b><code>resp</code></b> (            <code><span title="pandas.DataFrame">DataFrame</span></code>
+)        –
+        <div class="doc-md-description">
+          <p>An object containing information about trends</p>
+      </div>
+      </li>
+  </ul>
+
+
+
+<p><strong>Examples:</strong></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">fitted_trends</span> <span class="o">=</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">fit_trends</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">trend_fitting_conf</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;max_trends&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span> <span class="n">min_cluster_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">df</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
+  </div>
+
+</div><p>The underlying algorithm starts with one trend. It estimates the parameters of a linear function by optimizing <em>variance of an absolute error (VAE)</em>. It is a bit different from the metrics used usually, such as <em>MAE</em>, <em>MPE</em> and others. The reason for choosing such a metric is that it we are aiming to find the most <em>equidistant</em> line, and the <em>VAE</em> metric describes this process well.</p>
+<p>After one trend is fitted, the algorithm tries to find a point which will reduce the total VAE if we "break" the trend there and reestimate trends for the left and the right part of a time-series. The left and right trends which reduce the VAE the most are now our current trends. If we already fitted enough trends, defined by <code>max_n_trends</code>, or the current VAE is at least by <code>min_var_reduction</code> lower from what we saw using one trend, the algorithm stops and returns the trends. Otherwise, it starts to "break" each trend into two pieces the same way as described.</p>
+<p>When a breaking point is being searched, all the points with presented data are used as candidates. What is important, some kind of a <em>regularization</em> is used during the search. Choosing a point located closer to the ends of a considered range is penalized more to balance the number of samples in the left and right parts of the range. The low number of samples in one of the parts may cause a lower error variance there, which will hinder extracting long and consistent trends. </p>
+<p>The method returns all the trends and the breaking points:</p>
+<p><img alt="anomeda.fit_trends method" src="../img/anomeda_fit_trends_1.png" title="anomeda.fit_trends method" /></p>
+<p>If you plot one of them with <code>anomeda.plot_trends</code>, you may see what the result looks like:</p>
+<p><img alt="anomeda.plot_trends method" src="../img/anomeda_plot_trends_1.png" title="anomeda.plot_trends method" /></p>
 <h2 id="how-we-detect-anomalies">How we detect anomalies</h2>
-<p>Text</p>
-<h2 id="create-an-anomedadataframe-object">Create an anomeda.DataFrame object</h2>
-<p>The base object anomeda is working with is the DataFrame. It is based on pandas.DataFrame object which contains events represented by rows or time series (aggregated events). It may contain:
-- Index
-    - Usually a datetime of a corresponding event
-- Measures
-    - Columns which describes an event, like "country", "region", "client category", etc. Measures can be numerical and categorical
-- Metric
-    - Metric you want to track, can be either aggregated, like "count of visits in a period", or non-aggregated, like "fact of visit"</p>
-<pre><code class="language-python">anmd_df = anomeda.DataFrame(
-    data, # pandas.DataFrame
-    measures_names=['dummy_measure', 'dummy_numeric_measure'], # columns represending measures
-    measures_types={
-        'categorical': ['dummy_measure'], 
-        'continuous': ['dummy_numeric_measure']
-    },
-    index_name='dt',
-    metric_name='metric',
-    agg_func='sum' # function that is used to aggregate metric if more than 1 metric value will be found for a particular set of measure values
+<p>The algorithm of detecting anomalies is based on comparing observed values with values of a fitted trend. Sounds simple, doesn't it?. The interesting part is how the anomalies are identified based on its differences from a trend.</p>
+<p>Once differences between observed values and fitted trend are calculated, we apply the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.LocalOutlierFactor.html"><code>Local Outlier Factor</code></a> algorithm with a provided <code>n_neighbors</code>. It identifies "isolated" (without many neighbors) points or clusters and mark them as outliers. So, we find differences which are too rare, i.e. little or no points have similar difference. Such an alghorithm let us handle data with a high variance where lot's of differences are far from the trend. Once we identified abnormal clusters, we filter points with only <em>the lowest</em> and <em>the highest</em> differences, meaning for each <em>low-value anomaly</em> there must be no normal points with a difference lower than given, and similarly for the <em>high-value anomalies</em> - no points must have a difference higher than given. Finally, the amount of points to return is customized with <code>p_large</code> and <code>p_low</code> parameters which set the fraction of the most extreme points to return. The parameters vary from 0 to 1.</p>
+<p>Anomalies are identified with <code>anomeda.find_anomalies</code> method.</p>
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<a id="utils.find_anomalies"></a>
+  <div class="doc doc-contents first">
+  
+
+
+
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b><code>data</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span> | (<span title="numpy.ndarray">ndarray</span>[int], <span title="numpy.ndarray">ndarray</span>[float])</code>)
+        –
+        <div class="doc-md-description">
+          <p>Object containing metric values to be analyzed. Trends must be fitted for the object with anomeda.fit_trends() method if anomeda.DataFrame is passed.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>clusters</code></b>
+            (<code>list</code>, default:
+                <code>None</code>
 )
-</code></pre>
-<p>Each of the parameters can be changed with corresponding method, like <code>anomeda.DataFrame.set_measures_names</code>, <code>anomeda.DataFrame.set_measures_types</code>, <code>anomeda.DataFrame.set_index_name</code>, etc. The parameters can be retrieved with a corresponding getter, like <code>anomeda.DataFrame.get_measures_names</code>, <code>anomeda.DataFrame.get_measures_types</code>, <code>anomeda.DataFrame.get_index_name</code>, etc.</p>
-<p>The underlying pandas.DataFrame object can be changed without creating a new instance of anomeda.DataFrame with <code>mod_data</code> method.</p>
-<p>IF you need to get the pandas.DataFrame representation of an object, you can use <code>aspandas</code> method.</p>
-<h3 id="discretization-of-numeric-measures">Discretization of numeric measures</h3>
-<p>When continuous measures are passed, they will be mapped to discrete values by sklearn.mixture.BayesianGaussianMixture by default. You can pass your own discrete values of continuous measure when creating an anomeda.DataFrame object (see <code>discretized_measures</code> parameter of <code>anomeda.DataFrame</code> constructor) or later on (see method <code>anomeda.DataFrame.set_discretized_measures</code>)</p>
-<p>If you need to see the discretized values, you can use <code>anomeda.DataFrame.get_discretization_mapping</code> method</p>
-<h2 id="find-an-anomaly-change-of-the-metric">Find an anomaly change of the metric</h2>
-<p><code>anomeda.find_anomalies</code> and <code>anomeda.find_anomalies_by_clusters</code> are responsible for looking for unusual metric changes in the data. They both currently use a method based of fitting a generic trend line and analyzing differences from a trend.</p>
-<p>There are some parameters for the method which represent which part of anomalies from both tailes to present:</p>
-<pre><code class="language-python">p_large = 1 # 100% of anomalies with high values will be returned
-p_low = 1 # 100% of anomalies with low values will be returned
-</code></pre>
-<p>The output is unique and sorted index values and an indication if total metric value is an anomaly or not. The values are aggregated using <code>agg_func</code> parameter.</p>
-<pre><code>index_values, anomalies_flag = anomeda.find_anomalies(anmd_df, n=n, p=p, normal_whole_window=normal_whole_window, read_deltas_consequently=read_deltas_consequently)
-</code></pre>
-<p>The methods use an alghorithm based on analyzing the <strong>historical changes</strong> of metric values in order to decide if the current point is an anomaly. The parameters mentioned before can tune the method for your needs.</p>
-<h2 id="find-the-root-cause-of-an-anomaly-change-of-the-metric">Find the root cause of an anomaly change of the metric</h2>
-<p>When you found an unusual period (whether by using <code>anomeda.find_anomalies</code> or by yourself), you can compare it to other period in order to find which events caused the difference between metric values.</p>
-<p>All you need to do is to call <code>anomeda.explain_values_difference</code> with 2 anomeda.DataFrame objects containing data you want to compare. It will automatically detect clusters of events using measure values, compare the metric values and return the result.</p>
-<pre><code class="language-python">anomeda.explain_values_difference(
-    anmd_df1,
-    anmd_df2
+        –
+        <div class="doc-md-description">
+          <p>List of clusters to plot. The objects in the list are queries used in pandas.DataFrame.query.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>anomalies_conf</code></b>
+            (<code>dict</code>, default:
+                <code>{&#39;p_large&#39;: 1., &#39;p_low&#39;: 1., &#39;n_neighbors&#39;: 3}</code>
 )
-</code></pre>
-<p>The output is a pandas.DataFrame with average metric value in each cluster in both periods and the <em>differences</em> between them. Thus, sorting by the absolute or relative differences and average values, you can find the most important clusters in terms of its contribution to the overall metric's change. </p>
-<h2 id="find-clusters-of-events-which-make-your-metric-rise-or-decrease">Find clusters of events which make your metric rise or decrease</h2>
-<p>Anomeda can calculate trends of the metric for each cluster in your data and show the most significat positive and negative contributions. It aggregates metric values by index, fit a line a * x + b, where x is index numeric value, and produce the output.</p>
-<pre><code class="language-python">anomeda.describe_trends_by_clusters(anmd_df)
-</code></pre>
-<p>The output is a pandas.DataFrame with the following columns:
-- Measures
-- trend_coeff
-    - Coefficient <em>a</em> of a fitted line a * x + b
-- trend_bias
-    - Coefficient <em>b</em> of a fitted line a * x + b
-- avg_value 
-- contribution_metric 
-    - Coefficient which describes how important the cluster for the total metric is. It is calculated as follows: <code>sign(a) * abs(a * avg_value)</code>, where a is coefficient <em>a</em> of a fitted line a * x + b</p></div>
+        –
+        <div class="doc-md-description">
+          <p>Dict containing 'p_large' and 'p_low' values. Both are float values between 0 and 1 corresponding to the % of the anomalies with largest and lowest metric values to be returned.
+For example, if you set 'p_low' to 0, no points with abnormally low metric values will be returned; if 0.5, then 50% of points with abnormally values will be returned, etc. 
+If some of the keys is not present or None, 1 is assumed.
+'n_neighbors' means number of neighbors parameter for sklearn.neighbors.LocalOutlierFactor class. The class is used to find points with abnormally large MAE. The more the parameter, typically, the less sensitive the model to anomalies.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>return_all_points</code></b>
+            (<code>bool</code>, default:
+                <code>False</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>If False, only anomaly points are returned. If True, all points with anomalies marks are returned. Default False.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>trend_fitting_conf</code></b>
+            (<code>dict</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Used only if data is not anomeda.DataFrame, but numpy arrays, to run anomeda.fit_trends method for them. 
+Parameters are similar to those you would pass to the argument anomeda.fit_trends(..., trend_fitting_conf=...).</p>
+        </div>
+      </li>
+  </ul>
+
+
+
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+<b><code>res</code></b> (            <code><span title="pandas.DataFrame">DataFrame</span></code>
+)        –
+        <div class="doc-md-description">
+          <p>A DataFrame containing fields 'cluster', 'index', 'metric_value', 'fitted_trend_value', 'anomaly'.</p>
+      </div>
+      </li>
+  </ul>
+
+
+
+<p><strong>Examples:</strong></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">fit_trends</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">find_anomalies</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</code></pre></div>
+
+  </div>
+
+</div><p><img alt="anomeda.find_anomalies method" src="../img/anomeda_anomalies_2.png" title="anomeda.find_anomalies method" /></p>
+<p><img alt="anomeda.find_anomalies method" src="../img/anomeda_anomalies_1.png" title="anomeda.find_anomalies method" /></p></div>
             </div>
         </div>
 
