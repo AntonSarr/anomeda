@@ -86,23 +86,23 @@
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-level="2"><a href="#utils.compare_clusters" class="nav-link">compare_clusters</a>
+            <li class="nav-item" data-level="2"><a href="#utils.compare_clusters" class="nav-link">compare_clusters()</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-level="2"><a href="#utils.extract_trends" class="nav-link">extract_trends</a>
+            <li class="nav-item" data-level="2"><a href="#utils.extract_trends" class="nav-link">extract_trends()</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-level="2"><a href="#utils.find_anomalies" class="nav-link">find_anomalies</a>
+            <li class="nav-item" data-level="2"><a href="#utils.find_anomalies" class="nav-link">find_anomalies()</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-level="2"><a href="#utils.fit_trends" class="nav-link">fit_trends</a>
+            <li class="nav-item" data-level="2"><a href="#utils.fit_trends" class="nav-link">fit_trends()</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-level="2"><a href="#utils.plot_trends" class="nav-link">plot_trends</a>
+            <li class="nav-item" data-level="2"><a href="#utils.plot_trends" class="nav-link">plot_trends()</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -136,6 +136,7 @@
 
 
 <div class="doc doc-object doc-class">
+
 
 
 
@@ -271,6 +272,7 @@
 
 
 
+
 <h3 id="DataFrame.DataFrame.copy_anomeda_df" class="doc doc-heading">
           <span class="doc doc-object-name doc-function-name">copy_anomeda_df</span>
 
@@ -292,6 +294,7 @@
 
 
 
+
 <h3 id="DataFrame.DataFrame.get_agg_func" class="doc doc-heading">
           <span class="doc doc-object-name doc-function-name">get_agg_func</span>
 
@@ -310,6 +313,7 @@
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -348,6 +352,7 @@
 
 
 
+
 <h3 id="DataFrame.DataFrame.get_discretized_measures" class="doc doc-heading">
           <span class="doc doc-object-name doc-function-name">get_discretized_measures</span>
 
@@ -366,6 +371,7 @@
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -390,6 +396,7 @@
 
 
 
+
 <h3 id="DataFrame.DataFrame.get_measures_names" class="doc doc-heading">
           <span class="doc doc-object-name doc-function-name">get_measures_names</span>
 
@@ -408,6 +415,7 @@
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -432,6 +440,7 @@
 
 
 
+
 <h3 id="DataFrame.DataFrame.get_metric_name" class="doc doc-heading">
           <span class="doc doc-object-name doc-function-name">get_metric_name</span>
 
@@ -450,6 +459,7 @@
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -504,6 +514,7 @@
 
 
 
+
 <h3 id="DataFrame.DataFrame.set_agg_func" class="doc doc-heading">
           <span class="doc doc-object-name doc-function-name">set_agg_func</span>
 
@@ -535,6 +546,7 @@
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -596,6 +608,7 @@ The lower bound must be including, the higher bound must be excluding.</p>
 
 
 
+
 <h3 id="DataFrame.DataFrame.set_discretized_measures" class="doc doc-heading">
           <span class="doc doc-object-name doc-function-name">set_discretized_measures</span>
 
@@ -628,6 +641,7 @@ The lower bound must be including, the higher bound must be excluding.</p>
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -664,6 +678,7 @@ The lower bound must be including, the higher bound must be excluding.</p>
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -712,6 +727,7 @@ The lower bound must be including, the higher bound must be excluding.</p>
 
 
 
+
 <h3 id="DataFrame.DataFrame.set_metric_name" class="doc doc-heading">
           <span class="doc doc-object-name doc-function-name">set_metric_name</span>
 
@@ -748,7 +764,6 @@ The lower bound must be including, the higher bound must be excluding.</p>
 
   </div>
 
-
 </div>
 
 
@@ -781,6 +796,7 @@ The lower bound must be including, the higher bound must be excluding.</p>
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -874,6 +890,7 @@ If None, all clusters are used. Default is None.</p>
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -992,14 +1009,17 @@ The sensibility of the method to identify trend changes are set by parameters "m
 
 
 
+
 <h2 id="utils.find_anomalies" class="doc doc-heading">
           <span class="doc doc-object-name doc-function-name">find_anomalies</span>
 
 
 </h2>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">find_anomalies</span><span class="p">(</span>
-    <span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span>
-    <span class="o">|</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">float</span><span class="p">]),</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="p">(</span>
+        <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="p">),</span>
     <span class="n">clusters</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">anomalies_conf</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;p_large&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
@@ -1104,14 +1124,17 @@ Parameters are similar to those you would pass to the argument anomeda.fit_trend
 
 
 
+
 <h2 id="utils.fit_trends" class="doc doc-heading">
           <span class="doc doc-object-name doc-function-name">fit_trends</span>
 
 
 </h2>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">fit_trends</span><span class="p">(</span>
-    <span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span>
-    <span class="o">|</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">float</span><span class="p">]),</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="p">(</span>
+        <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="p">),</span>
     <span class="n">trend_fitting_conf</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;max_trends&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
         <span class="s2">&quot;min_var_reduction&quot;</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">,</span>
@@ -1253,6 +1276,7 @@ The method returns a pandas.DataFrame describing trends and/or plots the trends.
 
 
 <div class="doc doc-object doc-function">
+
 
 
 

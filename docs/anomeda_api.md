@@ -2,7 +2,7 @@
 
 Here you can find the documentation for available endpoints of **anomeda** Python package.
 
-::: utils
+    ::: utils
     options:
       heading_level: 2
       show_root_toc_entry: false
@@ -12,4 +12,3 @@ Here you can find the documentation for available endpoints of **anomeda** Pytho
       show_root_full_path: false
       separate_signature: true
       show_root_members_full_path: false
-    
