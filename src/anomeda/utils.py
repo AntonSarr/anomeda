@@ -31,7 +31,11 @@ def __regularizer(x):
     return beta.pdf(x, 0.4, 0.4)
 
 
-def __find_trend_breaking_point(x : 'numpy.ndarray[int]', y : 'numpy.ndarray[float]'):
+def __find_trend_breaking_point(
+    x : 'numpy.ndarray[int]', 
+    y : 'numpy.ndarray[float]',
+    sample_frac : 'float' = 1
+):
     """Find the point where the trend is the most likely to be different from before.
     
     Parameters
@@ -40,6 +44,8 @@ def __find_trend_breaking_point(x : 'numpy.ndarray[int]', y : 'numpy.ndarray[flo
         Indeces corresponding to time points. Must be an increasing array of integers. Some of the values may be omitted, e.g such x is OK: [0, 1, 5, 10]. 
     y : numpy.ndarray[float]
         Metric values corresponding to time points.
+    sample_frac : float, default 1
+        Describes a fraction of random points from x to check. If 1, all points are checked. Default is 1.
         
     Returns
     -------
@@ -53,11 +59,18 @@ def __find_trend_breaking_point(x : 'numpy.ndarray[int]', y : 'numpy.ndarray[flo
     """
     metric_vals = []
     points_candidates = x[2:-1]
+    
+    if sample_frac == 1:
+        points_candidates_ind = list(range(len(x))[2:-1])
+    elif sample_frac >= 0 and sample_frac < 1:
+        points_candidates_ind = np.random.choice(list(range(len(x))[2:-1]), size=int(len(points_candidates) * sample_frac))
+    else:
+        raise ValueError('"sample_frac" must be between 0 and 1')
 
     if len(points_candidates) == 0:
         return None
     
-    for dt in range(len(x))[2:-1]:
+    for dt in points_candidates_ind:
     
         y_true1 = y[:dt]
         x1 = np.arange(len(y_true1))
@@ -170,7 +183,14 @@ def extract_trends(
             xmin, xmax, (a, b), _ = trends[i]
             
             index_mask = (x >= xmin) & (x < xmax)
-            dt = __find_trend_breaking_point(x[index_mask], y[index_mask])
+            if len(x[index_mask]) <= 50:
+                sample_frac = 1
+            elif len(x[index_mask]) <= 100:
+                sample_frac = -0.007 * len(x[index_mask]) + 1.35
+            else:
+                sample_frac = 0.65
+
+            dt = __find_trend_breaking_point(x[index_mask], y[index_mask], sample_frac=sample_frac)
             
             if dt is None:
                 continue
@@ -262,6 +282,7 @@ def compare_clusters(
     data: 'anomeda.DataFrame',
     period1: 'str',
     period2: 'str',
+    breakdown : "'no' | 'all-clusters' | list[str]" = 'no',
     clusters : 'list' = None
 ):
     """Compare metric values for 2 periods.
@@ -277,6 +298,8 @@ def compare_clusters(
         Query to filter the first period. For example, 'dt < 10'.
     period2 s: str
         Query to filter the second period. For example, 'dt >= 10'.
+    breakdown : 'no' | 'all-clusters' | list[str], default 'no'
+        If 'no', the metric is grouped by date points only. If 'all-clusters', then all combinations of measures are used to create clusters for fitting trends within them. If list[str], then only combinations of measures specified in the list are used.
     clusters : list, default None
         List of clusters to use in the comparison. The objects in the list are queries used in pandas.DataFrame.query. 
         If None, all clusters are used. Default is None.
@@ -322,8 +345,8 @@ def compare_clusters(
     data1 = data.replace_df(new_df1, keep_discretization=True)
     data2 = data.replace_df(new_df2, keep_discretization=True)
 
-    clusters_info_1 = fit_trends(data1, trend_fitting_conf={'max_trends': 1}, breakdown='all-clusters', plot=False, df=True)
-    clusters_info_2 = fit_trends(data2, trend_fitting_conf={'max_trends': 1}, breakdown='all-clusters', plot=False, df=True)
+    clusters_info_1 = fit_trends(data1, trend_fitting_conf={'max_trends': 1}, breakdown=breakdown, plot=False, df=True)
+    clusters_info_2 = fit_trends(data2, trend_fitting_conf={'max_trends': 1}, breakdown=breakdown, plot=False, df=True)
     
     if clusters is not None:
         clusters_info_1 = clusters_info_1[clusters_info_1['cluster'].isin(clusters)]
@@ -760,8 +783,8 @@ def fit_trends(
     """
     def resp_to_df(resp):
         flattened = []
-        for row in resp:
-            cluster, trends = row
+        for key in resp.keys():
+            cluster, trends = key, resp[key]
             for t in trends:
                 x_min, x_max, (slope, intercept), (cnt, mean, mae_var, y_sum) = trends[t]
                 flattened.append((cluster, x_min, x_max, slope, intercept, cnt, mean, mae_var, y_sum))
@@ -809,16 +832,19 @@ def fit_trends(
             for measure in measures_types['continuous']:
                 data_pandas[measure] = data.get_discretized_measures()[measure]
         
-        res_values = []
+        res_values = {}
         skipped_clusters = 0
         skipped_indeces = []
         total_clusters = 0
         columns_to_use = np.append(index_name, metric_name)
         clusters_storage = {}
+        hashed_index = {}
 
         query = 'total'
         
-        yseries = data_pandas[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
+        yseries = data_pandas[columns_to_use]
+        cluster_search_index = yseries.index.values
+        yseries = yseries.groupby(index_name).agg(agg_func)[metric_name]
         yindex = yseries.index.values
         ydata = yseries.values
 
@@ -831,13 +857,16 @@ def fit_trends(
                 return None
 
         clusters_storage[query] = {'index': yindex, 'values': ydata}
+
+        hashable_key = ''.join(list(map(str, cluster_search_index)))
+        hashed_index[hashable_key] = [query]
         
         trends = extract_trends(
             yindex, ydata,
             max_trends=trend_fitting_conf.get('max_trends'), 
             min_var_reduction=trend_fitting_conf.get('min_var_reduction')
         )
-        res_values.append((query, trends))
+        res_values[query] = trends.copy()
         
         for measures_set in measures_to_iterate:
             for measures_values in data_pandas[measures_set].drop_duplicates().values:
@@ -846,36 +875,42 @@ def fit_trends(
                     quote = '"' if type(measure_value) == str else ''
                     str_arr.append('`' + measure_name + '`' + '==' + quote + str(measure_value) + quote)
                 query = ' and '.join(str_arr)
+                total_clusters += 1
                 
-                yseries = data_pandas.query(query)[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
+                yseries = data_pandas.query(query)[columns_to_use]
+                cluster_search_index = yseries.index.values
+                yseries = yseries.groupby(index_name).agg(agg_func)[metric_name]
                 yindex = yseries.index.values
                 ydata = yseries.values
 
                 clusters_storage[query] = {'index': yindex, 'values': ydata}
 
-                total_clusters += 1
-                if ydata.shape[0] >= min_cluster_size and ydata.shape[0] <= max_cluster_size:
-                    if ydata.shape[0] == 1:
-                        res_values.append((
-                            query, 
-                            {
+                hashable_key = ''.join(list(map(str, cluster_search_index)))
+                if hashable_key in hashed_index:
+                    res_values[query] = res_values[hashed_index[hashable_key][0]].copy()
+                    hashed_index[hashable_key].append(query)
+                else:
+                    hashed_index[hashable_key] = [query]
+
+                    if ydata.shape[0] >= min_cluster_size and ydata.shape[0] <= max_cluster_size:
+                        if ydata.shape[0] == 1:
+                            res_values[query] = {
                                 0: (
                                     yindex[0], yindex[0] + 1, 
                                     (1, ydata[0]), 
                                     (1, ydata[0], 0, ydata[0])
                                 )
                             }
-                        ))
+                        else:
+                            trends = extract_trends(
+                                yindex, ydata, 
+                                max_trends=trend_fitting_conf.get('max_trends'), 
+                                min_var_reduction=trend_fitting_conf.get('min_var_reduction')
+                            )
+                            res_values[query] = trends.copy()
                     else:
-                        trends = extract_trends(
-                            yindex, ydata, 
-                            max_trends=trend_fitting_conf.get('max_trends'), 
-                            min_var_reduction=trend_fitting_conf.get('min_var_reduction')
-                        )
-                        res_values.append((query, trends))
-                else:
-                    skipped_clusters += 1
-                    skipped_indeces.append(yindex)
+                        skipped_clusters += 1
+                        skipped_indeces.append(yindex)
         if skipped_clusters > 0:
             skipped_indeces = np.unique(np.concatenate(skipped_indeces))
 
@@ -886,25 +921,23 @@ def fit_trends(
             ydata = yseries.values
 
             clusters_storage[query] = {'index': yindex, 'values': ydata}
+            hashed_index[hashable_key] = [query]
 
             if ydata.shape[0] == 1:
-                res_values.append((
-                    query, 
-                    {
-                        0: (
-                            skipped_indeces[0], skipped_indeces[0] + 1, 
-                            (1, ydata[0]), 
-                            (1, ydata[0], 0, ydata[0])
-                        )
-                    }
-                ))
+                res_values[query] = {
+                    0: (
+                        skipped_indeces[0], skipped_indeces[0] + 1, 
+                        (1, ydata[0]), 
+                        (1, ydata[0], 0, ydata[0])
+                    )
+                }
             else:
                 trends = extract_trends(
                     yindex, ydata, 
                     max_trends=trend_fitting_conf.get('max_trends'), 
                     min_var_reduction=trend_fitting_conf.get('min_var_reduction')
                 )
-                res_values.append((query, trends))
+                res_values[query] = trends.copy()
         
         res_values = resp_to_df(res_values)
         
@@ -917,6 +950,7 @@ def fit_trends(
                 'min_cluster_size': min_cluster_size,
                 'max_cluster_size': max_cluster_size
             }
+            data._hashed_index = hashed_index.copy()
         if plot:
             plot_trends(data)
         if df:
@@ -934,26 +968,23 @@ def fit_trends(
         x = x[sorted_indx]
         y = y[sorted_indx]
         query = 'total'
-        res_values = []
+        res_values = {}
         if y.shape[0] >= min_cluster_size and y.shape[0] <= max_cluster_size:
             if y.shape[0] == 1:
-                res_values.append((
-                    query, 
-                    {
-                        0: (
-                            0, 1, 
-                            (1, ydata[0]), 
-                            (1, ydata[0], 0, ydata[0])
-                        )
-                    }
-                ))
+                res_values[query] = {
+                    0: (
+                        0, 1, 
+                        (1, ydata[0]), 
+                        (1, ydata[0], 0, ydata[0])
+                    )
+                }
             else:
                 trends = extract_trends(
                     x, y, 
                     max_trends=trend_fitting_conf.get('max_trends'), 
                     min_var_reduction=trend_fitting_conf.get('min_var_reduction')
                 )
-                res_values.append((query, trends))
+                res_values[query] = trends.copy()
         
         res_values = resp_to_df(res_values)
         

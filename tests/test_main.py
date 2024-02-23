@@ -263,7 +263,7 @@ def test_compare_clusters():
     res = anomeda.compare_clusters(anmd_df, period1='dt < 2', period2='dt >= 2', clusters=['total'])
     assert res.shape[0] > 0
 
-    res = anomeda.compare_clusters(anmd_df, period1='dt < 2', period2='dt >= 2', clusters=['`a`==20'])
+    res = anomeda.compare_clusters(anmd_df, period1='dt < 2', period2='dt >= 2', breakdown='all-clusters', clusters=['`a`==20'])
     assert res.shape[0] > 0
 
 
