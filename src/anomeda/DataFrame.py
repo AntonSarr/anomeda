@@ -4,10 +4,31 @@ import pandas as pd
 import numpy as np
 from sklearn.mixture import BayesianGaussianMixture
 from sklearn.exceptions import ConvergenceWarning
+from enum import Enum
 
 
 warnings.filterwarnings('ignore')
 warnings.filterwarnings('default', module='anomeda', append=True)
+
+
+class Freq(Enum):
+    NANOSECOND  = {'compare': 1, 'pandas_freq': 'ns'}
+    MICROSECOND = {'compare': 2, 'pandas_freq': 'us'}
+    SECOND      = {'compare': 3, 'pandas_freq': 's'}
+    MINUTE      = {'compare': 4, 'pandas_freq': 'min'}
+    HOUR        = {'compare': 5, 'pandas_freq': 'h'}
+    DAY         = {'compare': 6, 'pandas_freq': 'D'}
+    MONTH       = {'compare': 7, 'pandas_freq': 'MS'}
+    YEAR        = {'compare': 8, 'pandas_freq': 'YS'}
+
+    def __lt__(self, other):
+        return self.value['compare'] < other.value['compare']
+
+    def __eq__(self, other):
+        return self.value['compare'] == other.value['compare']
+
+    def __ge__(self, other):
+        return self.value['compare'] >= other.value['compare']
 
 
 def _to_discrete_values(values, model=None):
@@ -85,6 +106,46 @@ def _to_discrete_values(values, model=None):
     return labels, mapping_intervals
 
 
+def _extract_freq(values):
+    """Define frequency of a time-series values"""
+    x_datetime = pd.to_datetime(values)
+    freq = Freq.YEAR
+    for val in x_datetime:
+        if pd.Timestamp(val).nanosecond > 0:
+            freq = Freq.NANOSECOND
+            break
+        if pd.Timestamp(val).microsecond > 0:
+            if freq > Freq.MICROSECOND:
+                freq = Freq.MICROSECOND
+                continue
+        if pd.Timestamp(val).second > 0:
+            if freq > Freq.SECOND:
+                freq = Freq.SECOND
+                continue
+        if pd.Timestamp(val).minute > 0:
+            if freq > Freq.MINUTE:
+                freq = Freq.MINUTE
+                continue
+        if pd.Timestamp(val).hour > 0:
+            if freq > Freq.HOUR:
+                freq = Freq.HOUR
+                continue
+        if pd.Timestamp(val).day > 0:
+            if freq > Freq.DAY:
+                freq = Freq.DAY
+                continue
+        if pd.Timestamp(val).month > 0:
+            if freq > Freq.MONTH:
+                freq = Freq.MONTH
+                continue
+        if pd.Timestamp(val).year > 0:
+            if freq > Freq.YEAR:
+                freq = Freq.YEAR
+                continue
+    
+    return freq
+
+
 class DataFrame(pd.DataFrame):
     """Data to be processed by anomeda. The class inherits pandas.DataFrame.
     
@@ -111,7 +172,7 @@ class DataFrame(pd.DataFrame):
     discretized_measures : 'dict' = None
         A dictionary containig names of the measures as keys and array-like objects containing customly discretized values of the measure. If not provided, continuous measures will be discretized automatically.
     index_name : 'str | list | None' = None
-        An index column (usually a date or a timestamp). If None, index is taken from the pandas.DataFrame.
+        An index column containg Integer or pandas.DatetimeIndex. If None, index is taken from the pandas.DataFrame.
     metric_name : 'str'
         A metric column.
     agg_func: '"sum" | "avg" | "count" | callable' = 'sum'
@@ -141,6 +202,22 @@ class DataFrame(pd.DataFrame):
                 filtered_kwargs[arg] = kwargs[arg]
         
         super().__init__(pd.DataFrame(*args, **filtered_kwargs).copy())
+
+        index_name = kwargs.get('index_name')
+   
+        curr_indeces = list(filter(lambda x: x is not None, self.index.names))
+        if index_name is None: 
+            if len(curr_indeces) >= 1:
+                self._index_name = curr_indeces
+                try:
+                    self.index = pd.to_datetime(self.index)
+                except BaseException:
+                    pass
+            else:
+                self._index_name = None
+            self.set_index_type()
+        else:
+            self.set_index(index_name, inplace=True)
         
         measures_names = kwargs.get('measures_names')
         self.set_measures_names(measures_names)
@@ -162,16 +239,6 @@ class DataFrame(pd.DataFrame):
         
         agg_func = kwargs.get('agg_func')
         self.set_agg_func(agg_func)
-        
-        index_name = kwargs.get('index_name')
-        curr_indeces = list(filter(lambda x: x is not None, self.index.names))
-        if index_name is None: 
-            if len(curr_indeces) >= 1:
-                self._index_name = curr_indeces
-            else:
-                self._index_name = None
-        else:
-            self.set_index(index_name, inplace=True)
         
     def __copy__(self):
         return self.copy_anomeda_df()
@@ -408,12 +475,22 @@ class DataFrame(pd.DataFrame):
             resp = super().reset_index()
             resp = super().set_index(*args, **kwargs)
             if resp is not None:
+                try:
+                    resp.index = pd.to_datetime(resp.index)
+                except BaseException:
+                    pass
                 return self.replace_df(resp, inplace=False)
+            try:
+                self.index = pd.to_datetime(self.index)
+            except BaseException:
+                pass
             index_names = list(filter(lambda x: x is not None, self.index.names))
             if len(index_names) >= 1:
                 self._index_name = index_names
+            self.set_index_type()
         else:
             self._index_name = curr_indeces
+            self.set_index_type()
 
     def reset_index(self, *args, **kwargs):
         resp = super().reset_index(*args, **kwargs)
@@ -428,7 +505,28 @@ class DataFrame(pd.DataFrame):
                 agg_func=self._agg_func
             )
         self._index_name = None       
-    
+
+    def set_index_type(self):
+        if len(self.index) == 0:
+            self._index_is_numeric = None
+            self._index_freq = None
+            return
+        
+        try: 
+            int(self.index[0])
+            if type(self.index[0]) == np.datetime64:
+                raise ValueError
+            self._index_is_numeric = True
+            self._index_freq = None
+        except BaseException:
+            try:
+                pd.Timestamp(str(self.index[0]))
+                self._index_is_numeric = False
+                freq = _extract_freq(self.index)
+                self._index_freq = freq.value['pandas_freq']
+            except ValueError:
+                raise ValueError('x values must be either convertable to Interger or compatible with pandas.Timestamp method')
+
     def get_metric_name(self):
         """Return the name of a metric column."""
         return self._metric_name

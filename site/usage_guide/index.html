@@ -187,7 +187,7 @@
             (<code>&#39;str | list | None&#39; = None</code>)
         –
         <div class="doc-md-description">
-          <p>An index column (usually a date or a timestamp). If None, index is taken from the pandas.DataFrame.</p>
+          <p>An index column containg Integer or pandas.DatetimeIndex. If None, index is taken from the pandas.DataFrame.</p>
         </div>
       </li>
       <li class="field-body">
@@ -228,6 +228,7 @@
 
 
 </div><p>As you may have noticed, most of the parameters are optional. If you don't specify a parameter, a default value will be used. Or you will be notified once you use <code>anomeda.fit_trends</code>, <code>anomeda.find_anomalies</code> or other methods that you need to specify something additionally.</p>
+<p>Note that it is recommended to use <strong>datetime-like index</strong>. For example, transformed by <code>pandas.to_datetime</code>. Anomeda will try to change the type automatically, but it may cause unexpected results.</p>
 <p>Here is some examples of how you can initialize a new <code>anomeda.DataFrame</code>:</p>
 <pre><code class="language-python"># With just a pandas.DataFrame and metric name
 anomeda.DataFrame(pandas_df, metric_name='my_metric')
@@ -270,7 +271,7 @@ anomeda.DataFrame(
 <p><strong>NOTE 2</strong></p>
 <p>The scale of undex increments is extracted automatically. It can be 1 (<em>Integer</em>, if your index are integers) or a part of a timestamp (<em>second</em>, <em>minute</em>, <em>hour</em>, etc). </p>
 <p>For example, if your index consists of two values ['2024-01-01 00:00:00', '2024-01-01 00:01:00'], the step is <em>hour</em>. However, the step may become <em>minute</em> once you add only one value - ['2024-01-01 00:00:00', '2024-01-01 00:01:00', '2024-01-01 00:01:<strong>01</strong>'], since <em>minute</em> is the smallest increment now.</p>
-<p>By default, anomeda does not fill the missing index values. So if there are infrequent index values, anomeda will use only them to use fit trends.</p>
+<p>By default, anomeda does not propagate metric values for the missing index values in clusters. However, you can specify a different option by providing <code>metric_propagate</code> parameters to <code>anomeda.fit_trends</code>. It can be <em>"zeros"</em> (fill missing metric values with zeros), <em>"ffil"</em> (use the last present metric value) or <em>None</em> (do not fill any missing values, treat them as it is).</p>
 <p><em>TODO in new versions: add filling options</em></p>
 <hr />
 <p>A list of methods available to manipulate <code>anomeda.DataFrame</code>, such as <em>getters</em>, <em>setters</em>, <em>copying</em>, <em>modifying the object</em>, etc. Please follow <a href="../dataframe_api/">anomeda.DataFrame API Reference</a> for the details. Her is the full list:</p>
@@ -600,7 +601,7 @@ anomeda.DataFrame(
   <ul>
       <li class="field-body">
         <b><code>data</code></b>
-            (<code><span title="anomeda.DataFrame">DataFrame</span> | (<span title="numpy.ndarray">ndarray</span>, <span title="numpy.ndarray">ndarray</span>)</code>)
+            (<code><span title="anomeda.DataFrame">DataFrame</span> | (<span title="numpy.ndarray">ndarray</span>[int], <span title="numpy.ndarray">ndarray</span>[float]) | (<span title="pandas.DatetimeIndex">DatetimeIndex</span>, <span title="numpy.ndarray">ndarray</span>[float])</code>)
         –
         <div class="doc-md-description">
           <p>Object containing metric values. If numpy.ndarray, a tuple of arrays corresponding to x (data points) and y (metric values) respectively.</p>
@@ -634,6 +635,34 @@ anomeda.DataFrame(
         –
         <div class="doc-md-description">
           <p>If 'no', the metric is grouped by date points only. If 'all-clusters', then all combinations of measures are used to create clusters for fitting trends within them. If list[str], then only combinations of measures specified in the list are used.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>metric_propagate</code></b>
+            (<code>&#39;&#34;zeros&#34; | &#34;ffil&#34; | None&#39; = None</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>How to propogate aggregated time-series for missing index values.
+- zeros: 
+    Let metric for missing index be equal 0. For example, aggregated metric values
+        '2024-01-01': 1
+        '2024-01-03': 2
+    Will be propagated as
+        '2024-01-01': 1 
+        '2024-01-02': 0
+        '2024-01-03': 2
+- ffil: 
+    Let metric for missing index be equal the last observed value. For example, aggregated metric values 
+        '2024-01-01': 1
+        '2024-01-03': 2
+    Will be propagated as
+        '2024-01-01': 1
+        '2024-01-02': 1 
+        '2024-01-03': 2
+- None: 
+    Use only present metric and index values.</p>
         </div>
       </li>
       <li class="field-body">
@@ -704,7 +733,14 @@ anomeda.DataFrame(
 
 
 <p><strong>Examples:</strong></p>
-    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">fitted_trends</span> <span class="o">=</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">fit_trends</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">trend_fitting_conf</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;max_trends&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span> <span class="n">min_cluster_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">df</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">fitted_trends</span> <span class="o">=</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">fit_trends</span><span class="p">(</span>
+<span class="go">        data, </span>
+<span class="go">        trend_fitting_conf={&#39;max_trends&#39;: 3}, </span>
+<span class="go">        metric_propagate=&#39;zeros&#39;,</span>
+<span class="go">        min_cluster_size=3, </span>
+<span class="go">        plot=True, </span>
+<span class="go">        df=True</span>
+<span class="go">    )</span>
 </code></pre></div>
 
   </div>
@@ -716,9 +752,10 @@ anomeda.DataFrame(
 <p><img alt="anomeda.fit_trends method" src="../img/anomeda_fit_trends_1.png" title="anomeda.fit_trends method" /></p>
 <p>If you plot one of them with <code>anomeda.plot_trends</code>, you may see what the result looks like:</p>
 <p><img alt="anomeda.plot_trends method" src="../img/anomeda_plot_trends_1.png" title="anomeda.plot_trends method" /></p>
+<p>While fitting trends, the method also stores clusters to <code>anomeda.DataFrame._clusters</code>. If you want to query them in other methods, remember that you must query them exactly how they are called in this property (only measures may have a different order). The syntax is the following: "`measure_name_1`==measure_value_1 and `measure_name_1`==measure_value_1 and ...". Also, note that discretized values of continous measures are used as measure values in clusters definitions.</p>
 <h2 id="how-we-detect-anomalies">How we detect anomalies</h2>
 <p>The algorithm of detecting anomalies is based on comparing observed values with values of a fitted trend. Sounds simple, doesn't it?. The interesting part is how the anomalies are identified based on its differences from a trend.</p>
-<p>Once differences between observed values and fitted trend are calculated, we apply the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.LocalOutlierFactor.html"><code>Local Outlier Factor</code></a> algorithm with a provided <code>n_neighbors</code>. It identifies "isolated" (without many neighbors) points or clusters and mark them as outliers. So, we find differences which are too rare, i.e. little or no points have similar difference. Such an alghorithm let us handle data with a high variance where lot's of differences are far from the trend. Once we identified abnormal clusters, we filter points with only <em>the lowest</em> and <em>the highest</em> differences, meaning for each <em>low-value anomaly</em> there must be no normal points with a difference lower than given, and similarly for the <em>high-value anomalies</em> - no points must have a difference higher than given. Finally, the amount of points to return is customized with <code>p_large</code> and <code>p_low</code> parameters which set the fraction of the most extreme points to return. The parameters vary from 0 to 1.</p>
+<p>Once differences between observed values and fitted trend are calculated, we apply the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.LocalOutlierFactor.html"><code>Local Outlier Factor</code></a> algorithm with a provided <code>n_neighbors</code>. It identifies "isolated" (without many neighbors) points or clusters and mark them as outliers. So, we find differences which are too rare, i.e. little or no points have similar difference. Such an alghorithm let us handle data with a high variance where lot's of differences are far from the trend, as well as not to mark points as anomalies if there are none of them. Once we identified abnormal clusters, we filter points with only <em>the lowest</em> and <em>the highest</em> differences, meaning for each <em>low-value anomaly</em> there must be no normal points with a difference lower than given, and similarly for the <em>high-value anomalies</em> - no points must have a difference higher than given. Finally, the amount of points to return is customized with <code>p_large</code> and <code>p_low</code> parameters which set the fraction of the most extreme points to return. The parameters vary from 0 to 1.</p>
 <p>Anomalies are identified with <code>anomeda.find_anomalies</code> method.</p>
 
 
@@ -751,7 +788,8 @@ anomeda.DataFrame(
 )
         –
         <div class="doc-md-description">
-          <p>List of clusters to plot. The objects in the list are queries used in pandas.DataFrame.query.</p>
+          <p>List of clusters to plot. The objects in the list are queries used in pandas.DataFrame.query.
+Make sure you pass the cluster names exactly as they they appear in the fitted trends.</p>
         </div>
       </li>
       <li class="field-body">

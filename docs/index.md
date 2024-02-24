@@ -62,7 +62,8 @@ trends = anomeda.fit_trends(
     trend_fitting_conf={'max_trends': 'auto', 'min_var_reduction': 0.75}, # set the number of trends automatically,
                                                                           # try to reduce error variance compared to error of estimating values by 1-line trend by 75%
     breakdown='all-clusters', # fit trends for clusters extracted from all possible sets of measures
-    min_cluster_size=3 # skip small clusters
+    mettic_propagte='zeros', # if some index values are missed after aggregation for a cluster, fill them with zeros
+    min_cluster_size=3 # skip small clusters, they all will be combined into 'skipped' cluster
 )
 ```
 
@@ -85,8 +86,8 @@ Of course, you may have no idea which cluster caused the problem and what to plo
 ```python
 anomeda.compare_clusters(
     anomeda_df,
-    period1='date < 30',
-    period2='date >= 30'
+    period1='date < "2024-01-30"',
+    period2='date >= "2024-01-30"'
 )
 ```
 
