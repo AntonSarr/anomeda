@@ -167,7 +167,8 @@ anomeda_df = anomeda.DataFrame(
     trend_fitting_conf={'max_trends': 'auto', 'min_var_reduction': 0.75}, # set the number of trends automatically,
                                                                           # try to reduce error variance compared to error of estimating values by 1-line trend by 75%
     breakdown='all-clusters', # fit trends for clusters extracted from all possible sets of measures
-    min_cluster_size=3 # skip small clusters
+    mettic_propagte='zeros', # if some index values are missed after aggregation for a cluster, fill them with zeros
+    min_cluster_size=3 # skip small clusters, they all will be combined into 'skipped' cluster
 )
 </code></pre>
 <p>Typically you will see something like this:</p>
@@ -180,8 +181,8 @@ anomeda_df = anomeda.DataFrame(
 <p>Of course, you may have no idea which cluster caused the problem and what to plot. Almost always you know only that there is a decrease of an overall metric and you need to find the culprits. Let's utilize another method -- <code>anomeda.compare_clusters</code>.</p>
 <pre><code class="language-python">anomeda.compare_clusters(
     anomeda_df,
-    period1='date &lt; 30',
-    period2='date &gt;= 30'
+    period1='date &lt; &quot;2024-01-30&quot;',
+    period2='date &gt;= &quot;2024-01-30&quot;'
 )
 </code></pre>
 <p>You see the clusters you fitted before and comparison between their characteristics. The result is quite hefty, but you can easily add your own metrics and sort clusters so that the cluster you are looking for will be on top. For example, look at how different means in the second cluster are. The second cluster corresponds to Germany (the first cluster consists of all events, so we are not interested in it now).</p>
@@ -327,5 +328,5 @@ anomeda_df = anomeda.DataFrame(
 
 <!--
 MkDocs version : 1.5.3
-Build Date UTC : 2024-02-23 21:32:43.497454+00:00
+Build Date UTC : 2024-02-24 19:27:48.478487+00:00
 -->

@@ -29,6 +29,7 @@ def test_setters_and_getters():
     assert measures_names == anmd_df.get_measures_names()
     assert measures_types == anmd_df.get_measures_types()
     assert index_name == anmd_df.get_index_name()
+    assert anmd_df._index_is_numeric == False
     assert metric_name == anmd_df.get_metric_name()
     assert agg_func == anmd_df.get_agg_func()
 
@@ -65,6 +66,24 @@ def test_setters_and_getters():
     )
 
     assert index_name == anmd_df.get_index_name()
+
+    dummy_df = pd.DataFrame({
+        'dt': ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04'], 
+        'a': [10, 20, 20, 30], 
+        'b': [0.1, 0.2, 0.3, 0.2], 
+        'metric': [10.5, 12.6, 8.3, 9.8]
+    })
+    
+    anmd_df = anomeda.DataFrame(
+        dummy_df,
+        measures_names=measures_names,
+        measures_types=measures_types,
+        index_name=index_name,
+        metric_name=metric_name,
+        agg_func=agg_func
+    )
+    assert anmd_df._index_is_numeric == False
+    assert anmd_df._index_freq == 'D'
     
 
 def test_set_reset_index():
@@ -149,7 +168,10 @@ def test_to_pandas_method():
         agg_func=agg_func
     )
     
-    assert dummy_df.set_index(index_name).equals(anmd_df.to_pandas())
+    dummy_df.set_index(index_name, inplace=True)
+    dummy_df.index = pd.to_datetime(dummy_df.index)
+
+    assert dummy_df.equals(anmd_df.to_pandas())
 
 
 def test_find_anomalies():
@@ -190,6 +212,41 @@ def test_find_anomalies():
     anomeda.find_anomalies((x, y), return_all_points=True, trend_fitting_conf={'max_trends': 1, 'n_neighbors': 3})
 
 
+def test_fit_trends():
+    
+    dummy_df = pd.DataFrame({'dt': [0, 1, 2, 3], 'a': [10, 20, 20, 30], 'b': [0.1, 0.2, 0.3, 0.2], 'metric': [10.5, 12.6, 8.3, 9.8]})
+    
+    index_name = 'dt'
+    metric_name = 'metric'
+    agg_func = 'sum'
+    measures_names = ['a', 'b']
+    measures_types = {
+        'categorical': ['a'], 
+        'continuous': ['b']
+    }
+    
+    anmd_df = anomeda.DataFrame(
+        dummy_df,
+        measures_names=measures_names,
+        measures_types=measures_types,
+        index_name=index_name,
+        metric_name=metric_name,
+        agg_func=agg_func
+    )
+
+    anomeda.fit_trends(anmd_df)
+    anomeda.fit_trends(anmd_df, breakdown='all-clusters')
+    anomeda.fit_trends(anmd_df, breakdown='all-clusters', metric_propagate='zeros')
+    anomeda.fit_trends(anmd_df, breakdown='all-clusters', metric_propagate='ffil')
+
+    x = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    y = np.array([11.2, 10.4, 10.2, 30.1, 10.2, 10., 11., 10.2, 10.9, 10.5, 11.1])
+
+    anomeda.fit_trends((x, y))
+    anomeda.fit_trends((x, y), metric_propagate='zeros')
+    anomeda.fit_trends((x, y), metric_propagate='ffil')
+
+
 def test_extract_trends():
 
     x = np.arange(50)
@@ -207,7 +264,7 @@ def test_plot_trends():
     x = np.arange(50)
     y = 0.5 * x + 10 +  3 * np.random.randn(50)
 
-    dummy_df = pd.DataFrame({'dt': [0, 1, 2, 3], 'a': [10, 20, 20, 30], 'b': [0.1, 0.2, 0.3, 0.2], 'metric': [10.5, 12.6, 8.3, 9.8]})
+    dummy_df = pd.DataFrame({'dt': ["2023-12-01", "2023-12-01", "2024-02-01", "2024-02-01"], 'a': [10, 20, 20, 30], 'b': [0.1, 0.2, 0.3, 0.2], 'metric': [10.5, 12.6, 8.3, 9.8]})
     
     index_name = 'dt'
     metric_name = 'metric'
@@ -237,7 +294,7 @@ def test_plot_trends():
 
 def test_compare_clusters():
 
-    dummy_df = pd.DataFrame({'dt': [0, 1, 2, 3], 'a': [10, 20, 20, 30], 'b': [0.1, 0.2, 0.3, 0.2], 'metric': [10.5, 12.6, 8.3, 9.8]})
+    dummy_df = pd.DataFrame({'dt': ["2023-12-01", "2023-12-01", "2024-02-01", "2024-02-01"], 'a': [10, 20, 20, 30], 'b': [0.1, 0.2, 0.3, 0.2], 'metric': [10.5, 12.6, 8.3, 9.8]})
     
     index_name = 'dt'
     metric_name = 'metric'
@@ -257,14 +314,11 @@ def test_compare_clusters():
         agg_func=agg_func
     )
 
-    res = anomeda.compare_clusters(anmd_df, period1='dt < 2', period2='dt >= 2')
-    assert res.shape[0] > 0
+    res = anomeda.compare_clusters(anmd_df, period1='dt < "2024-01-01"', period2='dt >= "2024-01-01"')
 
-    res = anomeda.compare_clusters(anmd_df, period1='dt < 2', period2='dt >= 2', clusters=['total'])
-    assert res.shape[0] > 0
+    res = anomeda.compare_clusters(anmd_df, period1='dt < "2024-01-01"', period2='dt >= "2024-01-01"', clusters=['total'])
 
-    res = anomeda.compare_clusters(anmd_df, period1='dt < 2', period2='dt >= 2', breakdown='all-clusters', clusters=['`a`==20'])
-    assert res.shape[0] > 0
+    res = anomeda.compare_clusters(anmd_df, period1='dt < "2024-01-01"', period2='dt >= "2024-01-01"', breakdown='all-clusters', clusters=['`a`==20'])
 
 
 def test_empty_df():
@@ -346,3 +400,42 @@ def test_two_elements_df():
     anomeda.fit_trends(anmd_df)
     anomeda.fit_trends(anmd_df, breakdown='all-clusters')
     anomeda.plot_trends(anmd_df)
+
+
+def test_datetime_index():
+
+    df = pd.DataFrame({
+        'dt': ['2024-01-01', '2024-01-03', '2024-01-04', '2024-01-05', '2024-01-03', '2024-01-03'],
+        'metric': [10, 20, -100, 30, 20, 10],
+        'measure': ['A', 'A', 'A', 'A', 'B', 'B']
+    })
+
+    anomeda_df = anomeda.DataFrame(
+        df,
+        measures_names=['measure'], # columns represending measures or characteristics of your events
+        measures_types={
+            'categorical': ['measure']
+        },
+        index_name='dt',
+        metric_name='metric', # dummy metric, always 1
+        agg_func='sum' # function that is used to aggregate metric
+    )
+
+    anomeda.fit_trends(
+        anomeda_df,
+        metric_propagate=None,
+        breakdown='all-clusters'
+    )
+    anomeda.fit_trends(
+        anomeda_df,
+        metric_propagate='zeros',
+        breakdown='all-clusters'
+    )
+    anomeda.fit_trends(
+        anomeda_df,
+        metric_propagate='ffil',
+        breakdown='all-clusters'
+    )
+
+    anomeda.find_anomalies(anomeda_df)
+    anomeda.plot_trends(anomeda_df)

@@ -19,6 +19,8 @@
     
 As you may have noticed, most of the parameters are optional. If you don't specify a parameter, a default value will be used. Or you will be notified once you use `anomeda.fit_trends`, `anomeda.find_anomalies` or other methods that you need to specify something additionally.
 
+Note that it is recommended to use **datetime-like index**. For example, transformed by `pandas.to_datetime`. Anomeda will try to change the type automatically, but it may cause unexpected results.
+
 Here is some examples of how you can initialize a new `anomeda.DataFrame`:
 
 ```python
@@ -70,7 +72,7 @@ The scale of undex increments is extracted automatically. It can be 1 (*Integer*
 
 For example, if your index consists of two values ['2024-01-01 00:00:00', '2024-01-01 00:01:00'], the step is *hour*. However, the step may become *minute* once you add only one value - ['2024-01-01 00:00:00', '2024-01-01 00:01:00', '2024-01-01 00:01:**01**'], since *minute* is the smallest increment now.
 
-By default, anomeda does not fill the missing index values. So if there are infrequent index values, anomeda will use only them to use fit trends.
+By default, anomeda does not propagate metric values for the missing index values in clusters. However, you can specify a different option by providing `metric_propagate` parameters to `anomeda.fit_trends`. It can be *"zeros"* (fill missing metric values with zeros), *"ffil"* (use the last present metric value) or *None* (do not fill any missing values, treat them as it is).
 
 *TODO in new versions: add filling options*
 
@@ -127,11 +129,13 @@ If you plot one of them with `anomeda.plot_trends`, you may see what the result 
 
 ![anomeda.plot_trends method](img/anomeda_plot_trends_1.png "anomeda.plot_trends method")
 
+While fitting trends, the method also stores clusters to `anomeda.DataFrame._clusters`. If you want to query them in other methods, remember that you must query them exactly how they are called in this property (only measures may have a different order). The syntax is the following: "\`measure_name_1\`==measure_value_1 and \`measure_name_1\`==measure_value_1 and ...". Also, note that discretized values of continous measures are used as measure values in clusters definitions.
+
 ## How we detect anomalies
 
 The algorithm of detecting anomalies is based on comparing observed values with values of a fitted trend. Sounds simple, doesn't it?. The interesting part is how the anomalies are identified based on its differences from a trend.
 
-Once differences between observed values and fitted trend are calculated, we apply the [`Local Outlier Factor`](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.LocalOutlierFactor.html) algorithm with a provided `n_neighbors`. It identifies "isolated" (without many neighbors) points or clusters and mark them as outliers. So, we find differences which are too rare, i.e. little or no points have similar difference. Such an alghorithm let us handle data with a high variance where lot's of differences are far from the trend. Once we identified abnormal clusters, we filter points with only *the lowest* and *the highest* differences, meaning for each *low-value anomaly* there must be no normal points with a difference lower than given, and similarly for the *high-value anomalies* - no points must have a difference higher than given. Finally, the amount of points to return is customized with `p_large` and `p_low` parameters which set the fraction of the most extreme points to return. The parameters vary from 0 to 1.
+Once differences between observed values and fitted trend are calculated, we apply the [`Local Outlier Factor`](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.LocalOutlierFactor.html) algorithm with a provided `n_neighbors`. It identifies "isolated" (without many neighbors) points or clusters and mark them as outliers. So, we find differences which are too rare, i.e. little or no points have similar difference. Such an alghorithm let us handle data with a high variance where lot's of differences are far from the trend, as well as not to mark points as anomalies if there are none of them. Once we identified abnormal clusters, we filter points with only *the lowest* and *the highest* differences, meaning for each *low-value anomaly* there must be no normal points with a difference lower than given, and similarly for the *high-value anomalies* - no points must have a difference higher than given. Finally, the amount of points to return is customized with `p_large` and `p_low` parameters which set the fraction of the most extreme points to return. The parameters vary from 0 to 1.
 
 Anomalies are identified with `anomeda.find_anomalies` method.
 

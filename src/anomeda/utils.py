@@ -11,7 +11,7 @@ from sklearn.neighbors import LocalOutlierFactor
 from sklearn.mixture import BayesianGaussianMixture
 from matplotlib.colors import TABLEAU_COLORS
 
-from anomeda.DataFrame import DataFrame, _to_discrete_values
+from anomeda.DataFrame import DataFrame, Freq, _extract_freq
 
 INVALID_DATA_TYPE_MSG = "'{0}' argument must be anomeda.DataFrame, but {1} is provided"
 
@@ -96,8 +96,10 @@ def __find_trend_breaking_point(
 
 
 def extract_trends(
-    x : 'numpy.ndarray[int]', 
+    x : 'numpy.ndarray[int] | pandas.DatetimeIndex', 
     y : 'numpy.ndarray[float]', 
+    freq: 'frequency unit for pandas.DatetimeIndex' = None,
+    propagation_strategy: '"zeros" | "ffil" | None' = None,
     max_trends : "int | 'auto'"='auto', 
     min_var_reduction : 'float[0, 1] | None'=0.5, 
     verbose : 'bool'=False
@@ -109,10 +111,30 @@ def extract_trends(
     
     Parameters
     ----------
-    x : numpy.ndarray[int]
+    x : numpy.ndarray[int] | pandas.DatetimeIndex
         Indeces corresponding to time points. Must be an increasing array of integers. Some of the values may be omitted, e.g such x is OK: [0, 1, 5, 10]. 
     y : numpy.ndarray[float]
         Metric values corresponding to time points.
+    propagation_strategy : '"zeros" | "ffil" | None' = None
+        How to propogate aggregated time-series for missing index values.
+        - zeros: 
+            Let metric for missing index be equal 0. For example, aggregated metric values
+                '2024-01-01': 1
+                '2024-01-03': 2
+            Will be propagated as
+                '2024-01-01': 1 
+                '2024-01-02': 0
+                '2024-01-03': 2
+        - ffil: 
+            Let metric for missing index be equal the last observed value. For example, aggregated metric values 
+                '2024-01-01': 1
+                '2024-01-03': 2
+            Will be propagated as
+                '2024-01-01': 1
+                '2024-01-02': 1 
+                '2024-01-03': 2
+        - None: 
+            Use only present metric and index values.
     max_trends : int | "auto", default "auto"
         Number of trends to extract. If int, the method extracts defined amount of trends or less. Less trends may be extracted if no more trends were found or if the min_var_reduction is reached. It would mean taht the variance is already explained by that amount of trends. If 'auto', the method defines the number of trends automatically using min_var_reduction parameter. Default is 'auto'.
     min_var_reduction : float[0, 1] | None, default 0.5
@@ -144,6 +166,65 @@ def extract_trends(
         1: (4, 6, (-0.2999999999999998, 4.6), (2, 3.25, 0.0, 6.5))
     }
     """
+    def propagate_metric(
+        x : 'numpy.ndarray[int] | numpy.ndarray[datetime]', 
+        y : 'numpy.ndarray[float]', 
+        strategy : '"zeros" | "ffil" | None',
+        freq: 'frequency unit for pandas.DatetimeIndex' = None
+    ):
+        
+        if len(x) != len(y):
+            raise ValueError('Lengths of x and y must be the same for the propagation')
+
+        if len(x) == 0 or len(y) == 0:
+            return x, y
+        
+        if type(x[0]) in [pd.Timestamp, datetime, np.datetime64]:
+            x = pd.to_datetime(x)
+
+        if type(x) == pd.DatetimeIndex:
+            x_is_numeric = False
+            if freq is None:
+                raise ValueError('If x is pandas.DatetimeIndex, frequency must be provided')
+        else:
+            x_is_numeric = True
+            
+        if x_is_numeric:
+            x_prop = np.arange(x.min(), x.max() + 1)
+            y_prop = np.zeros(x.max() - x.min() + 1)
+            x_formatted = x
+            x_prop_int = x_prop
+        else:
+            x_datetime = pd.to_datetime(x)
+            x_prop = pd.date_range(start=x_datetime.min(), end=x_datetime.max(), freq=freq)
+            y_prop = np.zeros(len(x_prop))
+
+            x_formatted = x_datetime
+            x_prop_int = np.arange(len(x_prop))
+
+        if strategy is None:
+            if not x_is_numeric:
+                x_prop_int = []
+                init_i = 0
+                for i in range(len(x_prop)):
+                    if x_prop[i] == x_formatted[init_i]:
+                        x_prop_int.append(i)
+                        init_i += 1
+                x_prop_int = np.array(x_prop_int)
+
+            return x_formatted, x_prop_int, y
+
+        init_i = 0
+        for i in range(len(x_prop)):
+            if x_prop[i] == x_formatted[init_i]:
+                y_prop[i] = y[init_i]
+                init_i += 1
+            else:
+                if strategy == 'ffil':
+                    y_prop[i] = y[init_i - 1]
+
+        return x_prop, x_prop_int, y_prop
+    
     if max_trends == 'auto':
         if min_var_reduction is None:
             raise ValueError("Either max_trends or min_var_reduction parameters must be set. max_trends='auto' and min_var_reduction=None at the same time is not permitted.")
@@ -151,6 +232,16 @@ def extract_trends(
 
     if min_var_reduction is None:
         min_var_reduction = np.inf
+
+    x_prop, x_prop_int, y_prop = propagate_metric(x, y, strategy=propagation_strategy, freq=freq)
+
+    x_int_val_map = {x_int: x_val for (x_int, x_val) in zip(x_prop_int, x_prop)}
+    if type(x_prop) == pd.DatetimeIndex:
+        x_int_val_map[x_prop_int[-1] + 1] = x_prop[-1] + pd.Timedelta(1, unit=freq)
+    else:
+        x_int_val_map[x_prop_int[-1] + 1] = x_prop[-1] + 1
+
+    x, y = x_prop_int, y_prop
     
     linreg_fitted = linregress(x, y)
     y_fitted = linreg_fitted.slope * x + linreg_fitted.intercept
@@ -275,6 +366,11 @@ def extract_trends(
         n += 1
         continue
 
+    if type(x_prop) == pd.DatetimeIndex:
+        for t in trends.keys():
+            x_min, x_max, (slope, intercept), (cnt, mean, mae_var, y_sum) = trends[t]
+            trends[t] = (x_int_val_map[x_min], x_int_val_map[x_max], (slope, intercept), (cnt, mean, mae_var, y_sum))
+
     return trends
 
 
@@ -301,7 +397,7 @@ def compare_clusters(
     breakdown : 'no' | 'all-clusters' | list[str], default 'no'
         If 'no', the metric is grouped by date points only. If 'all-clusters', then all combinations of measures are used to create clusters for fitting trends within them. If list[str], then only combinations of measures specified in the list are used.
     clusters : list, default None
-        List of clusters to use in the comparison. The objects in the list are queries used in pandas.DataFrame.query. 
+        List of clusters to use in the comparison. The objects in the list are queries used in pandas.DataFrame.query.
         If None, all clusters are used. Default is None.
         
     Returns
@@ -387,6 +483,7 @@ def find_anomalies(
         Object containing metric values to be analyzed. Trends must be fitted for the object with anomeda.fit_trends() method if anomeda.DataFrame is passed.
     clusters : list, default None
         List of clusters to plot. The objects in the list are queries used in pandas.DataFrame.query.
+        Make sure you pass the cluster names exactly as they they appear in the fitted trends.
     anomalies_conf : dict, default {'p_large': 1., 'p_low': 1., 'n_neighbors': 3}
         Dict containing 'p_large' and 'p_low' values. Both are float values between 0 and 1 corresponding to the % of the anomalies with largest and lowest metric values to be returned.
         For example, if you set 'p_low' to 0, no points with abnormally low metric values will be returned; if 0.5, then 50% of points with abnormally values will be returned, etc. 
@@ -475,6 +572,12 @@ def find_anomalies(
             yindex = data._clusters[c]['index']
             ydata = data._clusters[c]['values']
             
+            if type(yindex[0]) == int:
+                yindex_int = yindex
+            else:
+                yindex_int = np.arange(len(yindex))
+                yindex = pd.to_datetime(yindex)
+            
             y_fitted_list = []
             y_diff_list = []
             x_labels = []
@@ -484,9 +587,14 @@ def find_anomalies(
                 xmin, xmax = t['trend_start_dt'], t['trend_end_dt']
                 slope, intercept = t['slope'], t['intercept']
 
+                if type(yindex[0]) != int:
+                    xmin = pd.Timestamp(xmin)
+                    xmax = pd.Timestamp(xmax)
+
                 index_mask = (yindex >= xmin) & (yindex < xmax)
                 cluster_indx = yindex[index_mask]
-                y_fitted = slope * cluster_indx + intercept
+                cluster_indx_int = yindex_int[index_mask]
+                y_fitted = slope * cluster_indx_int + intercept
                 y_diff_list.append(ydata[index_mask] - y_fitted)
                 x_labels.append(cluster_indx)
                 y_fitted_list.append(y_fitted)
@@ -554,6 +662,12 @@ def find_anomalies(
             raise ValueError('Clusters may be specified only if passing an anomeda.DataFrame object')
 
         yindex, ydata = data
+
+        if type(yindex[0]) == int:
+            yindex_int = yindex
+        else:
+            yindex_int = np.arange(len(yindex))
+            yindex = pd.to_datetime(yindex)
         
         y_fitted_list = []
         y_diff_list = []
@@ -576,9 +690,14 @@ def find_anomalies(
             xmin, xmax = t['trend_start_dt'], t['trend_end_dt']
             slope, intercept = t['slope'], t['intercept']
 
+            if type(yindex[0]) != int:
+                xmin = pd.Timestamp(xmin)
+                xmax = pd.Timestamp(xmax)
+
             index_mask = (yindex >= xmin) & (yindex < xmax)
             cluster_indx = yindex[index_mask]
-            y_fitted = slope * cluster_indx + intercept
+            cluster_indx_int = yindex_int[index_mask]
+            y_fitted = slope * cluster_indx_int + intercept
             y_diff_list.append(ydata[index_mask] - y_fitted)
             x_labels.append(cluster_indx)
             y_fitted_list.append(y_fitted)
@@ -660,6 +779,7 @@ def plot_trends(
         Object containing trends to be plotted.
     clusters : list, default None
         List of clusters to plot. The objects in the list are queries used in pandas.DataFrame.query.
+        Make sure you pass the cluster names exactly as they they appear in the fitted trends.
     colors : dict, default None
         Dictionary with a mapping between clusters and colors used in matplotlib.
     show_points : bool, default True
@@ -715,10 +835,17 @@ def plot_trends(
         for trend in df_tmp.iterrows():
             i, t = trend
             cluster = t['cluster']
-            x = np.arange(t['trend_start_dt'], t['trend_end_dt'])
+            
+            if type(t['trend_start_dt']) == int:
+                x = np.arange(t['trend_start_dt'], t['trend_end_dt'])
+                x_axis = x
+            else:
+                x_axis = pd.date_range(start=t['trend_start_dt'], end=t['trend_end_dt'])
+                x = np.arange(len(x_axis))
+            
             y_trend = x * t['slope'] + t['intercept']
             
-            x_cluster.append(x)
+            x_cluster.append(x_axis)
             y_trend_cluster.append(y_trend)
         
         x_cluster = np.concatenate(x_cluster)
@@ -734,10 +861,11 @@ def plot_trends(
 
 
 def fit_trends(
-    data : 'anomeda.DataFrame | (numpy.ndarray[int], numpy.ndarray[float])', 
+    data : 'anomeda.DataFrame | (numpy.ndarray[int], numpy.ndarray[float]) | (pandas.DatetimeIndex, numpy.ndarray[float])', 
     trend_fitting_conf : 'dict' = {'max_trends': 'auto', 'min_var_reduction': 0.75},
     save_trends : 'bool' = True,
     breakdown : "'no' | 'all-clusters' | list[str]" = 'no',
+    metric_propagate : '"zeros" | "ffil" | None' = None,
     min_cluster_size : 'int | None' = None,
     max_cluster_size : 'int | None' = None,
     plot : 'bool' = False,
@@ -753,7 +881,7 @@ def fit_trends(
 
     Parameters
     ----------
-    data : anomeda.DataFrame | (numpy.ndarray, numpy.ndarray)
+    data : anomeda.DataFrame | (numpy.ndarray[int], numpy.ndarray[float]) | (pandas.DatetimeIndex, numpy.ndarray[float])
         Object containing metric values. If numpy.ndarray, a tuple of arrays corresponding to x (data points) and y (metric values) respectively.
     trend_fitting_conf : dict, default {'max_trends': 'auto', 'min_var_reduction': 0.75}
         Parameters for calling anomeda.extract_trends() function. It consists of 'max_trends' parameter, which is responsible for the maximum number of trends that you want to identify, and 'min_var_reduction' parameter, which describes what part of variance must be reduced by estimating trends. Values close to 1 will produce more trends since more trends reduce variance more signigicantly. Default is {'max_trends': 'auto', 'min_var_reduction': 0.75}.
@@ -761,6 +889,26 @@ def fit_trends(
         If False, return pandas.DataFrame with trends description without assigning it to the anomeda.DataFrame._trends.
     breakdown : 'no' | 'all-clusters' | list[str], default 'no'
         If 'no', the metric is grouped by date points only. If 'all-clusters', then all combinations of measures are used to create clusters for fitting trends within them. If list[str], then only combinations of measures specified in the list are used.
+    metric_propagate : '"zeros" | "ffil" | None' = None
+        How to propogate aggregated time-series for missing index values.
+        - zeros: 
+            Let metric for missing index be equal 0. For example, aggregated metric values
+                '2024-01-01': 1
+                '2024-01-03': 2
+            Will be propagated as
+                '2024-01-01': 1 
+                '2024-01-02': 0
+                '2024-01-03': 2
+        - ffil: 
+            Let metric for missing index be equal the last observed value. For example, aggregated metric values 
+                '2024-01-01': 1
+                '2024-01-03': 2
+            Will be propagated as
+                '2024-01-01': 1
+                '2024-01-02': 1 
+                '2024-01-03': 2
+        - None: 
+            Use only present metric and index values.
     min_cluster_size : int, default None
         Skip clusters whose total size among all date points is less than the value.
     max_cluster_size : int, default None
@@ -779,7 +927,14 @@ def fit_trends(
 
     Examples
     --------
-    >>> fitted_trends = anomeda.fit_trends(data, trend_fitting_conf={'max_trends': 3}, min_cluster_size=3, plot=True, df=True)
+    >>> fitted_trends = anomeda.fit_trends(
+            data, 
+            trend_fitting_conf={'max_trends': 3}, 
+            metric_propagate='zeros',
+            min_cluster_size=3, 
+            plot=True, 
+            df=True
+        )
     """
     def resp_to_df(resp):
         flattened = []
@@ -862,7 +1017,9 @@ def fit_trends(
         hashed_index[hashable_key] = [query]
         
         trends = extract_trends(
-            yindex, ydata,
+            yindex, ydata, 
+            propagation_strategy=metric_propagate,
+            freq=data._index_freq,
             max_trends=trend_fitting_conf.get('max_trends'), 
             min_var_reduction=trend_fitting_conf.get('min_var_reduction')
         )
@@ -894,16 +1051,27 @@ def fit_trends(
 
                     if ydata.shape[0] >= min_cluster_size and ydata.shape[0] <= max_cluster_size:
                         if ydata.shape[0] == 1:
-                            res_values[query] = {
-                                0: (
-                                    yindex[0], yindex[0] + 1, 
-                                    (1, ydata[0]), 
-                                    (1, ydata[0], 0, ydata[0])
-                                )
-                            }
+                            if data._index_is_numeric:
+                                res_values[query] = {
+                                    0: (
+                                        yindex[0], yindex[0] + 1, 
+                                        (1, ydata[0]), 
+                                        (1, ydata[0], 0, ydata[0])
+                                    )
+                                }
+                            else:
+                                res_values[query] = {
+                                    0: (
+                                        pd.Timestamp(yindex[0]), pd.Timestamp(yindex[0]) + pd.Timedelta(1, data._index_freq), 
+                                        (1, ydata[0]), 
+                                        (1, ydata[0], 0, ydata[0])
+                                    )
+                                }
                         else:
                             trends = extract_trends(
                                 yindex, ydata, 
+                                propagation_strategy=metric_propagate,
+                                freq=data._index_freq,
                                 max_trends=trend_fitting_conf.get('max_trends'), 
                                 min_var_reduction=trend_fitting_conf.get('min_var_reduction')
                             )
@@ -924,16 +1092,27 @@ def fit_trends(
             hashed_index[hashable_key] = [query]
 
             if ydata.shape[0] == 1:
-                res_values[query] = {
-                    0: (
-                        skipped_indeces[0], skipped_indeces[0] + 1, 
-                        (1, ydata[0]), 
-                        (1, ydata[0], 0, ydata[0])
-                    )
-                }
+                if data._index_is_numeric:
+                    res_values[query] = {
+                        0: (
+                            skipped_indeces[0], skipped_indeces[0] + 1, 
+                            (1, ydata[0]), 
+                            (1, ydata[0], 0, ydata[0])
+                        )
+                    }
+                else:
+                    res_values[query] = {
+                        0: (
+                            pd.Timestamp(skipped_indeces[0]), pd.Timestamp(skipped_indeces[0]) + pd.Timedelta(1, data._index_freq), 
+                            (1, ydata[0]), 
+                            (1, ydata[0], 0, ydata[0])
+                        )
+                    }
             else:
                 trends = extract_trends(
-                    yindex, ydata, 
+                    yindex, ydata,
+                    propagation_strategy=metric_propagate,
+                    freq=data._index_freq,
                     max_trends=trend_fitting_conf.get('max_trends'), 
                     min_var_reduction=trend_fitting_conf.get('min_var_reduction')
                 )
@@ -956,13 +1135,22 @@ def fit_trends(
         if df:
             return res_values
 
-    elif type(data) == tuple and type(data[0]) == np.ndarray and type(data[1]) == np.ndarray:
+    elif type(data) == tuple and type(data[0]) in [pd.DatetimeIndex, np.ndarray] and type(data[1]) == np.ndarray:
         if breakdown is not None and breakdown != 'no':
             raise ValueError('Breakdown may be passed only if provided data is anomeda.DataFrame')
         x, y = data
 
         if len(y) == 0:
             return None
+        
+        if type(x) == np.ndarray:
+            if type(x[0]) in [pd.Timestamp, datetime, np.datetime64]:
+                x = pd.to_datetime(x)
+        
+        if type(x) == pd.DatetimeIndex:
+            freq = _extract_freq(data[0]).values['pandas_freq']
+        else:
+            freq = None
 
         sorted_indx = np.argsort(x)
         x = x[sorted_indx]
@@ -980,7 +1168,9 @@ def fit_trends(
                 }
             else:
                 trends = extract_trends(
-                    x, y, 
+                    x, y,
+                    propagation_strategy=metric_propagate, 
+                    freq=freq,
                     max_trends=trend_fitting_conf.get('max_trends'), 
                     min_var_reduction=trend_fitting_conf.get('min_var_reduction')
                 )
@@ -993,7 +1183,7 @@ def fit_trends(
         if df:
             return res_values
     else:
-        raise TypeError('Data parameter must be either anomeda.DataFrame or (numpy.ndarray[int], numpy.ndarray[float]) tuple')
+        raise TypeError('Data parameter must be either anomeda.DataFrame or (numpy.ndarray[int], numpy.ndarray[float]) or (pandas.DatetimeIndex, numpy.ndarray[float])')
 
     return trends
     
