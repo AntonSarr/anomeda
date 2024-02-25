@@ -19,7 +19,7 @@
     
 As you may have noticed, most of the parameters are optional. If you don't specify a parameter, a default value will be used. Or you will be notified once you use `anomeda.fit_trends`, `anomeda.find_anomalies` or other methods that you need to specify something additionally.
 
-Note that it is recommended to use **datetime-like index**. For example, transformed by `pandas.to_datetime`. Anomeda will try to change the type automatically, but it may cause unexpected results.
+Note that it is recommended to use **datetime-like index** or **integer index**. You can map change the type of your index to datetime, for example, using `pandas.to_datetime`. Anomeda will try to change the type automatically, but it may cause unexpected results. If it failes, it will try to convert index values to *int64*.
 
 Here is some examples of how you can initialize a new `anomeda.DataFrame`:
 
@@ -74,8 +74,6 @@ For example, if your index consists of two values ['2024-01-01 00:00:00', '2024-
 
 By default, anomeda does not propagate metric values for the missing index values in clusters. However, you can specify a different option by providing `metric_propagate` parameters to `anomeda.fit_trends`. It can be *"zeros"* (fill missing metric values with zeros), *"ffil"* (use the last present metric value) or *None* (do not fill any missing values, treat them as it is).
 
-*TODO in new versions: add filling options*
-
 ---
 
 A list of methods available to manipulate `anomeda.DataFrame`, such as *getters*, *setters*, *copying*, *modifying the object*, etc. Please follow [anomeda.DataFrame API Reference](dataframe_api.md) for the details. Her is the full list:
@@ -115,11 +113,13 @@ All the work is made by `anomeda.fit_trends` method. It can fit trends, plot the
       show_docstring_description: false
       show_root_heading: false
 
-The underlying algorithm starts with one trend. It estimates the parameters of a linear function by optimizing *variance of an absolute error (VAE)*. It is a bit different from the metrics used usually, such as *MAE*, *MPE* and others. The reason for choosing such a metric is that it we are aiming to find the most *equidistant* line, and the *VAE* metric describes this process well.
+The underlying algorithm starts with one trend. It estimates the parameters of a linear function. by optimizing.
 
-After one trend is fitted, the algorithm tries to find a point which will reduce the total VAE if we "break" the trend there and reestimate trends for the left and the right part of a time-series. The left and right trends which reduce the VAE the most are now our current trends. If we already fitted enough trends, defined by `max_n_trends`, or the current VAE is at least by `min_var_reduction` lower from what we saw using one trend, the algorithm stops and returns the trends. Otherwise, it starts to "break" each trend into two pieces the same way as described.
+After one trend is fitted, the algorithm tries to find a point which will reduce the an interesting metric, *variance of an absolute error (VAE) multiplied by 90-th percentile of an absolute error*, if we "break" the trend there and reestimate trends for the left and the right part of a time-series. The left and right trends which reduce the VAE the most are now our current trends. If we already fitted enough trends, defined by `max_n_trends`, or the current VAE is at least by `min_var_reduction` lower from what we saw using one trend, the algorithm stops and returns the trends. Otherwise, it starts to "break" each trend into two pieces the same way as described.
 
-When a breaking point is being searched, either all points with presented data or a randomly sampled points are used as candidates. What is important, a kind of a *regularization* is used during the search. Choosing a point located closer to the ends of an index range is penalized more than closer to the center. It was made to balance the number of samples in the left and right parts of the range. The low number of samples in one of the parts may cause a lower error variance there, which will hinder extracting long and consistent trends. 
+When a breaking point is being searched, either all points with presented data or a randomly sampled points are used as candidates. What is important, a kind of a *regularization* is used during the search. Choosing a point located closer to the ends of an index range is penalized more than closer to the center. We use PDF of Beta-function as a multiplicator. It was made to balance the number of samples in the left and right parts of the range. The low number of samples in one of the parts may cause a lower error variance there, which will hinder extracting long and consistent trends. 
+
+![anomeda regularizer](img/regularizer_1.png "anomeda regularizer")
 
 The method returns all the trends and the breaking points:
 

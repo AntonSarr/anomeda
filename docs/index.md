@@ -1,6 +1,6 @@
 # Introduction to Anomeda
 
-**anomeda package helps you analyze non-aggregated time-series data with Python**.
+**anomeda package helps you analyze non-aggregated time-series data with Python and quickly indentify important changes of your metric**.
 
 Here is a brief example of how **anomeda** can work for you.
 
