@@ -116,7 +116,11 @@ There are some nuances of how to use **anomeda** wisely and powerfully. For exam
 
 # Installing
 
-The [GitHub repo](https://github.com/AntonSarr/anomeda) contains the source and built distribution files in *dist* folder.
+*anomeda* is availale from PyPI. You may run a `pip install` command:
+
+`pip install anomeda`
+
+Also, the [GitHub repo](https://github.com/AntonSarr/anomeda) contains the source and built distribution files in *dist* folder.
 
 You must have such packages be installed:
 

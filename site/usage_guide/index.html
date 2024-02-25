@@ -228,7 +228,7 @@
 
 
 </div><p>As you may have noticed, most of the parameters are optional. If you don't specify a parameter, a default value will be used. Or you will be notified once you use <code>anomeda.fit_trends</code>, <code>anomeda.find_anomalies</code> or other methods that you need to specify something additionally.</p>
-<p>Note that it is recommended to use <strong>datetime-like index</strong>. For example, transformed by <code>pandas.to_datetime</code>. Anomeda will try to change the type automatically, but it may cause unexpected results.</p>
+<p>Note that it is recommended to use <strong>datetime-like index</strong> or <strong>integer index</strong>. You can map change the type of your index to datetime, for example, using <code>pandas.to_datetime</code>. Anomeda will try to change the type automatically, but it may cause unexpected results. If it failes, it will try to convert index values to <em>int64</em>.</p>
 <p>Here is some examples of how you can initialize a new <code>anomeda.DataFrame</code>:</p>
 <pre><code class="language-python"># With just a pandas.DataFrame and metric name
 anomeda.DataFrame(pandas_df, metric_name='my_metric')
@@ -272,7 +272,6 @@ anomeda.DataFrame(
 <p>The scale of undex increments is extracted automatically. It can be 1 (<em>Integer</em>, if your index are integers) or a part of a timestamp (<em>second</em>, <em>minute</em>, <em>hour</em>, etc). </p>
 <p>For example, if your index consists of two values ['2024-01-01 00:00:00', '2024-01-01 00:01:00'], the step is <em>hour</em>. However, the step may become <em>minute</em> once you add only one value - ['2024-01-01 00:00:00', '2024-01-01 00:01:00', '2024-01-01 00:01:<strong>01</strong>'], since <em>minute</em> is the smallest increment now.</p>
 <p>By default, anomeda does not propagate metric values for the missing index values in clusters. However, you can specify a different option by providing <code>metric_propagate</code> parameters to <code>anomeda.fit_trends</code>. It can be <em>"zeros"</em> (fill missing metric values with zeros), <em>"ffil"</em> (use the last present metric value) or <em>None</em> (do not fill any missing values, treat them as it is).</p>
-<p><em>TODO in new versions: add filling options</em></p>
 <hr />
 <p>A list of methods available to manipulate <code>anomeda.DataFrame</code>, such as <em>getters</em>, <em>setters</em>, <em>copying</em>, <em>modifying the object</em>, etc. Please follow <a href="../dataframe_api/">anomeda.DataFrame API Reference</a> for the details. Her is the full list:</p>
 
