@@ -93,7 +93,7 @@ anomeda.compare_clusters(
 
 You see the clusters you fitted before and comparison between their characteristics. The result is quite hefty, but you can easily add your own metrics and sort clusters so that the cluster you are looking for will be on top. For example, look at how different means in the second cluster are. The second cluster corresponds to Germany (the first cluster consists of all events, so we are not interested in it now).
 
-![anomeda.compare_clusters method](img/anomeda_compare_clusters_1.png "anomeda.compare_clusters method")
+![anomeda.compare_clusters method](docs/img/anomeda_compare_clusters_1.png "anomeda.compare_clusters method")
 
 Finally, you can check if there are any point anomalies present in any of your clusters.
 
