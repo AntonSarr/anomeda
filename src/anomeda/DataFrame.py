@@ -212,7 +212,7 @@ class DataFrame(pd.DataFrame):
                 try:
                     self.index = pd.to_datetime(self.index)
                 except BaseException:
-                    pass
+                    self.index = self.index.astype('int64')
             else:
                 self._index_name = None
             self.set_index_type()
@@ -478,12 +478,12 @@ class DataFrame(pd.DataFrame):
                 try:
                     resp.index = pd.to_datetime(resp.index)
                 except BaseException:
-                    pass
+                    resp.index = resp.index.astype('int64')
                 return self.replace_df(resp, inplace=False)
             try:
                 self.index = pd.to_datetime(self.index)
             except BaseException:
-                pass
+                resp.index = resp.index.astype('int64')
             index_names = list(filter(lambda x: x is not None, self.index.names))
             if len(index_names) >= 1:
                 self._index_name = index_names

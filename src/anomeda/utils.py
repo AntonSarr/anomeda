@@ -4,7 +4,6 @@ from itertools import combinations
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
 from scipy.stats import linregress
 from scipy.stats import beta
 from sklearn.neighbors import LocalOutlierFactor
@@ -28,7 +27,7 @@ def __regularizer(x):
     """Penalize an alghorithm for choosing a trend breaking point so that so that x is the ratio of the dataset got in right of left part.   
     
     Used in in anomeda.__find_trend_breaking_point method. The more the value of the regularizer, the less the probabilty to choose a given point as a breaking point is."""
-    return beta.pdf(x, 0.4, 0.4)
+    return beta.pdf(x, 0.3, 0.6)
 
 
 def __find_trend_breaking_point(
@@ -87,8 +86,8 @@ def __find_trend_breaking_point(
         ratio1 = len(y_true1) / (len(y_true1) + len(y_true2))
         ratio2 = len(y_true2) / (len(y_true1) + len(y_true2))
     
-        metric = __regularizer(ratio1) * np.var(np.abs(y_pred1 - y_true1)) \
-        + __regularizer(ratio2) * np.var(np.abs(y_pred2 - y_true2))
+        metric = __regularizer(ratio1) * np.var(np.abs(y_pred1 - y_true1)) * np.quantile(np.abs(y_pred1 - y_true1), 0.9) \
+        + __regularizer(ratio2) * np.var(np.abs(y_pred2 - y_true2)) * np.quantile(np.abs(y_pred2 - y_true2), 0.9)
         
         metric_vals.append(metric)
     
@@ -242,9 +241,11 @@ def extract_trends(
         x_int_val_map[x_prop_int[-1] + 1] = x_prop[-1] + 1
 
     x, y = x_prop_int, y_prop
+
+    x_scaled = x - x.min()
     
-    linreg_fitted = linregress(x, y)
-    y_fitted = linreg_fitted.slope * x + linreg_fitted.intercept
+    linreg_fitted = linregress(x_scaled, y)
+    y_fitted = linreg_fitted.slope * x_scaled + linreg_fitted.intercept
     error_var = np.var(np.abs(y_fitted - y))
     
     trends = {
@@ -292,11 +293,11 @@ def extract_trends(
             y_true2 = y[(x >= dt) & (x < xmax)]
             x2 = x[(x >= dt) & (x < xmax)]
 
-            linreg_fitted1 = linregress(x1, y_true1)
-            y_pred1 = linreg_fitted1.slope * x1 + linreg_fitted1.intercept
+            linreg_fitted1 = linregress(x1 - x1.min(), y_true1)
+            y_pred1 = linreg_fitted1.slope * (x1 - x1.min()) + linreg_fitted1.intercept
             
-            linreg_fitted2 = linregress(x2, y_true2)
-            y_pred2 = linreg_fitted2.slope * x2 + linreg_fitted2.intercept
+            linreg_fitted2 = linregress(x2 - x2.min(), y_true2)
+            y_pred2 = linreg_fitted2.slope * (x2 - x2.min()) + linreg_fitted2.intercept
     
             y_base_diffs = []
             y_new_diffs = []
@@ -316,8 +317,8 @@ def extract_trends(
             y_base_diffs = np.concatenate(y_base_diffs)
             y_new_diffs = np.concatenate(y_new_diffs)
     
-            new_var = np.var(np.abs(y_new_diffs))
-            old_var = np.var(np.abs(y_base_diffs))
+            new_var = np.var(np.abs(y_new_diffs)) * np.quantile(np.abs(y_new_diffs), 0.9)
+            old_var = np.var(np.abs(y_base_diffs)) * np.quantile(np.abs(y_base_diffs), 0.9)
             var_diff = new_var - old_var
     
             if var_diff < min_var_diff:
@@ -641,7 +642,7 @@ def find_anomalies(
                         n_large_anomalies += 1
             
             outliers[indeces_sorted_by_y_diff[np.min(not_outliers_indeces) - int(n_low_anomalies * (1 - p_low)): np.max(not_outliers_indeces) + int(n_large_anomalies * (1 - p_large)) + 1]] = False
-
+        
             res_df = pd.DataFrame({
                 'index': yindex, 
                 'metric_value': ydata, 
@@ -832,6 +833,7 @@ def plot_trends(
         
         x_cluster = []
         y_trend_cluster = []
+
         for trend in df_tmp.iterrows():
             i, t = trend
             cluster = t['cluster']

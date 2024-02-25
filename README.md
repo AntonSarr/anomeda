@@ -1,6 +1,6 @@
 # Introduction to Anomeda
 
-**anomeda package helps you analyze non-aggregated time-series data with Python**.
+**anomeda package helps you analyze non-aggregated time-series data with Python and quickly indentify important changes of your metric**.
 
 Here is a brief example of how **anomeda** can work for you.
 
@@ -62,7 +62,8 @@ trends = anomeda.fit_trends(
     trend_fitting_conf={'max_trends': 'auto', 'min_var_reduction': 0.75}, # set the number of trends automatically,
                                                                           # try to reduce error variance compared to error of estimating values by 1-line trend by 75%
     breakdown='all-clusters', # fit trends for clusters extracted from all possible sets of measures
-    min_cluster_size=3 # skip small clusters
+    mettic_propagte='zeros', # if some index values are missed after aggregation for a cluster, fill them with zeros
+    min_cluster_size=3 # skip small clusters, they all will be combined into 'skipped' cluster
 )
 ```
 
@@ -85,14 +86,14 @@ Of course, you may have no idea which cluster caused the problem and what to plo
 ```python
 anomeda.compare_clusters(
     anomeda_df,
-    period1='date < 30',
-    period2='date >= 30'
+    period1='date < "2024-01-30"',
+    period2='date >= "2024-01-30"'
 )
 ```
 
 You see the clusters you fitted before and comparison between their characteristics. The result is quite hefty, but you can easily add your own metrics and sort clusters so that the cluster you are looking for will be on top. For example, look at how different means in the second cluster are. The second cluster corresponds to Germany (the first cluster consists of all events, so we are not interested in it now).
 
-![anomeda.compare_clusters method](docs/img/anomeda_compare_clusters_1.png "anomeda.compare_clusters method")
+![anomeda.compare_clusters method](img/anomeda_compare_clusters_1.png "anomeda.compare_clusters method")
 
 Finally, you can check if there are any point anomalies present in any of your clusters.
 
@@ -127,7 +128,33 @@ You must have such packages be installed:
 
 # Contribution
 
-You are very welcome to contribute to the project. The contribution guide is coming soon.
+You are very welcome to participate in developing to the project. You may solve the current issues or add new functionality - it is up for you to decide.
+
+Here is how your flow may look like:
+
+1. Preparing your Fork
+    - Click ‘Fork’ on Github, creating e.g. yourname/theproject.
+    - Clone your project: git clone git@github.com:yourname/theproject.
+    - cd theproject
+    - Create and activate a virtual environment.
+    - Install the development requirements: pip install -r dev-requirements.txt.
+    - Create a branch: git checkout -b my_branch
+
+2. Making your Changes
+    - Make the changes
+    - Write tests checking your code works for different scenarious
+    - Run tests, make sure they pass.
+    - Commit your changes: git commit -m "Foo the bars"
+
+3. Creating Pull Requests
+    - Push your commit to get it back up to your fork: git push origin HEAD
+    - Visit Github, click handy “Pull request” button that it will make upon noticing your new branch.
+    - In the description field, write down issue number (if submitting code fixing an existing issue) or describe the issue + your fix (if submitting a wholly new bugfix).
+    - Hit ‘submit’!
+
+# Reporting issues
+
+To report an issue, you should use [Issues section](https://github.com/AntonSarr/anomeda/issues) of the project's page on Github. We will try to solve the issue as soon as possible.
 
 # Contacts
 
