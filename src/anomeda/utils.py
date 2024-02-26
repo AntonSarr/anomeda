@@ -257,16 +257,12 @@ def extract_trends(
     }
     
     best_vars = [error_var]
-
-    if max(best_vars) == 0:
-        reducted_variance = 1
-    else:
-        reducted_variance = 1 - min(best_vars) / max(best_vars) # that much of variance we explained
+    reducted_variance = 0 # that much of variance we explained
     
     n = len(trends.keys())
     while n < max_trends and reducted_variance < min_var_reduction:
     
-        min_var_diff = 0
+        min_metric_diff = 0
         best_id = None
         best_dt = None
         best_params = None
@@ -275,12 +271,12 @@ def extract_trends(
             xmin, xmax, (a, b), _ = trends[i]
             
             index_mask = (x >= xmin) & (x < xmax)
-            if len(x[index_mask]) <= 50:
+            if len(x[index_mask]) <= 300:
                 sample_frac = 1
-            elif len(x[index_mask]) <= 100:
-                sample_frac = -0.007 * len(x[index_mask]) + 1.35
+            elif len(x[index_mask]) <= 500:
+                sample_frac = -0.001 * len(x[index_mask]) + 1.3
             else:
-                sample_frac = 0.65
+                sample_frac = 0.8
 
             dt = __find_trend_breaking_point(x[index_mask], y[index_mask], sample_frac=sample_frac)
             
@@ -317,12 +313,14 @@ def extract_trends(
             y_base_diffs = np.concatenate(y_base_diffs)
             y_new_diffs = np.concatenate(y_new_diffs)
     
-            new_var = np.var(np.abs(y_new_diffs)) * np.quantile(np.abs(y_new_diffs), 0.9)
-            old_var = np.var(np.abs(y_base_diffs)) * np.quantile(np.abs(y_base_diffs), 0.9)
-            var_diff = new_var - old_var
+            new_var = np.var(np.abs(y_new_diffs))
+            new_metric = np.var(np.abs(y_new_diffs)) * np.quantile(np.abs(y_new_diffs), 0.9)
+            old_var = np.var(np.abs(y_base_diffs))
+            old_metric = np.var(np.abs(y_base_diffs)) * np.quantile(np.abs(y_base_diffs), 0.9)
+            metric_diff = new_metric - old_metric
     
-            if var_diff < min_var_diff:
-                min_var_diff = var_diff
+            if metric_diff < min_metric_diff:
+                min_metric_diff = metric_diff
                 best_id = i
                 best_dt = dt
                 best_params = [(linreg_fitted1.slope, linreg_fitted1.intercept), (linreg_fitted2.slope, linreg_fitted2.intercept)]
@@ -359,7 +357,7 @@ def extract_trends(
         else:
             reducted_variance = 1 - min(best_vars) / max(best_vars) # that much of variance we explained
         
-        if reducted_variance <= min_var_reduction:
+        if reducted_variance >= min_var_reduction:
             if verbose:
                 print('Variance reduced by {} comparing to initial value, while the reduction of {} is needed. Finish with {} trends'.format(reducted_variance, min_var_reduction, n))
             break
@@ -413,7 +411,7 @@ def compare_clusters(
         data,
         period1='dt < 10',
         period2='dt >= 10',
-        clusters=None # means all clusters
+        breakdown='no'
     )
     ```
     """
@@ -594,7 +592,7 @@ def find_anomalies(
 
                 index_mask = (yindex >= xmin) & (yindex < xmax)
                 cluster_indx = yindex[index_mask]
-                cluster_indx_int = yindex_int[index_mask]
+                cluster_indx_int = np.arange(len(yindex_int[index_mask]))
                 y_fitted = slope * cluster_indx_int + intercept
                 y_diff_list.append(ydata[index_mask] - y_fitted)
                 x_labels.append(cluster_indx)
@@ -655,7 +653,7 @@ def find_anomalies(
 
         resp = pd.concat(resp).reset_index(drop=True)
         if not return_all_points:
-            resp = resp[resp['anomaly']]
+            resp = resp[resp['anomaly']].reset_index(drop=True)
 
         return resp
     elif type(data) == tuple and type(data[0]) == np.ndarray and type(data[1]) == np.ndarray:
@@ -697,7 +695,7 @@ def find_anomalies(
 
             index_mask = (yindex >= xmin) & (yindex < xmax)
             cluster_indx = yindex[index_mask]
-            cluster_indx_int = yindex_int[index_mask]
+            cluster_indx_int = np.arange(len(yindex_int[index_mask]))
             y_fitted = slope * cluster_indx_int + intercept
             y_diff_list.append(ydata[index_mask] - y_fitted)
             x_labels.append(cluster_indx)
@@ -757,7 +755,7 @@ def find_anomalies(
 
         resp = pd.concat(resp).reset_index(drop=True)
         if not return_all_points:
-            resp = resp[resp['anomaly']]
+            resp = resp[resp['anomaly']].reset_index(drop=True)
 
         return resp
     else:
@@ -768,7 +766,7 @@ def plot_trends(
     data: 'anomeda.DataFrame | pandas.DataFrame returned from anomeda.fit_trends()', 
     clusters: 'list' = None, 
     colors: 'dict' = None, 
-    show_points=True
+    show_metric=True
 ):
     """Plot fitted trends.
     
@@ -783,8 +781,8 @@ def plot_trends(
         Make sure you pass the cluster names exactly as they they appear in the fitted trends.
     colors : dict, default None
         Dictionary with a mapping between clusters and colors used in matplotlib.
-    show_points : bool, default True
-        Indicator if to show data points on plots.
+    show_metric : bool, default True
+        Indicator if to show actual metric on plots.
         
     Returns
     -------
@@ -852,12 +850,11 @@ def plot_trends(
         
         x_cluster = np.concatenate(x_cluster)
         y_trend_cluster = np.concatenate(y_trend_cluster)
-        plt.plot(x_cluster, y_trend_cluster, label=cluster, color=cluster_c[cluster])
+        plt.plot(x_cluster, y_trend_cluster, label=cluster, color=cluster_c[cluster], linestyle=(0, (5, 2)))
         
-        if show_points and type(data) == DataFrame:
-            if c not in ['total']:
-                cluster_info = data._clusters[c]
-                plt.scatter(cluster_info['index'], cluster_info['values'], color=cluster_c[cluster], marker='x')
+        if show_metric and type(data) == DataFrame:
+            cluster_info = data._clusters[c]
+            plt.plot(cluster_info['index'], cluster_info['values'], color=cluster_c[cluster])
         
     plt.legend()
 
