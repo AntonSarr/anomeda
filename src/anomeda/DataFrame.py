@@ -155,11 +155,11 @@ class DataFrame(pd.DataFrame):
     ----------
     *args, **kwargs
         Parameters for initialization a pandas.DataFrame object. Other parameters must be passed as **kwargs only.
-    measures_names : 'list | tuple' = None
+    measures_names : 'list | tuple' = []
         A list containing columns considered as measures. If None, your data is supposed to have no measures.
-    measures_types : 'dict' = None
+    measures_types : 'dict' = {}
         A dictionary containing 'categorical' and/or 'continuous' keys and list of measures as values. Continuous measures will be discretized automatically if not presented in discretized_measures parameter. If your data has any measures, you must provide its' types.
-    discretized_measures_mapping : 'dict' = None
+    discretized_measures_mapping : 'dict' = {}
         Custom dictionary with a mapping between a discrete value of the meauser and corresponding continous ranges. The lower bound must be including, the higher bound must be excluding. It uses the following format:
         ```json
         {
@@ -169,7 +169,7 @@ class DataFrame(pd.DataFrame):
             }
         }
         ```
-    discretized_measures : 'dict' = None
+    discretized_measures : 'dict' = {}
         A dictionary containig names of the measures as keys and array-like objects containing customly discretized values of the measure. If not provided, continuous measures will be discretized automatically.
     index_name : 'str | list | None' = None
         An index column containg Integer or pandas.DatetimeIndex. If None, index is taken from the pandas.DataFrame.
@@ -220,15 +220,20 @@ class DataFrame(pd.DataFrame):
             self.set_index(index_name, inplace=True)
         
         measures_names = kwargs.get('measures_names')
+        if measures_names is None:
+            measures_names = []
         self.set_measures_names(measures_names)
         
         measures_types = kwargs.get('measures_types')
+        if measures_types is None:
+            measures_types = {}
         self.set_measures_types(measures_types)
         
         discretized_measures = kwargs.get('discretized_measures')
         discretized_measures_mapping = kwargs.get('discretized_measures_mapping')
 
-        if discretized_measures is not None and discretized_measures_mapping is not None:
+        if discretized_measures is not None and discretized_measures != {}\
+              and discretized_measures_mapping is not None and discretized_measures_mapping != {}:
             raise NotImplementedError('As for now "discretized_measures" and "discretized_measures_mapping" cannot be passed at the same time. Please choose either mapping or measures.')
         
         self.set_discretized_measures(discretized_measures)
@@ -238,6 +243,8 @@ class DataFrame(pd.DataFrame):
         self.set_metric_name(metric_name)
         
         agg_func = kwargs.get('agg_func')
+        if agg_func is None:
+            agg_func = 'sum'
         self.set_agg_func(agg_func)
         
     def __copy__(self):
@@ -483,7 +490,7 @@ class DataFrame(pd.DataFrame):
             try:
                 self.index = pd.to_datetime(self.index)
             except BaseException:
-                resp.index = resp.index.astype('int64')
+                self.index = self.index.astype('int64')
             index_names = list(filter(lambda x: x is not None, self.index.names))
             if len(index_names) >= 1:
                 self._index_name = index_names

@@ -439,3 +439,21 @@ def test_datetime_index():
 
     anomeda.find_anomalies(anomeda_df)
     anomeda.plot_trends(anomeda_df)
+
+
+def test_anomeda_df_without_measures():
+
+    df = pd.DataFrame({
+        'dt': ['2024-01-01', '2024-01-03', '2024-01-04', '2024-01-05', '2024-01-03', '2024-01-03'],
+        'metric': [10, 20, -100, 30, 20, 10]
+    })
+
+    anomeda_df = anomeda.DataFrame(
+        df,
+        index_name='dt',
+        metric_name='metric'
+    )
+
+    anomeda.fit_trends(anomeda_df)
+    anomeda.find_anomalies(anomeda_df)
+    anomeda.plot_trends(anomeda_df)
