@@ -859,6 +859,116 @@ def plot_trends(
     plt.legend()
 
 
+def plot_clusters(
+    data : 'anomeda.DataFrame', 
+    breakdowns : "'no' | 'all' | list[str]" = 'no',
+    colors : 'dict' = None
+):
+    """Plot metric in clusters.
+    
+    Plot metric extracted from clusters from anomeda.DataFrame instance.
+    
+    Parameters
+    ----------
+    data : anomeda.DataFrame
+        Object containing clusters to be plotted.
+    breakdowns : 'no' | 'all' | list[str], default 'no'
+        If 'no', the metric is grouped by date points only. 
+        If 'all', all combinations of measures are used to create clusters for fitting trends within them. 
+        If list[str], then only combinations of measures specified in the list or clusters spicified in the list are used.
+    colors : dict, default None
+        Dictionary with a mapping between clusters and colors used in matplotlib.
+        
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> anomeda.plot_clusters(
+    >>>     data, # anomeda.DataFrame
+    >>>     breakdowns=[['measure_a'], ['measure_a', 'measure_b']] # plot clusters extracted using measure_a and a combination of measure_a and measure_b 
+    >>> )
+    """
+    if type(data) == DataFrame:
+        pass
+    else:
+        raise ValueError('"data" argument must be an anomeda.DataFrame instance')
+    
+    if data is None or len(data) == 0:
+        return None
+    
+    index_name = data.get_index_name()
+    if index_name is None:
+        raise KeyError('not-None "index_name" must be set for anomeda.DataFrame object')
+    
+    metric_name = data.get_metric_name()
+    if metric_name is None:
+        raise KeyError('not-None "metric_name" must be set for anomeda.DataFrame object')
+    
+    agg_func = data.get_agg_func()
+    if agg_func is None:
+        raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
+    
+    if colors is None:
+        replace = len(clusters) >= len(TABLEAU_COLORS)
+        cluster_c = dict(zip(clusters, np.random.choice(list(TABLEAU_COLORS.keys()), size=len(clusters), replace=replace)))
+
+    clusters_calculated = False
+    if breakdowns == 'all':
+        measures_names = data.get_measures_names()
+        if measures_names is None:
+            raise KeyError('not-None "measures_names" must be set for anomeda.DataFrame object')
+        measures_to_iterate = []
+        for i in range(1, len(measures_names) + 1):
+            for el in combinations(measures_names, i):
+                measures_to_iterate.append(list(el))
+    elif type(breakdowns) == list:
+        if len(breakdowns) > 0:
+            if type(breakdowns[0]) == list:
+                measures_names = data.get_measures_names()
+                measures_to_iterate = breakdowns.copy()
+            elif type(breakdowns[0]) == str:
+                clusters = breakdowns.copy()
+                clusters_calculated = True
+            else:
+                raise ValueError('If breakdowns is a list, then it must be either [[measure_name, ..], ..] (list of lists) or [cluster_1, ..] (list of queries used to extract clusters)')
+        else:
+            measures_to_iterate = []
+    elif breakdowns == 'no':
+        measures_to_iterate = []
+    else:
+        raise ValueError('Breakdown must be either "all", "no" or list')
+
+    data_pandas = data.to_pandas().sort_index().reset_index()
+    columns_to_use = np.append(index_name, metric_name)
+
+    if not clusters_calculated:
+        clusters = []
+        for measures_set in measures_to_iterate:
+            for measures_values in data_pandas[measures_set].drop_duplicates().values:
+                str_arr = []
+                for (measure_name, measure_value) in zip(measures_set, measures_values):
+                    quote = '"' if type(measure_value) == str else ''
+                    str_arr.append('`' + measure_name + '`' + '==' + quote + str(measure_value) + quote)
+                query = ' and '.join(str_arr)
+                clusters.append(query)
+
+    if colors is None:
+        replace = len(clusters) >= len(TABLEAU_COLORS)
+        cluster_c = dict(zip(clusters, np.random.choice(list(TABLEAU_COLORS.keys()), size=len(clusters), replace=replace)))
+    
+    for query in clusters:
+                
+        yseries = data_pandas.query(query)[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
+        yindex = yseries.index.values
+        ydata = yseries.values
+
+        plt.plot(yindex, ydata, color=cluster_c[query])
+        
+    plt.legend()
+
+
 def fit_trends(
     data : 'anomeda.DataFrame | (numpy.ndarray[int], numpy.ndarray[float]) | (pandas.DatetimeIndex, numpy.ndarray[float])', 
     trend_fitting_conf : 'dict' = {'max_trends': 'auto', 'min_var_reduction': 0.75},
