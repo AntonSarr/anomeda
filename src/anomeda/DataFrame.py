@@ -210,9 +210,9 @@ class DataFrame(pd.DataFrame):
             if len(curr_indeces) >= 1:
                 self._index_name = curr_indeces
                 try:
-                    self.index = pd.to_datetime(self.index)
+                    self.index = self.index.astype('str').astype('int64')
                 except BaseException:
-                    self.index = self.index.astype('int64')
+                    self.index = pd.to_datetime(self.index)
             else:
                 self._index_name = None
             self.set_index_type()
@@ -483,14 +483,14 @@ class DataFrame(pd.DataFrame):
             resp = super().set_index(*args, **kwargs)
             if resp is not None:
                 try:
-                    resp.index = pd.to_datetime(resp.index)
+                    self.index = self.index.astype('str').astype('int64')
                 except BaseException:
-                    resp.index = resp.index.astype('int64')
+                    self.index = pd.to_datetime(self.index)
                 return self.replace_df(resp, inplace=False)
             try:
-                self.index = pd.to_datetime(self.index)
+                self.index = self.index.astype('str').astype('int64')
             except BaseException:
-                self.index = self.index.astype('int64')
+                self.index = pd.to_datetime(self.index)
             index_names = list(filter(lambda x: x is not None, self.index.names))
             if len(index_names) >= 1:
                 self._index_name = index_names

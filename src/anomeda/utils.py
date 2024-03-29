@@ -94,6 +94,66 @@ def __find_trend_breaking_point(
     return points_candidates[np.argmin(metric_vals)]
 
 
+def _propagate_metric(
+    x : 'numpy.ndarray[int] | numpy.ndarray[datetime]', 
+    y : 'numpy.ndarray[float]', 
+    strategy : '"zeros" | "ffil" | None',
+    freq: 'frequency unit for pandas.DatetimeIndex' = None
+):
+    
+    if len(x) != len(y):
+        raise ValueError('Lengths of x and y must be the same for the propagation')
+
+    if len(x) == 0 or len(y) == 0:
+        return x, y
+    
+    if type(x[0]) in [pd.Timestamp, datetime, np.datetime64]:
+        x = pd.to_datetime(x)
+
+    if type(x) == pd.DatetimeIndex:
+        x_is_numeric = False
+        if freq is None:
+            raise ValueError('If x is pandas.DatetimeIndex, frequency must be provided')
+    else:
+        x_is_numeric = True
+        
+    if x_is_numeric:
+        x_prop = np.arange(x.min(), x.max() + 1)
+        y_prop = np.zeros(x.max() - x.min() + 1)
+        x_formatted = x
+        x_prop_int = x_prop
+    else:
+        x_datetime = pd.to_datetime(x)
+        x_prop = pd.date_range(start=x_datetime.min(), end=x_datetime.max(), freq=freq)
+        y_prop = np.zeros(len(x_prop))
+
+        x_formatted = x_datetime
+        x_prop_int = np.arange(len(x_prop))
+
+    if strategy is None:
+        if not x_is_numeric:
+            x_prop_int = []
+            init_i = 0
+            for i in range(len(x_prop)):
+                if x_prop[i] == x_formatted[init_i]:
+                    x_prop_int.append(i)
+                    init_i += 1
+            x_prop_int = np.array(x_prop_int)
+
+        return x_formatted, x_prop_int, y
+
+    init_i = 0
+    for i in range(len(x_prop)):
+        if x_prop[i] == x_formatted[init_i]:
+            y_prop[i] = y[init_i]
+            init_i += 1
+        else:
+            if strategy == 'ffil':
+                y_prop[i] = y[init_i - 1]
+
+    return x_prop, x_prop_int, y_prop
+
+
 def extract_trends(
     x : 'numpy.ndarray[int] | pandas.DatetimeIndex', 
     y : 'numpy.ndarray[float]', 
@@ -165,64 +225,6 @@ def extract_trends(
         1: (4, 6, (-0.2999999999999998, 4.6), (2, 3.25, 0.0, 6.5))
     }
     """
-    def propagate_metric(
-        x : 'numpy.ndarray[int] | numpy.ndarray[datetime]', 
-        y : 'numpy.ndarray[float]', 
-        strategy : '"zeros" | "ffil" | None',
-        freq: 'frequency unit for pandas.DatetimeIndex' = None
-    ):
-        
-        if len(x) != len(y):
-            raise ValueError('Lengths of x and y must be the same for the propagation')
-
-        if len(x) == 0 or len(y) == 0:
-            return x, y
-        
-        if type(x[0]) in [pd.Timestamp, datetime, np.datetime64]:
-            x = pd.to_datetime(x)
-
-        if type(x) == pd.DatetimeIndex:
-            x_is_numeric = False
-            if freq is None:
-                raise ValueError('If x is pandas.DatetimeIndex, frequency must be provided')
-        else:
-            x_is_numeric = True
-            
-        if x_is_numeric:
-            x_prop = np.arange(x.min(), x.max() + 1)
-            y_prop = np.zeros(x.max() - x.min() + 1)
-            x_formatted = x
-            x_prop_int = x_prop
-        else:
-            x_datetime = pd.to_datetime(x)
-            x_prop = pd.date_range(start=x_datetime.min(), end=x_datetime.max(), freq=freq)
-            y_prop = np.zeros(len(x_prop))
-
-            x_formatted = x_datetime
-            x_prop_int = np.arange(len(x_prop))
-
-        if strategy is None:
-            if not x_is_numeric:
-                x_prop_int = []
-                init_i = 0
-                for i in range(len(x_prop)):
-                    if x_prop[i] == x_formatted[init_i]:
-                        x_prop_int.append(i)
-                        init_i += 1
-                x_prop_int = np.array(x_prop_int)
-
-            return x_formatted, x_prop_int, y
-
-        init_i = 0
-        for i in range(len(x_prop)):
-            if x_prop[i] == x_formatted[init_i]:
-                y_prop[i] = y[init_i]
-                init_i += 1
-            else:
-                if strategy == 'ffil':
-                    y_prop[i] = y[init_i - 1]
-
-        return x_prop, x_prop_int, y_prop
     
     if max_trends == 'auto':
         if min_var_reduction is None:
@@ -232,7 +234,7 @@ def extract_trends(
     if min_var_reduction is None:
         min_var_reduction = np.inf
 
-    x_prop, x_prop_int, y_prop = propagate_metric(x, y, strategy=propagation_strategy, freq=freq)
+    x_prop, x_prop_int, y_prop = _propagate_metric(x, y, strategy=propagation_strategy, freq=freq)
 
     x_int_val_map = {x_int: x_val for (x_int, x_val) in zip(x_prop_int, x_prop)}
     if type(x_prop) == pd.DatetimeIndex:
@@ -862,6 +864,9 @@ def plot_trends(
 def plot_clusters(
     data : 'anomeda.DataFrame', 
     breakdowns : "'no' | 'all' | list[str]" = 'no',
+    metric_propagate : '"zeros" | "ffil" | None' = None,
+    min_cluster_size : 'int | None' = None,
+    max_cluster_size : 'int | None' = None,
     colors : 'dict' = None
 ):
     """Plot metric in clusters.
@@ -876,6 +881,30 @@ def plot_clusters(
         If 'no', the metric is grouped by date points only. 
         If 'all', all combinations of measures are used to create clusters for fitting trends within them. 
         If list[str], then only combinations of measures specified in the list or clusters spicified in the list are used.
+    metric_propagate : '"zeros" | "ffil" | None' = None
+        How to propogate aggregated time-series for missing index values.
+        - zeros: 
+            Let metric for missing index be equal 0. For example, aggregated metric values
+                '2024-01-01': 1
+                '2024-01-03': 2
+            Will be propagated as
+                '2024-01-01': 1 
+                '2024-01-02': 0
+                '2024-01-03': 2
+        - ffil: 
+            Let metric for missing index be equal the last observed value. For example, aggregated metric values 
+                '2024-01-01': 1
+                '2024-01-03': 2
+            Will be propagated as
+                '2024-01-01': 1
+                '2024-01-02': 1 
+                '2024-01-03': 2
+        - None: 
+            Use only present metric and index values.
+    min_cluster_size : int, default None
+        Skip clusters whose total size among all date points is less than the value.
+    max_cluster_size : int, default None
+        Skip clusters whose total size among all date points is more than the value.
     colors : dict, default None
         Dictionary with a mapping between clusters and colors used in matplotlib.
         
@@ -898,6 +927,11 @@ def plot_clusters(
     if data is None or len(data) == 0:
         return None
     
+    if min_cluster_size is None:
+        min_cluster_size = -np.inf
+    if max_cluster_size is None:
+        max_cluster_size = np.inf
+    
     index_name = data.get_index_name()
     if index_name is None:
         raise KeyError('not-None "index_name" must be set for anomeda.DataFrame object')
@@ -909,10 +943,6 @@ def plot_clusters(
     agg_func = data.get_agg_func()
     if agg_func is None:
         raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
-    
-    if colors is None:
-        replace = len(clusters) >= len(TABLEAU_COLORS)
-        cluster_c = dict(zip(clusters, np.random.choice(list(TABLEAU_COLORS.keys()), size=len(clusters), replace=replace)))
 
     clusters_calculated = False
     if breakdowns == 'all':
@@ -941,6 +971,10 @@ def plot_clusters(
         raise ValueError('Breakdown must be either "all", "no" or list')
 
     data_pandas = data.to_pandas().sort_index().reset_index()
+    measures_types = data.get_measures_types()
+    if measures_types is not None and 'continuous' in measures_types:
+        for measure in measures_types['continuous']:
+            data_pandas[measure] = data.get_discretized_measures()[measure]
     columns_to_use = np.append(index_name, metric_name)
 
     if not clusters_calculated:
@@ -958,15 +992,30 @@ def plot_clusters(
         replace = len(clusters) >= len(TABLEAU_COLORS)
         cluster_c = dict(zip(clusters, np.random.choice(list(TABLEAU_COLORS.keys()), size=len(clusters), replace=replace)))
     
-    for query in clusters:
-                
-        yseries = data_pandas.query(query)[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
+    if breakdowns == 'no':
+        yseries = data_pandas[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
         yindex = yseries.index.values
         ydata = yseries.values
 
-        plt.plot(yindex, ydata, color=cluster_c[query])
-        
-    plt.legend()
+        if metric_propagate is not None:
+            freq = data._index_freq
+            yindex, _, ydata = _propagate_metric(yindex, ydata, strategy=metric_propagate, freq=freq)
+
+        plt.plot(yindex, ydata, label=metric_name)
+        plt.legend()
+    else:
+        for query in clusters:
+            yseries = data_pandas.query(query)[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
+            if len(yseries) >= min_cluster_size and len(yseries) <= max_cluster_size:
+                yindex = yseries.index.values
+                ydata = yseries.values
+                
+                if metric_propagate is not None:
+                    freq = data._index_freq
+                    yindex, _, ydata = _propagate_metric(yindex, ydata, strategy=metric_propagate, freq=freq)
+                
+                plt.plot(yindex, ydata, label=query, color=cluster_c[query])
+        plt.legend()
 
 
 def fit_trends(
@@ -1152,7 +1201,7 @@ def fit_trends(
                 clusters_storage[query] = {'index': yindex, 'values': ydata}
 
                 hashable_key = ''.join(list(map(str, cluster_search_index)))
-                if hashable_key in hashed_index:
+                if hashable_key in hashed_index and hashed_index[hashable_key][0] in res_values:
                     res_values[query] = res_values[hashed_index[hashable_key][0]].copy()
                     hashed_index[hashable_key].append(query)
                 else:

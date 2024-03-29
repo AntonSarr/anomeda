@@ -29,7 +29,7 @@ def test_setters_and_getters():
     assert measures_names == anmd_df.get_measures_names()
     assert measures_types == anmd_df.get_measures_types()
     assert index_name == anmd_df.get_index_name()
-    assert anmd_df._index_is_numeric == False
+    assert anmd_df._index_is_numeric == True
     assert metric_name == anmd_df.get_metric_name()
     assert agg_func == anmd_df.get_agg_func()
 
@@ -169,7 +169,10 @@ def test_to_pandas_method():
     )
     
     dummy_df.set_index(index_name, inplace=True)
-    dummy_df.index = pd.to_datetime(dummy_df.index)
+    try:
+        dummy_df.index.astype('str').astype('int')
+    except BaseException:
+        dummy_df.index = pd.to_datetime(dummy_df.index)
 
     assert dummy_df.equals(anmd_df.to_pandas())
 
