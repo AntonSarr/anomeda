@@ -94,6 +94,66 @@ def __find_trend_breaking_point(
     return points_candidates[np.argmin(metric_vals)]
 
 
+def _propagate_metric(
+    x : 'numpy.ndarray[int] | numpy.ndarray[datetime]', 
+    y : 'numpy.ndarray[float]', 
+    strategy : '"zeros" | "ffil" | None',
+    freq: 'frequency unit for pandas.DatetimeIndex' = None
+):
+    
+    if len(x) != len(y):
+        raise ValueError('Lengths of x and y must be the same for the propagation')
+
+    if len(x) == 0 or len(y) == 0:
+        return x, y
+    
+    if type(x[0]) in [pd.Timestamp, datetime, np.datetime64]:
+        x = pd.to_datetime(x)
+
+    if type(x) == pd.DatetimeIndex:
+        x_is_numeric = False
+        if freq is None:
+            raise ValueError('If x is pandas.DatetimeIndex, frequency must be provided')
+    else:
+        x_is_numeric = True
+        
+    if x_is_numeric:
+        x_prop = np.arange(x.min(), x.max() + 1)
+        y_prop = np.zeros(x.max() - x.min() + 1)
+        x_formatted = x
+        x_prop_int = x_prop
+    else:
+        x_datetime = pd.to_datetime(x)
+        x_prop = pd.date_range(start=x_datetime.min(), end=x_datetime.max(), freq=freq)
+        y_prop = np.zeros(len(x_prop))
+
+        x_formatted = x_datetime
+        x_prop_int = np.arange(len(x_prop))
+
+    if strategy is None:
+        if not x_is_numeric:
+            x_prop_int = []
+            init_i = 0
+            for i in range(len(x_prop)):
+                if x_prop[i] == x_formatted[init_i]:
+                    x_prop_int.append(i)
+                    init_i += 1
+            x_prop_int = np.array(x_prop_int)
+
+        return x_formatted, x_prop_int, y
+
+    init_i = 0
+    for i in range(len(x_prop)):
+        if x_prop[i] == x_formatted[init_i]:
+            y_prop[i] = y[init_i]
+            init_i += 1
+        else:
+            if strategy == 'ffil':
+                y_prop[i] = y[init_i - 1]
+
+    return x_prop, x_prop_int, y_prop
+
+
 def extract_trends(
     x : 'numpy.ndarray[int] | pandas.DatetimeIndex', 
     y : 'numpy.ndarray[float]', 
@@ -165,64 +225,6 @@ def extract_trends(
         1: (4, 6, (-0.2999999999999998, 4.6), (2, 3.25, 0.0, 6.5))
     }
     """
-    def propagate_metric(
-        x : 'numpy.ndarray[int] | numpy.ndarray[datetime]', 
-        y : 'numpy.ndarray[float]', 
-        strategy : '"zeros" | "ffil" | None',
-        freq: 'frequency unit for pandas.DatetimeIndex' = None
-    ):
-        
-        if len(x) != len(y):
-            raise ValueError('Lengths of x and y must be the same for the propagation')
-
-        if len(x) == 0 or len(y) == 0:
-            return x, y
-        
-        if type(x[0]) in [pd.Timestamp, datetime, np.datetime64]:
-            x = pd.to_datetime(x)
-
-        if type(x) == pd.DatetimeIndex:
-            x_is_numeric = False
-            if freq is None:
-                raise ValueError('If x is pandas.DatetimeIndex, frequency must be provided')
-        else:
-            x_is_numeric = True
-            
-        if x_is_numeric:
-            x_prop = np.arange(x.min(), x.max() + 1)
-            y_prop = np.zeros(x.max() - x.min() + 1)
-            x_formatted = x
-            x_prop_int = x_prop
-        else:
-            x_datetime = pd.to_datetime(x)
-            x_prop = pd.date_range(start=x_datetime.min(), end=x_datetime.max(), freq=freq)
-            y_prop = np.zeros(len(x_prop))
-
-            x_formatted = x_datetime
-            x_prop_int = np.arange(len(x_prop))
-
-        if strategy is None:
-            if not x_is_numeric:
-                x_prop_int = []
-                init_i = 0
-                for i in range(len(x_prop)):
-                    if x_prop[i] == x_formatted[init_i]:
-                        x_prop_int.append(i)
-                        init_i += 1
-                x_prop_int = np.array(x_prop_int)
-
-            return x_formatted, x_prop_int, y
-
-        init_i = 0
-        for i in range(len(x_prop)):
-            if x_prop[i] == x_formatted[init_i]:
-                y_prop[i] = y[init_i]
-                init_i += 1
-            else:
-                if strategy == 'ffil':
-                    y_prop[i] = y[init_i - 1]
-
-        return x_prop, x_prop_int, y_prop
     
     if max_trends == 'auto':
         if min_var_reduction is None:
@@ -232,7 +234,7 @@ def extract_trends(
     if min_var_reduction is None:
         min_var_reduction = np.inf
 
-    x_prop, x_prop_int, y_prop = propagate_metric(x, y, strategy=propagation_strategy, freq=freq)
+    x_prop, x_prop_int, y_prop = _propagate_metric(x, y, strategy=propagation_strategy, freq=freq)
 
     x_int_val_map = {x_int: x_val for (x_int, x_val) in zip(x_prop_int, x_prop)}
     if type(x_prop) == pd.DatetimeIndex:
@@ -377,8 +379,7 @@ def compare_clusters(
     data: 'anomeda.DataFrame',
     period1: 'str',
     period2: 'str',
-    breakdown : "'no' | 'all-clusters' | list[str]" = 'no',
-    clusters : 'list' = None
+    breakdowns : "'no' | 'all' | list[str] | list[list[str]]" = 'no'
 ):
     """Compare metric values for 2 periods.
     
@@ -391,13 +392,13 @@ def compare_clusters(
         Object containing data to be analyzed
     period1 : str
         Query to filter the first period. For example, 'dt < 10'.
-    period2 s: str
+    period2 : str
         Query to filter the second period. For example, 'dt >= 10'.
-    breakdown : 'no' | 'all-clusters' | list[str], default 'no'
-        If 'no', the metric is grouped by date points only. If 'all-clusters', then all combinations of measures are used to create clusters for fitting trends within them. If list[str], then only combinations of measures specified in the list are used.
-    clusters : list, default None
-        List of clusters to use in the comparison. The objects in the list are queries used in pandas.DataFrame.query.
-        If None, all clusters are used. Default is None.
+    breakdowns : 'no' | 'all' | list[str], default 'no'
+        If 'no', the metric is grouped by date points only. 
+        If 'all', all combinations of measures are used to extract and plot clusters. 
+        If list[str], then only specific clusters specified in the list are plotted. 
+        If list[list[str]] then each internal list is a list of measures used to extract clusters.
         
     Returns
     -------
@@ -411,24 +412,13 @@ def compare_clusters(
         data,
         period1='dt < 10',
         period2='dt >= 10',
-        breakdown='no'
+        breakdowns='no'
     )
     ```
     """
     if type(data) != DataFrame:
         raise TypeError(INVALID_DATA_TYPE_MSG.format('data', type(data)))
-        
-    if data.get_measures_names() is None:
-        raise KeyError('not-None "measure_names" must be set for anomeda.DataFrame object')
-    measures_names = data.get_measures_names()
 
-    if clusters is not None:
-        clusters = clusters.copy()
-        for i in range(len(clusters)):
-            if clusters[i] not in ['total', 'skipped']:
-                clusters[i] = ' and '.join(sorted(clusters[i].split(' and '), key=lambda v: measures_names.index(v.split('==')[0].replace('`', ''))))
-
-    
     new_df1 = data.to_pandas().reset_index().query(period1).set_index(data.get_index_name())
     if new_df1.shape[0] == 0:
         raise ValueError(f'Failed to find data for period {period1}')
@@ -440,12 +430,8 @@ def compare_clusters(
     data1 = data.replace_df(new_df1, keep_discretization=True)
     data2 = data.replace_df(new_df2, keep_discretization=True)
 
-    clusters_info_1 = fit_trends(data1, trend_fitting_conf={'max_trends': 1}, breakdown=breakdown, plot=False, df=True)
-    clusters_info_2 = fit_trends(data2, trend_fitting_conf={'max_trends': 1}, breakdown=breakdown, plot=False, df=True)
-    
-    if clusters is not None:
-        clusters_info_1 = clusters_info_1[clusters_info_1['cluster'].isin(clusters)]
-        clusters_info_2 = clusters_info_2[clusters_info_2['cluster'].isin(clusters)]
+    clusters_info_1 = fit_trends(data1, trend_fitting_conf={'max_trends': 1}, breakdowns=breakdowns, plot=False, df=True)
+    clusters_info_2 = fit_trends(data2, trend_fitting_conf={'max_trends': 1}, breakdowns=breakdowns, plot=False, df=True)
     
     joined_info = clusters_info_1.merge(clusters_info_2, on='cluster', how='outer')
 
@@ -466,7 +452,7 @@ def compare_clusters(
 
 def find_anomalies(
     data: 'anomeda.DataFrame | (numpy.ndarray[int], numpy.ndarray[float])', 
-    clusters: 'list' = None, 
+    breakdowns : "'no' | 'all' | list[str] | list[list[str]]" = 'no',
     anomalies_conf : 'dict' = {'p_large': 1, 'p_low': 1, 'n_neighbors': 3},
     return_all_points : 'bool' = False,
     trend_fitting_conf : 'dict' = None
@@ -480,9 +466,11 @@ def find_anomalies(
     ----------
     data : anomeda.DataFrame | (numpy.ndarray[int], numpy.ndarray[float])
         Object containing metric values to be analyzed. Trends must be fitted for the object with anomeda.fit_trends() method if anomeda.DataFrame is passed.
-    clusters : list, default None
-        List of clusters to plot. The objects in the list are queries used in pandas.DataFrame.query.
-        Make sure you pass the cluster names exactly as they they appear in the fitted trends.
+    breakdowns : 'no' | 'all' | list[str], default 'no'
+        If 'no', the metric is grouped by date points only. 
+        If 'all', all combinations of measures are used to extract and plot clusters. 
+        If list[str], then only specific clusters specified in the list are plotted. 
+        If list[list[str]] then each internal list is a list of measures used to extract clusters.
     anomalies_conf : dict, default {'p_large': 1., 'p_low': 1., 'n_neighbors': 3}
         Dict containing 'p_large' and 'p_low' values. Both are float values between 0 and 1 corresponding to the % of the anomalies with largest and lowest metric values to be returned.
         For example, if you set 'p_low' to 0, no points with abnormally low metric values will be returned; if 0.5, then 50% of points with abnormally values will be returned, etc. 
@@ -539,29 +527,75 @@ def find_anomalies(
         if agg_func is None:
             raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
 
-        if data.get_measures_names() is None:
-            raise KeyError('not-None "measure_names" must be set for anomeda.DataFrame object')
         measures_names = data.get_measures_names()
+        if measures_names is None:
+            measures_names = []
+
+        clusters_calculated = False
+        if breakdowns == 'all':
+            measures_to_iterate = [[]]
+            if measures_names is not None and len(measures_names) > 0:
+                for i in range(1, len(measures_names) + 1):
+                    for el in combinations(measures_names, i):
+                        measures_to_iterate.append(list(el))
+        elif type(breakdowns) == list:
+            if len(breakdowns) > 0:
+                if type(breakdowns[0]) == list:
+                    measures_names = data.get_measures_names()
+                    measures_to_iterate = breakdowns.copy()
+                elif type(breakdowns[0]) == str:
+                    clusters = breakdowns.copy()
+                    clusters_calculated = True
+                else:
+                    raise ValueError('If breakdowns is a list, then it must be either [[measure_name, ..], ..] (list of lists) or [cluster_1, ..] (list of queries used to extract clusters)')
+            else:
+                measures_to_iterate = [[]]
+        elif breakdowns == 'no':
+            measures_to_iterate = [[]]
+        else:
+            raise ValueError('Breakdown must be either "all", "no" or list')
         
-        if clusters is None:
-            clusters = df['cluster'].drop_duplicates()
-
-        if trend_fitting_conf is not None:
-            raise ValueError('trend_fitting_conf is not used if anomeda.DataFrame is specified. Please remove the argument or set it to None to avoid confusion.')
-
         data_pandas = data.to_pandas().sort_index().reset_index()
         measures_types = data.get_measures_types()
         if measures_types is not None and 'continuous' in measures_types:
             for measure in measures_types['continuous']:
                 data_pandas[measure] = data.get_discretized_measures()[measure]
+        
+        if not clusters_calculated:
+            clusters = []
+            if len(measures_to_iterate) == 0:
+                query = 'total'
+                clusters.append(query)
+            else:
+                for measures_set in measures_to_iterate:
+                    if len(measures_set) == 0:
+                        query = 'total'
+                        clusters.append(query)
+                    else:
+                        for measures_values in data_pandas[measures_set].drop_duplicates().values:
+                            str_arr = []
+                            for (measure_name, measure_value) in zip(measures_set, measures_values):
+                                quote = '"' if type(measure_value) == str else ''
+                                str_arr.append('`' + measure_name + '`' + '==' + quote + str(measure_value) + quote)
+                            query = ' and '.join(str_arr)
+                            clusters.append(query)
+
+        if trend_fitting_conf is not None:
+            raise ValueError('trend_fitting_conf is not used if anomeda.DataFrame is specified. Please remove the argument or set it to None to avoid confusion.')
 
         resp = []
         
         for c in clusters:
 
-            # reorder features names in accordance to how they sorted in measures names
+             # reorder features names in accordance to how they sorted in measures names 
             if c not in ['total', 'skipped']:
-                c = ' and '.join(sorted(c.split(' and '), key=lambda v: measures_names.index(v.split('==')[0].replace('`', ''))))
+                try:
+                    c = ' and '.join(sorted(c.split(' and '), key=lambda v: measures_names.index(v.split('==')[0].strip().replace('`', ''))))
+                except ValueError:
+                    raise ValueError('Some feature from the cluster {} is not a measure'.format(c))
+                
+            if c not in df['cluster'].values:
+                continue
 
             df_tmp = df[df['cluster'] == c]
 
@@ -657,8 +691,6 @@ def find_anomalies(
 
         return resp
     elif type(data) == tuple and type(data[0]) == np.ndarray and type(data[1]) == np.ndarray:
-        if clusters is not None:
-            raise ValueError('Clusters may be specified only if passing an anomeda.DataFrame object')
 
         yindex, ydata = data
 
@@ -764,9 +796,9 @@ def find_anomalies(
 
 def plot_trends(
     data: 'anomeda.DataFrame | pandas.DataFrame returned from anomeda.fit_trends()', 
-    clusters: 'list' = None, 
-    colors: 'dict' = None, 
-    show_metric=True
+    breakdowns : "'no' | 'all' | list[str] | list[list[str]]" = 'no',
+    show_metric=True,
+    colors : 'dict' = None
 ):
     """Plot fitted trends.
     
@@ -776,11 +808,11 @@ def plot_trends(
     ----------
     data : anomeda.DataFrame | pandas.DataFrame returned from anomeda.fit_trends()
         Object containing trends to be plotted.
-    clusters : list, default None
-        List of clusters to plot. The objects in the list are queries used in pandas.DataFrame.query.
-        Make sure you pass the cluster names exactly as they they appear in the fitted trends.
-    colors : dict, default None
-        Dictionary with a mapping between clusters and colors used in matplotlib.
+    breakdowns : 'no' | 'all' | list[str], default 'no'
+        If 'no', the metric is grouped by date points only. 
+        If 'all', all combinations of measures are used to extract and plot clusters. 
+        If list[str], then only specific clusters specified in the list are plotted. 
+        If list[list[str]] then each internal list is a list of measures used to extract clusters.
     show_metric : bool, default True
         Indicator if to show actual metric on plots.
         
@@ -799,30 +831,115 @@ def plot_trends(
         if not hasattr(data, '_trends') or not hasattr(data, '_clusters'):
             raise NotFittedError('The anomeda.DataFrame instance has no fitted trends or clusters. Run anomeda.fit_trends() with save_trends=True and prefered parameters first')
     
+        if df is None or len(df) == 0:
+            return None 
+        
+        index_name = data.get_index_name()
+        if index_name is None:
+            raise KeyError('not-None "index_name" must be set for anomeda.DataFrame object')
+        
+        metric_name = data.get_metric_name()
+        if metric_name is None:
+            raise KeyError('not-None "metric_name" must be set for anomeda.DataFrame object')
+        
+        agg_func = data.get_agg_func()
+        if agg_func is None:
+            raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
+        
         measures_names = data.get_measures_names()
         if measures_names is None:
-            raise KeyError('not-None "measures_names" must be set for anomeda.DataFrame object')
-    elif type(data) == pd.DataFrame:
+            measures_names = []
+
+        clusters_calculated = False
+        if breakdowns == 'all':
+            measures_to_iterate = [[]]
+            if measures_names is not None and len(measures_names) > 0:
+                for i in range(1, len(measures_names) + 1):
+                    for el in combinations(measures_names, i):
+                        measures_to_iterate.append(list(el))
+        elif type(breakdowns) == list:
+            if len(breakdowns) > 0:
+                if type(breakdowns[0]) == list:
+                    measures_names = data.get_measures_names()
+                    measures_to_iterate = breakdowns.copy()
+                elif type(breakdowns[0]) == str:
+                    clusters = breakdowns.copy()
+                    clusters_calculated = True
+                else:
+                    raise ValueError('If breakdowns is a list, then it must be either [[measure_name, ..], ..] (list of lists) or [cluster_1, ..] (list of queries used to extract clusters)')
+            else:
+                measures_to_iterate = [[]]
+        elif breakdowns == 'no':
+            measures_to_iterate = [[]]
+        else:
+            raise ValueError('Breakdown must be either "all", "no" or list')
+        
+        data_pandas = data.to_pandas().sort_index().reset_index()
+        measures_types = data.get_measures_types()
+        if measures_types is not None and 'continuous' in measures_types:
+            for measure in measures_types['continuous']:
+                data_pandas[measure] = data.get_discretized_measures()[measure]
+        
+        if not clusters_calculated:
+            clusters = []
+            if len(measures_to_iterate) == 0:
+                query = 'total'
+                clusters.append(query)
+            else:
+                for measures_set in measures_to_iterate:
+                    if len(measures_set) == 0:
+                        query = 'total'
+                        clusters.append(query)
+                    else:
+                        for measures_values in data_pandas[measures_set].drop_duplicates().values:
+                            str_arr = []
+                            for (measure_name, measure_value) in zip(measures_set, measures_values):
+                                quote = '"' if type(measure_value) == str else ''
+                                str_arr.append('`' + measure_name + '`' + '==' + quote + str(measure_value) + quote)
+                            query = ' and '.join(str_arr)
+                            clusters.append(query)
+    elif pd.DataFrame:
         df = data.copy()
+        clusters = df['cluster'].drop_duplicates().values
+
+        if breakdowns == 'all':
+            pass
+        if breakdowns == 'no':
+            if 'total' in clusters:
+                clusters = ['total']
+        if type(breakdowns) == list:
+            if type(breakdowns[0]) == list:
+                filtered_clusters = []
+                for measures_set in breakdowns:
+                    for c in clusters:
+                        c_measures = list(map(lambda x: x.split('==')[0].strip(), c.split(' and ')))
+                        if len(set(c_measures).intersection(set(measures_set))) == len(set(c_measures)):
+                            filtered_clusters.append(c)
+                clusters = filtered_clusters.copy()
+            elif type(breakdowns[0]) == str:
+                existing_clusters = set(df['clusters'].values)
+                provided_clusters = set(breakdowns)
+                clusters = existing_clusters.intersection(provided_clusters)
+            else:
+                raise ValueError('In case data is pandas.DataFrame returned from anomeda.fit_trends, breakdowns must be either "all", "no" list of measures to iterate or list of specific clusters')
     else:
         raise ValueError('"data" argument must be either anomeda.DataFrame or pandas.DataFrame returned by anomeda.fit_trends()')
-    
-    if df is None or len(df) == 0:
-        return None 
-    
-    if clusters is None:
-        clusters = df['cluster'].drop_duplicates()
-    
+
     if colors is None:
-        replace = len(clusters) >= len(TABLEAU_COLORS)
-        cluster_c = dict(zip(clusters, np.random.choice(list(TABLEAU_COLORS.keys()), size=len(clusters), replace=replace)))
+            replace = len(clusters) >= len(TABLEAU_COLORS)
+            cluster_c = dict(zip(clusters, np.random.choice(list(TABLEAU_COLORS.keys()), size=len(clusters), replace=replace)))
     
     for c in clusters:
         
-        # reorder features names in accordance to how they sorted in measures names
-        if type(data) == DataFrame: 
-            if c not in ['total', 'skipped']:
-                c = ' and '.join(sorted(c.split(' and '), key=lambda v: measures_names.index(v.split('==')[0].replace('`', ''))))
+        # reorder features names in accordance to how they sorted in measures names 
+        if c not in ['total', 'skipped']:
+            try:
+                c = ' and '.join(sorted(c.split(' and '), key=lambda v: measures_names.index(v.split('==')[0].strip().replace('`', ''))))
+            except ValueError:
+                raise ValueError('Some feature from the cluster {} is not a measure'.format(c))
+            
+        if c not in df['cluster'].values:
+            continue
 
         df_tmp = df[df['cluster'] == c].sort_values(by='trend_start_dt')
 
@@ -859,11 +976,179 @@ def plot_trends(
     plt.legend()
 
 
+def plot_clusters(
+    data : 'anomeda.DataFrame', 
+    breakdowns : "'no' | 'all' | list[str] | list[list[str]]" = 'no',
+    metric_propagate : '"zeros" | "ffil" | None' = None,
+    min_cluster_size : 'int | None' = None,
+    max_cluster_size : 'int | None' = None,
+    colors : 'dict' = None
+):
+    """Plot metric in clusters.
+    
+    Plot metric extracted from clusters from anomeda.DataFrame instance.
+    
+    Parameters
+    ----------
+    data : anomeda.DataFrame
+        Object containing clusters to be plotted.
+    breakdowns : 'no' | 'all' | list[str], default 'no'
+        If 'no', the metric is grouped by date points only. 
+        If 'all', all combinations of measures are used to extract and plot clusters. 
+        If list[str], then only specific clusters specified in the list are plotted. 
+        If list[list[str]] then each internal list is a list of measures used to extract clusters.
+    metric_propagate : '"zeros" | "ffil" | None' = None
+        How to propogate aggregated time-series for missing index values.
+        - zeros: 
+            Let metric for missing index be equal 0. For example, aggregated metric values
+                '2024-01-01': 1
+                '2024-01-03': 2
+            Will be propagated as
+                '2024-01-01': 1 
+                '2024-01-02': 0
+                '2024-01-03': 2
+        - ffil: 
+            Let metric for missing index be equal the last observed value. For example, aggregated metric values 
+                '2024-01-01': 1
+                '2024-01-03': 2
+            Will be propagated as
+                '2024-01-01': 1
+                '2024-01-02': 1 
+                '2024-01-03': 2
+        - None: 
+            Use only present metric and index values.
+    min_cluster_size : int, default None
+        Skip clusters whose total size among all date points is less than the value.
+    max_cluster_size : int, default None
+        Skip clusters whose total size among all date points is more than the value.
+    colors : dict, default None
+        Dictionary with a mapping between clusters and colors used in matplotlib.
+        
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> anomeda.plot_clusters(
+    >>>     data, # anomeda.DataFrame
+    >>>     breakdowns=[['measure_a'], ['measure_a', 'measure_b']] # plot clusters extracted using measure_a and a combination of measure_a and measure_b 
+    >>> )
+
+    >>> anomeda.plot_clusters(
+    >>>     data, # anomeda.DataFrame
+    >>>     breakdowns=['measure_a==1', 'measure_a == 1 and measure_b == 2'] # plot two specified clusters 
+    >>> )
+
+    >>> anomeda.plot_clusters(
+    >>>     data, # anomeda.DataFrame
+    >>>     breakdowns='no' # plot a metric grouped by index values only
+    >>> )
+    """
+    if type(data) == DataFrame:
+        pass
+    else:
+        raise ValueError('"data" argument must be an anomeda.DataFrame instance')
+    
+    if data is None or len(data) == 0:
+        return None
+    
+    if min_cluster_size is None:
+        min_cluster_size = -np.inf
+    if max_cluster_size is None:
+        max_cluster_size = np.inf
+    
+    index_name = data.get_index_name()
+    if index_name is None:
+        raise KeyError('not-None "index_name" must be set for anomeda.DataFrame object')
+    
+    metric_name = data.get_metric_name()
+    if metric_name is None:
+        raise KeyError('not-None "metric_name" must be set for anomeda.DataFrame object')
+    
+    agg_func = data.get_agg_func()
+    if agg_func is None:
+        raise KeyError('not-None "agg_func" must be set for anomeda.DataFrame object')
+
+    clusters_calculated = False
+    if breakdowns == 'all':
+        measures_names = data.get_measures_names()
+        measures_to_iterate = [[]]
+        if measures_names is not None and len(measures_names) > 0:
+            for i in range(1, len(measures_names) + 1):
+                for el in combinations(measures_names, i):
+                    measures_to_iterate.append(list(el))
+    elif type(breakdowns) == list:
+        if len(breakdowns) > 0:
+            if type(breakdowns[0]) == list:
+                measures_names = data.get_measures_names()
+                measures_to_iterate = breakdowns.copy()
+            elif type(breakdowns[0]) == str:
+                clusters = breakdowns.copy()
+                clusters_calculated = True
+            else:
+                raise ValueError('If breakdowns is a list, then it must be either [[measure_name, ..], ..] (list of lists) or [cluster_1, ..] (list of queries used to extract clusters)')
+        else:
+            measures_to_iterate = [[]]
+    elif breakdowns == 'no':
+        measures_to_iterate = [[]]
+    else:
+        raise ValueError('Breakdown must be either "all", "no" or list')
+
+    data_pandas = data.to_pandas().sort_index().reset_index()
+    measures_types = data.get_measures_types()
+    if measures_types is not None and 'continuous' in measures_types:
+        for measure in measures_types['continuous']:
+            data_pandas[measure] = data.get_discretized_measures()[measure]
+    columns_to_use = np.append(index_name, metric_name)
+
+    if not clusters_calculated:
+        clusters = []
+        if len(measures_to_iterate) == 0:
+            query = 'total'
+            clusters.append(query)
+        else:
+            for measures_set in measures_to_iterate:
+                if len(measures_set) == 0:
+                    query = 'total'
+                    clusters.append(query)
+                else:
+                    for measures_values in data_pandas[measures_set].drop_duplicates().values:
+                        str_arr = []
+                        for (measure_name, measure_value) in zip(measures_set, measures_values):
+                            quote = '"' if type(measure_value) == str else ''
+                            str_arr.append('`' + measure_name + '`' + '==' + quote + str(measure_value) + quote)
+                        query = ' and '.join(str_arr)
+                        clusters.append(query)
+
+    if colors is None:
+        replace = len(clusters) >= len(TABLEAU_COLORS)
+        cluster_c = dict(zip(clusters, np.random.choice(list(TABLEAU_COLORS.keys()), size=len(clusters), replace=replace)))
+    
+    for query in clusters:
+        if query == 'total':
+            yseries = data_pandas[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
+        else:
+            yseries = data_pandas.query(query)[columns_to_use].groupby(index_name).agg(agg_func)[metric_name]
+        
+        if len(yseries) >= min_cluster_size and len(yseries) <= max_cluster_size:
+            yindex = yseries.index.values
+            ydata = yseries.values
+            
+            if metric_propagate is not None:
+                freq = data._index_freq
+                yindex, _, ydata = _propagate_metric(yindex, ydata, strategy=metric_propagate, freq=freq)
+            
+            plt.plot(yindex, ydata, label=query, color=cluster_c[query])
+    if len(clusters) > 0:
+        plt.legend()
+
+
 def fit_trends(
     data : 'anomeda.DataFrame | (numpy.ndarray[int], numpy.ndarray[float]) | (pandas.DatetimeIndex, numpy.ndarray[float])', 
     trend_fitting_conf : 'dict' = {'max_trends': 'auto', 'min_var_reduction': 0.75},
     save_trends : 'bool' = True,
-    breakdown : "'no' | 'all-clusters' | list[str]" = 'no',
+    breakdowns : "'no' | 'all' | list[str] | list[list[str]]" = 'no',
     metric_propagate : '"zeros" | "ffil" | None' = None,
     min_cluster_size : 'int | None' = None,
     max_cluster_size : 'int | None' = None,
@@ -886,8 +1171,11 @@ def fit_trends(
         Parameters for calling anomeda.extract_trends() function. It consists of 'max_trends' parameter, which is responsible for the maximum number of trends that you want to identify, and 'min_var_reduction' parameter, which describes what part of variance must be reduced by estimating trends. Values close to 1 will produce more trends since more trends reduce variance more signigicantly. Default is {'max_trends': 'auto', 'min_var_reduction': 0.75}.
     save_trends : 'bool', default True
         If False, return pandas.DataFrame with trends description without assigning it to the anomeda.DataFrame._trends.
-    breakdown : 'no' | 'all-clusters' | list[str], default 'no'
-        If 'no', the metric is grouped by date points only. If 'all-clusters', then all combinations of measures are used to create clusters for fitting trends within them. If list[str], then only combinations of measures specified in the list are used.
+    breakdowns : 'no' | 'all' | list[str], default 'no'
+        If 'no', the metric is grouped by date points only. 
+        If 'all', all combinations of measures are used to extract and plot clusters. 
+        If list[str], then only specific clusters specified in the list are plotted. 
+        If list[list[str]] then each internal list is a list of measures used to extract clusters.
     metric_propagate : '"zeros" | "ffil" | None' = None
         How to propogate aggregated time-series for missing index values.
         - zeros: 
@@ -929,6 +1217,7 @@ def fit_trends(
     >>> fitted_trends = anomeda.fit_trends(
             data, 
             trend_fitting_conf={'max_trends': 3}, 
+            breakdowns='all',
             metric_propagate='zeros',
             min_cluster_size=3, 
             plot=True, 
@@ -965,26 +1254,54 @@ def fit_trends(
     
         data_pandas = data.to_pandas().sort_index().reset_index()
 
-        if breakdown == 'all-clusters':
+        clusters_calculated = False
+        if breakdowns == 'all':
             measures_names = data.get_measures_names()
-            if measures_names is None:
-                raise KeyError('not-None "measures_names" must be set for anomeda.DataFrame object')
-            measures_to_iterate = []
-            for i in range(1, len(measures_names) + 1):
-                for el in combinations(measures_names, i):
-                    measures_to_iterate.append(list(el))
-        elif type(breakdown) == list:
-            measures_names = data.get_measures_names()
-            measures_to_iterate = breakdown.copy()
-        elif breakdown == 'no':
-            measures_to_iterate = []
+            measures_to_iterate = [[]]
+            if measures_names is not None and len(measures_names) > 0:
+                for i in range(1, len(measures_names) + 1):
+                    for el in combinations(measures_names, i):
+                        measures_to_iterate.append(list(el))
+        elif type(breakdowns) == list:
+            if len(breakdowns) > 0:
+                if type(breakdowns[0]) == list:
+                    measures_names = data.get_measures_names()
+                    measures_to_iterate = breakdowns.copy()
+                elif type(breakdowns[0]) == str:
+                    clusters = breakdowns.copy()
+                    clusters_calculated = True
+                else:
+                    raise ValueError('If breakdowns is a list, then it must be either [[measure_name, ..], ..] (list of lists) or [cluster_1, ..] (list of queries used to extract clusters)')
+            else:
+                measures_to_iterate = [[]]
+        elif breakdowns == 'no':
+            measures_to_iterate = [[]]
         else:
-            raise ValueError('Breakdown must be either "all-clusters", list or "no"')
+            raise ValueError('Breakdown must be either "all", "no" or list')
         
         measures_types = data.get_measures_types()
         if measures_types is not None and 'continuous' in measures_types:
             for measure in measures_types['continuous']:
                 data_pandas[measure] = data.get_discretized_measures()[measure]
+
+        if not clusters_calculated:
+            clusters = []
+            if len(measures_to_iterate) == 0:
+                query = 'total'
+                clusters.append(query)
+            else:
+                for measures_set in measures_to_iterate:
+                    if len(measures_set) == 0:
+                        query = 'total'
+                        clusters.append(query)
+                    else:
+                        for measures_values in data_pandas[measures_set].drop_duplicates().values:
+                            str_arr = []
+                            for (measure_name, measure_value) in zip(measures_set, measures_values):
+                                quote = '"' if type(measure_value) == str else ''
+                                str_arr.append('`' + measure_name + '`' + '==' + quote + str(measure_value) + quote)
+                            query = ' and '.join(str_arr)
+                            clusters.append(query)
         
         res_values = {}
         skipped_clusters = 0
@@ -993,8 +1310,6 @@ def fit_trends(
         columns_to_use = np.append(index_name, metric_name)
         clusters_storage = {}
         hashed_index = {}
-
-        query = 'total'
         
         yseries = data_pandas[columns_to_use]
         cluster_search_index = yseries.index.values
@@ -1009,75 +1324,59 @@ def fit_trends(
                 data._trends_conf = {}
             if df:
                 return None
-
-        clusters_storage[query] = {'index': yindex, 'values': ydata}
-
-        hashable_key = ''.join(list(map(str, cluster_search_index)))
-        hashed_index[hashable_key] = [query]
         
-        trends = extract_trends(
-            yindex, ydata, 
-            propagation_strategy=metric_propagate,
-            freq=data._index_freq,
-            max_trends=trend_fitting_conf.get('max_trends'), 
-            min_var_reduction=trend_fitting_conf.get('min_var_reduction')
-        )
-        res_values[query] = trends.copy()
-        
-        for measures_set in measures_to_iterate:
-            for measures_values in data_pandas[measures_set].drop_duplicates().values:
-                str_arr = []
-                for (measure_name, measure_value) in zip(measures_set, measures_values):
-                    quote = '"' if type(measure_value) == str else ''
-                    str_arr.append('`' + measure_name + '`' + '==' + quote + str(measure_value) + quote)
-                query = ' and '.join(str_arr)
-                total_clusters += 1
-                
+        for query in clusters:
+            total_clusters += 1
+
+            if query == 'total':
+                yseries = data_pandas[columns_to_use]
+            else:
                 yseries = data_pandas.query(query)[columns_to_use]
-                cluster_search_index = yseries.index.values
-                yseries = yseries.groupby(index_name).agg(agg_func)[metric_name]
-                yindex = yseries.index.values
-                ydata = yseries.values
+            
+            cluster_search_index = yseries.index.values
+            yseries = yseries.groupby(index_name).agg(agg_func)[metric_name]
+            yindex = yseries.index.values
+            ydata = yseries.values
 
-                clusters_storage[query] = {'index': yindex, 'values': ydata}
+            clusters_storage[query] = {'index': yindex, 'values': ydata}
 
-                hashable_key = ''.join(list(map(str, cluster_search_index)))
-                if hashable_key in hashed_index:
-                    res_values[query] = res_values[hashed_index[hashable_key][0]].copy()
-                    hashed_index[hashable_key].append(query)
-                else:
-                    hashed_index[hashable_key] = [query]
+            hashable_key = ''.join(list(map(str, cluster_search_index)))
+            if hashable_key in hashed_index and hashed_index[hashable_key][0] in res_values:
+                res_values[query] = res_values[hashed_index[hashable_key][0]].copy()
+                hashed_index[hashable_key].append(query)
+            else:
+                hashed_index[hashable_key] = [query]
 
-                    if ydata.shape[0] >= min_cluster_size and ydata.shape[0] <= max_cluster_size:
-                        if ydata.shape[0] == 1:
-                            if data._index_is_numeric:
-                                res_values[query] = {
-                                    0: (
-                                        yindex[0], yindex[0] + 1, 
-                                        (1, ydata[0]), 
-                                        (1, ydata[0], 0, ydata[0])
-                                    )
-                                }
-                            else:
-                                res_values[query] = {
-                                    0: (
-                                        pd.Timestamp(yindex[0]), pd.Timestamp(yindex[0]) + pd.Timedelta(1, data._index_freq), 
-                                        (1, ydata[0]), 
-                                        (1, ydata[0], 0, ydata[0])
-                                    )
-                                }
+                if ydata.shape[0] >= min_cluster_size and ydata.shape[0] <= max_cluster_size:
+                    if ydata.shape[0] == 1:
+                        if data._index_is_numeric:
+                            res_values[query] = {
+                                0: (
+                                    yindex[0], yindex[0] + 1, 
+                                    (1, ydata[0]), 
+                                    (1, ydata[0], 0, ydata[0])
+                                )
+                            }
                         else:
-                            trends = extract_trends(
-                                yindex, ydata, 
-                                propagation_strategy=metric_propagate,
-                                freq=data._index_freq,
-                                max_trends=trend_fitting_conf.get('max_trends'), 
-                                min_var_reduction=trend_fitting_conf.get('min_var_reduction')
-                            )
-                            res_values[query] = trends.copy()
+                            res_values[query] = {
+                                0: (
+                                    pd.Timestamp(yindex[0]), pd.Timestamp(yindex[0]) + pd.Timedelta(1, data._index_freq), 
+                                    (1, ydata[0]), 
+                                    (1, ydata[0], 0, ydata[0])
+                                )
+                            }
                     else:
-                        skipped_clusters += 1
-                        skipped_indeces.append(yindex)
+                        trends = extract_trends(
+                            yindex, ydata, 
+                            propagation_strategy=metric_propagate,
+                            freq=data._index_freq,
+                            max_trends=trend_fitting_conf.get('max_trends'), 
+                            min_var_reduction=trend_fitting_conf.get('min_var_reduction')
+                        )
+                        res_values[query] = trends.copy()
+                else:
+                    skipped_clusters += 1
+                    skipped_indeces.append(yindex)
         if skipped_clusters > 0:
             skipped_indeces = np.unique(np.concatenate(skipped_indeces))
 
@@ -1124,7 +1423,7 @@ def fit_trends(
             data._clusters = clusters_storage.copy()
             data._trends_conf = {
                 'trend_fitting_conf': trend_fitting_conf.copy(),
-                'breakdown': breakdown,
+                'breakdown': breakdowns,
                 'min_cluster_size': min_cluster_size,
                 'max_cluster_size': max_cluster_size
             }
@@ -1135,7 +1434,7 @@ def fit_trends(
             return res_values
 
     elif type(data) == tuple and type(data[0]) in [pd.DatetimeIndex, np.ndarray] and type(data[1]) == np.ndarray:
-        if breakdown is not None and breakdown != 'no':
+        if breakdowns is not None and breakdowns != 'no':
             raise ValueError('Breakdown may be passed only if provided data is anomeda.DataFrame')
         x, y = data
 

@@ -29,7 +29,7 @@ def test_setters_and_getters():
     assert measures_names == anmd_df.get_measures_names()
     assert measures_types == anmd_df.get_measures_types()
     assert index_name == anmd_df.get_index_name()
-    assert anmd_df._index_is_numeric == False
+    assert anmd_df._index_is_numeric == True
     assert metric_name == anmd_df.get_metric_name()
     assert agg_func == anmd_df.get_agg_func()
 
@@ -169,7 +169,10 @@ def test_to_pandas_method():
     )
     
     dummy_df.set_index(index_name, inplace=True)
-    dummy_df.index = pd.to_datetime(dummy_df.index)
+    try:
+        dummy_df.index.astype('str').astype('int')
+    except BaseException:
+        dummy_df.index = pd.to_datetime(dummy_df.index)
 
     assert dummy_df.equals(anmd_df.to_pandas())
 
@@ -199,10 +202,10 @@ def test_find_anomalies():
     anomeda.fit_trends(anmd_df)
     anomeda.find_anomalies(anmd_df)
     anomeda.find_anomalies(anmd_df, anomalies_conf={'p_large': 1, 'p_low': 1})
-    anomeda.find_anomalies(anmd_df, clusters=['total'])
+    anomeda.find_anomalies(anmd_df, breakdowns=['total'])
 
-    anomeda.fit_trends(anmd_df, breakdown='all-clusters')
-    anomeda.find_anomalies(anmd_df, clusters=['`a`==20'])
+    anomeda.fit_trends(anmd_df, breakdowns='all')
+    anomeda.find_anomalies(anmd_df, breakdowns=['`a`==20'])
     anomeda.find_anomalies(anmd_df, return_all_points=True)
 
     x = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
@@ -235,9 +238,9 @@ def test_fit_trends():
     )
 
     anomeda.fit_trends(anmd_df)
-    anomeda.fit_trends(anmd_df, breakdown='all-clusters')
-    anomeda.fit_trends(anmd_df, breakdown='all-clusters', metric_propagate='zeros')
-    anomeda.fit_trends(anmd_df, breakdown='all-clusters', metric_propagate='ffil')
+    anomeda.fit_trends(anmd_df, breakdowns='all')
+    anomeda.fit_trends(anmd_df, breakdowns='all', metric_propagate='zeros')
+    anomeda.fit_trends(anmd_df, breakdowns='all', metric_propagate='ffil')
 
     x = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     y = np.array([11.2, 10.4, 10.2, 30.1, 10.2, 10., 11., 10.2, 10.9, 10.5, 11.1])
@@ -286,9 +289,10 @@ def test_plot_trends():
 
     trends = anomeda.fit_trends(anmd_df)
     anomeda.plot_trends(anmd_df)
-    anomeda.plot_trends(anmd_df, clusters=['total'])
+    anomeda.plot_trends(anmd_df, breakdowns=['total'])
     
     trends = anomeda.fit_trends((x, y))
+    print(trends)
     anomeda.plot_trends(trends)
 
 
@@ -316,9 +320,9 @@ def test_compare_clusters():
 
     res = anomeda.compare_clusters(anmd_df, period1='dt < "2024-01-01"', period2='dt >= "2024-01-01"')
 
-    res = anomeda.compare_clusters(anmd_df, period1='dt < "2024-01-01"', period2='dt >= "2024-01-01"', clusters=['total'])
+    res = anomeda.compare_clusters(anmd_df, period1='dt < "2024-01-01"', period2='dt >= "2024-01-01"', breakdowns=['total'])
 
-    res = anomeda.compare_clusters(anmd_df, period1='dt < "2024-01-01"', period2='dt >= "2024-01-01"', breakdown='all-clusters', clusters=['`a`==20'])
+    res = anomeda.compare_clusters(anmd_df, period1='dt < "2024-01-01"', period2='dt >= "2024-01-01"', breakdowns=['`a`==20'])
 
 
 def test_empty_df():
@@ -344,7 +348,7 @@ def test_empty_df():
     )
 
     anomeda.fit_trends(anmd_df)
-    anomeda.fit_trends(anmd_df, breakdown='all-clusters')
+    anomeda.fit_trends(anmd_df, breakdowns='all')
     anomeda.plot_trends(anmd_df)
 
 
@@ -371,7 +375,7 @@ def test_one_element_df():
     )
 
     anomeda.fit_trends(anmd_df)
-    anomeda.fit_trends(anmd_df, breakdown='all-clusters')
+    anomeda.fit_trends(anmd_df, breakdowns='all')
     anomeda.plot_trends(anmd_df)
 
 
@@ -398,7 +402,7 @@ def test_two_elements_df():
     )
 
     anomeda.fit_trends(anmd_df)
-    anomeda.fit_trends(anmd_df, breakdown='all-clusters')
+    anomeda.fit_trends(anmd_df, breakdowns='all')
     anomeda.plot_trends(anmd_df)
 
 
@@ -424,17 +428,17 @@ def test_datetime_index():
     anomeda.fit_trends(
         anomeda_df,
         metric_propagate=None,
-        breakdown='all-clusters'
+        breakdowns='all'
     )
     anomeda.fit_trends(
         anomeda_df,
         metric_propagate='zeros',
-        breakdown='all-clusters'
+        breakdowns='all'
     )
     anomeda.fit_trends(
         anomeda_df,
         metric_propagate='ffil',
-        breakdown='all-clusters'
+        breakdowns='all'
     )
 
     anomeda.find_anomalies(anomeda_df)

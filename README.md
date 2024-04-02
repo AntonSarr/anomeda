@@ -62,7 +62,7 @@ trends = anomeda.fit_trends(
     trend_fitting_conf={'max_trends': 'auto', 'min_var_reduction': 0.75}, # set the number of trends automatically,
                                                                           # try to reduce error variance compared to error of estimating values by 1-line trend by 75%
     breakdown='all-clusters', # fit trends for clusters extracted from all possible sets of measures
-    mettic_propagte='zeros', # if some index values are missed after aggregation for a cluster, fill them with zeros
+    metric_propagate='zeros', # if some index values are missed after aggregation for a cluster, fill them with zeros
     min_cluster_size=3 # skip small clusters, they all will be combined into 'skipped' cluster
 )
 ```
@@ -80,6 +80,12 @@ anomeda.plot_trends(anomeda_df, clusters=['`country`=="Germany"'])
 The output will look like this:
 
 ![anomeda.plot_trends method](docs/img/anomeda_plot_trends_1.png "anomeda.plot_trends method")
+
+If you don't need to *fit trends* since it's a complicated procedure, but you need to take a brief look at the clusters, you may run a different command which simply plots the clusters:
+
+```python
+anomeda.plot_clusters(anomeda_df, clusters=['`country`=="Germany"'])
+```
 
 Of course, you may have no idea which cluster caused the problem and what to plot. Almost always you know only that there is a decrease of an overall metric and you need to find the culprits. Let's utilize another method -- `anomeda.compare_clusters`.
 

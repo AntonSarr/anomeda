@@ -639,13 +639,16 @@ anomeda.DataFrame(
         </div>
       </li>
       <li class="field-body">
-        <b><code>breakdown</code></b>
-            (<code>no | all - clusters | list[str]</code>, default:
+        <b><code>breakdowns</code></b>
+            (<code>no | all | list[str]</code>, default:
                 <code>&#39;no&#39;</code>
 )
         –
         <div class="doc-md-description">
-          <p>If 'no', the metric is grouped by date points only. If 'all-clusters', then all combinations of measures are used to create clusters for fitting trends within them. If list[str], then only combinations of measures specified in the list are used.</p>
+          <p>If 'no', the metric is grouped by date points only. 
+If 'all', all combinations of measures are used to extract and plot clusters. 
+If list[str], then only specific clusters specified in the list are plotted. 
+If list[list[str]] then each internal list is a list of measures used to extract clusters.</p>
         </div>
       </li>
       <li class="field-body">
@@ -747,6 +750,7 @@ anomeda.DataFrame(
     <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">fitted_trends</span> <span class="o">=</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">fit_trends</span><span class="p">(</span>
 <span class="go">        data, </span>
 <span class="go">        trend_fitting_conf={&#39;max_trends&#39;: 3}, </span>
+<span class="go">        breakdowns=&#39;all&#39;,</span>
 <span class="go">        metric_propagate=&#39;zeros&#39;,</span>
 <span class="go">        min_cluster_size=3, </span>
 <span class="go">        plot=True, </span>
@@ -757,6 +761,9 @@ anomeda.DataFrame(
   </div>
 
 </div><p>The underlying algorithm starts with one trend. It estimates the parameters of a linear function. by optimizing.</p>
+<p>If you don't need to <em>fit trends</em> since it's a complicated procedure, but you need to take a brief look at the clusters, you may run a different command which simply plots the clusters:</p>
+<pre><code class="language-python">anomeda.plot_clusters(anomeda_df, clusters=['`country`==&quot;Germany&quot;'])
+</code></pre>
 <p>After one trend is fitted, the algorithm tries to find a point which will reduce the an interesting metric, <em>variance of an absolute error (VAE) multiplied by 90-th percentile of an absolute error</em>, if we "break" the trend there and reestimate trends for the left and the right part of a time-series. The left and right trends which reduce the VAE the most are now our current trends. If we already fitted enough trends, defined by <code>max_n_trends</code>, or the current VAE is at least by <code>min_var_reduction</code> lower from what we saw using one trend, the algorithm stops and returns the trends. Otherwise, it starts to "break" each trend into two pieces the same way as described.</p>
 <p>When a breaking point is being searched, either all points with presented data or a randomly sampled points are used as candidates. What is important, a kind of a <em>regularization</em> is used during the search. Choosing a point located closer to the ends of an index range is penalized more than closer to the center. We use PDF of Beta-function as a multiplicator. It was made to balance the number of samples in the left and right parts of the range. The low number of samples in one of the parts may cause a lower error variance there, which will hinder extracting long and consistent trends. </p>
 <p><img alt="anomeda regularizer" src="../img/regularizer_1.png" title="anomeda regularizer" /></p>
@@ -793,14 +800,16 @@ anomeda.DataFrame(
         </div>
       </li>
       <li class="field-body">
-        <b><code>clusters</code></b>
-            (<code>list</code>, default:
-                <code>None</code>
+        <b><code>breakdowns</code></b>
+            (<code>no | all | list[str]</code>, default:
+                <code>&#39;no&#39;</code>
 )
         –
         <div class="doc-md-description">
-          <p>List of clusters to plot. The objects in the list are queries used in pandas.DataFrame.query.
-Make sure you pass the cluster names exactly as they they appear in the fitted trends.</p>
+          <p>If 'no', the metric is grouped by date points only. 
+If 'all', all combinations of measures are used to extract and plot clusters. 
+If list[str], then only specific clusters specified in the list are plotted. 
+If list[list[str]] then each internal list is a list of measures used to extract clusters.</p>
         </div>
       </li>
       <li class="field-body">

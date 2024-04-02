@@ -115,6 +115,12 @@ All the work is made by `anomeda.fit_trends` method. It can fit trends, plot the
 
 The underlying algorithm starts with one trend. It estimates the parameters of a linear function. by optimizing.
 
+If you don't need to *fit trends* since it's a complicated procedure, but you need to take a brief look at the clusters, you may run a different command which simply plots the clusters:
+
+```python
+anomeda.plot_clusters(anomeda_df, clusters=['`country`=="Germany"'])
+```
+
 After one trend is fitted, the algorithm tries to find a point which will reduce the an interesting metric, *variance of an absolute error (VAE) multiplied by 90-th percentile of an absolute error*, if we "break" the trend there and reestimate trends for the left and the right part of a time-series. The left and right trends which reduce the VAE the most are now our current trends. If we already fitted enough trends, defined by `max_n_trends`, or the current VAE is at least by `min_var_reduction` lower from what we saw using one trend, the algorithm stops and returns the trends. Otherwise, it starts to "break" each trend into two pieces the same way as described.
 
 When a breaking point is being searched, either all points with presented data or a randomly sampled points are used as candidates. What is important, a kind of a *regularization* is used during the search. Choosing a point located closer to the ends of an index range is penalized more than closer to the center. We use PDF of Beta-function as a multiplicator. It was made to balance the number of samples in the left and right parts of the range. The low number of samples in one of the parts may cause a lower error variance there, which will hinder extracting long and consistent trends. 
