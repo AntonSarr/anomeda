@@ -102,6 +102,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-level="2"><a href="#utils.plot_clusters" class="nav-link">plot_clusters()</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-level="2"><a href="#utils.plot_trends" class="nav-link">plot_trends()</a>
               <ul class="nav flex-column">
               </ul>
@@ -809,8 +813,9 @@ The lower bound must be including, the higher bound must be excluding.</p>
     <span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">period1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">period2</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">breakdown</span><span class="p">:</span> <span class="s2">&quot;no&quot;</span> <span class="o">|</span> <span class="s2">&quot;all-clusters&quot;</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span><span class="p">,</span>
-    <span class="n">clusters</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">breakdowns</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;no&quot;</span> <span class="o">|</span> <span class="s2">&quot;all&quot;</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -849,24 +854,16 @@ You can use it to identify the cluster or set of clusters caused the differences
         </div>
       </li>
       <li class="field-body">
-        <b><code>breakdown</code></b>
-            (<code>no | all - clusters | list[str]</code>, default:
+        <b><code>breakdowns</code></b>
+            (<code>no | all | list[str]</code>, default:
                 <code>&#39;no&#39;</code>
 )
         –
         <div class="doc-md-description">
-          <p>If 'no', the metric is grouped by date points only. If 'all-clusters', then all combinations of measures are used to create clusters for fitting trends within them. If list[str], then only combinations of measures specified in the list are used.</p>
-        </div>
-      </li>
-      <li class="field-body">
-        <b><code>clusters</code></b>
-            (<code>list</code>, default:
-                <code>None</code>
-)
-        –
-        <div class="doc-md-description">
-          <p>List of clusters to use in the comparison. The objects in the list are queries used in pandas.DataFrame.query.
-If None, all clusters are used. Default is None.</p>
+          <p>If 'no', the metric is grouped by date points only. 
+If 'all', all combinations of measures are used to extract and plot clusters. 
+If list[str], then only specific clusters specified in the list are plotted. 
+If list[list[str]] then each internal list is a list of measures used to extract clusters.</p>
         </div>
       </li>
   </ul>
@@ -891,7 +888,7 @@ If None, all clusters are used. Default is None.</p>
     data,
     period1='dt &lt; 10',
     period2='dt &gt;= 10',
-    breakdown='no'
+    breakdowns='no'
 )
 </code></pre>
 
@@ -1061,7 +1058,9 @@ The sensibility of the method to identify trend changes are set by parameters "m
         <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
         <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
     <span class="p">),</span>
-    <span class="n">clusters</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">breakdowns</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;no&quot;</span> <span class="o">|</span> <span class="s2">&quot;all&quot;</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span><span class="p">,</span>
     <span class="n">anomalies_conf</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;p_large&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
         <span class="s2">&quot;p_low&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
@@ -1091,14 +1090,16 @@ You can find anomalies for automatically extracted clusters only if passing an a
         </div>
       </li>
       <li class="field-body">
-        <b><code>clusters</code></b>
-            (<code>list</code>, default:
-                <code>None</code>
+        <b><code>breakdowns</code></b>
+            (<code>no | all | list[str]</code>, default:
+                <code>&#39;no&#39;</code>
 )
         –
         <div class="doc-md-description">
-          <p>List of clusters to plot. The objects in the list are queries used in pandas.DataFrame.query.
-Make sure you pass the cluster names exactly as they they appear in the fitted trends.</p>
+          <p>If 'no', the metric is grouped by date points only. 
+If 'all', all combinations of measures are used to extract and plot clusters. 
+If list[str], then only specific clusters specified in the list are plotted. 
+If list[list[str]] then each internal list is a list of measures used to extract clusters.</p>
         </div>
       </li>
       <li class="field-body">
@@ -1183,7 +1184,9 @@ Parameters are similar to those you would pass to the argument anomeda.fit_trend
         <span class="s2">&quot;min_var_reduction&quot;</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">,</span>
     <span class="p">},</span>
     <span class="n">save_trends</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="n">breakdown</span><span class="p">:</span> <span class="s2">&quot;no&quot;</span> <span class="o">|</span> <span class="s2">&quot;all-clusters&quot;</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span><span class="p">,</span>
+    <span class="n">breakdowns</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;no&quot;</span> <span class="o">|</span> <span class="s2">&quot;all&quot;</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span><span class="p">,</span>
     <span class="n">metric_propagate</span><span class="p">:</span> <span class="s2">&quot;zeros&quot;</span> <span class="o">|</span> <span class="s2">&quot;ffil&quot;</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">min_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1234,13 +1237,16 @@ The method returns a pandas.DataFrame describing trends and/or plots the trends.
         </div>
       </li>
       <li class="field-body">
-        <b><code>breakdown</code></b>
-            (<code>no | all - clusters | list[str]</code>, default:
+        <b><code>breakdowns</code></b>
+            (<code>no | all | list[str]</code>, default:
                 <code>&#39;no&#39;</code>
 )
         –
         <div class="doc-md-description">
-          <p>If 'no', the metric is grouped by date points only. If 'all-clusters', then all combinations of measures are used to create clusters for fitting trends within them. If list[str], then only combinations of measures specified in the list are used.</p>
+          <p>If 'no', the metric is grouped by date points only. 
+If 'all', all combinations of measures are used to extract and plot clusters. 
+If list[str], then only specific clusters specified in the list are plotted. 
+If list[list[str]] then each internal list is a list of measures used to extract clusters.</p>
         </div>
       </li>
       <li class="field-body">
@@ -1342,11 +1348,161 @@ The method returns a pandas.DataFrame describing trends and/or plots the trends.
     <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">fitted_trends</span> <span class="o">=</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">fit_trends</span><span class="p">(</span>
 <span class="go">        data, </span>
 <span class="go">        trend_fitting_conf={&#39;max_trends&#39;: 3}, </span>
+<span class="go">        breakdowns=&#39;all&#39;,</span>
 <span class="go">        metric_propagate=&#39;zeros&#39;,</span>
 <span class="go">        min_cluster_size=3, </span>
 <span class="go">        plot=True, </span>
 <span class="go">        df=True</span>
 <span class="go">    )</span>
+</code></pre></div>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<h2 id="utils.plot_clusters" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">plot_clusters</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">plot_clusters</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">breakdowns</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;no&quot;</span> <span class="o">|</span> <span class="s2">&quot;all&quot;</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span><span class="p">,</span>
+    <span class="n">metric_propagate</span><span class="p">:</span> <span class="s2">&quot;zeros&quot;</span> <span class="o">|</span> <span class="s2">&quot;ffil&quot;</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">min_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">colors</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Plot metric in clusters.</p>
+<p>Plot metric extracted from clusters from anomeda.DataFrame instance.</p>
+
+
+
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b><code>data</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
+        –
+        <div class="doc-md-description">
+          <p>Object containing clusters to be plotted.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>breakdowns</code></b>
+            (<code>no | all | list[str]</code>, default:
+                <code>&#39;no&#39;</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>If 'no', the metric is grouped by date points only. 
+If 'all', all combinations of measures are used to extract and plot clusters. 
+If list[str], then only specific clusters specified in the list are plotted. 
+If list[list[str]] then each internal list is a list of measures used to extract clusters.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>metric_propagate</code></b>
+            (<code>&#39;&#34;zeros&#34; | &#34;ffil&#34; | None&#39; = None</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>How to propogate aggregated time-series for missing index values.
+- zeros: 
+    Let metric for missing index be equal 0. For example, aggregated metric values
+        '2024-01-01': 1
+        '2024-01-03': 2
+    Will be propagated as
+        '2024-01-01': 1 
+        '2024-01-02': 0
+        '2024-01-03': 2
+- ffil: 
+    Let metric for missing index be equal the last observed value. For example, aggregated metric values 
+        '2024-01-01': 1
+        '2024-01-03': 2
+    Will be propagated as
+        '2024-01-01': 1
+        '2024-01-02': 1 
+        '2024-01-03': 2
+- None: 
+    Use only present metric and index values.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>min_cluster_size</code></b>
+            (<code>int</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Skip clusters whose total size among all date points is less than the value.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>max_cluster_size</code></b>
+            (<code>int</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Skip clusters whose total size among all date points is more than the value.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>colors</code></b>
+            (<code>dict</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Dictionary with a mapping between clusters and colors used in matplotlib.</p>
+        </div>
+      </li>
+  </ul>
+
+
+
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>None</code>
+        –
+        <div class="doc-md-description">
+          
+      </div>
+      </li>
+  </ul>
+
+
+
+<p><strong>Examples:</strong></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">plot_clusters</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">data</span><span class="p">,</span> <span class="c1"># anomeda.DataFrame</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">breakdowns</span><span class="o">=</span><span class="p">[[</span><span class="s1">&#39;measure_a&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;measure_a&#39;</span><span class="p">,</span> <span class="s1">&#39;measure_b&#39;</span><span class="p">]]</span> <span class="c1"># plot clusters extracted using measure_a and a combination of measure_a and measure_b </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+</code></pre></div>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">plot_clusters</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">data</span><span class="p">,</span> <span class="c1"># anomeda.DataFrame</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">breakdowns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;measure_a==1&#39;</span><span class="p">,</span> <span class="s1">&#39;measure_a == 1 and measure_b == 2&#39;</span><span class="p">]</span> <span class="c1"># plot two specified clusters </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+</code></pre></div>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">plot_clusters</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">data</span><span class="p">,</span> <span class="c1"># anomeda.DataFrame</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">breakdowns</span><span class="o">=</span><span class="s1">&#39;no&#39;</span> <span class="c1"># plot a metric grouped by index values only</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
 </code></pre></div>
 
   </div>
@@ -1366,9 +1522,11 @@ The method returns a pandas.DataFrame describing trends and/or plots the trends.
 </h2>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">plot_trends</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="s2">&quot;anomeda.DataFrame | pandas.DataFrame returned from anomeda.fit_trends()&quot;</span><span class="p">,</span>
-    <span class="n">clusters</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">colors</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">breakdowns</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;no&quot;</span> <span class="o">|</span> <span class="s2">&quot;all&quot;</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span><span class="p">,</span>
     <span class="n">show_metric</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">colors</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -1390,24 +1548,16 @@ The method returns a pandas.DataFrame describing trends and/or plots the trends.
         </div>
       </li>
       <li class="field-body">
-        <b><code>clusters</code></b>
-            (<code>list</code>, default:
-                <code>None</code>
+        <b><code>breakdowns</code></b>
+            (<code>no | all | list[str]</code>, default:
+                <code>&#39;no&#39;</code>
 )
         –
         <div class="doc-md-description">
-          <p>List of clusters to plot. The objects in the list are queries used in pandas.DataFrame.query.
-Make sure you pass the cluster names exactly as they they appear in the fitted trends.</p>
-        </div>
-      </li>
-      <li class="field-body">
-        <b><code>colors</code></b>
-            (<code>dict</code>, default:
-                <code>None</code>
-)
-        –
-        <div class="doc-md-description">
-          <p>Dictionary with a mapping between clusters and colors used in matplotlib.</p>
+          <p>If 'no', the metric is grouped by date points only. 
+If 'all', all combinations of measures are used to extract and plot clusters. 
+If list[str], then only specific clusters specified in the list are plotted. 
+If list[list[str]] then each internal list is a list of measures used to extract clusters.</p>
         </div>
       </li>
       <li class="field-body">

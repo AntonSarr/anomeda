@@ -81,6 +81,12 @@ The output will look like this:
 
 ![anomeda.plot_trends method](docs/img/anomeda_plot_trends_1.png "anomeda.plot_trends method")
 
+If you don't need to *fit trends* since it's a complicated procedure, but you need to take a brief look at the clusters, you may run a different command which simply plots the clusters:
+
+```python
+anomeda.plot_clusters(anomeda_df, clusters=['`country`=="Germany"'])
+```
+
 Of course, you may have no idea which cluster caused the problem and what to plot. Almost always you know only that there is a decrease of an overall metric and you need to find the culprits. Let's utilize another method -- `anomeda.compare_clusters`.
 
 ```python
