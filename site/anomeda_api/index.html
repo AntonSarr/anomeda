@@ -88,6 +88,30 @@
             
             <li class="nav-item" data-level="1"><a href="#anomeda-methods-api" class="nav-link">Anomeda methods API</a>
               <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#utils.compare_clusters" class="nav-link">compare_clusters</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#utils.extract_trends" class="nav-link">extract_trends</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#utils.find_anomalies" class="nav-link">find_anomalies</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#utils.fit_trends" class="nav-link">fit_trends</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#utils.plot_clusters" class="nav-link">plot_clusters</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#utils.plot_trends" class="nav-link">plot_trends</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -97,17 +121,827 @@
 
 <h1 id="anomeda-methods-api">Anomeda methods API</h1>
 <p>Here you can find the documentation for available endpoints of <strong>anomeda</strong> Python package.</p>
-<pre><code>::: utils
-options:
-  heading_level: 2
-  show_root_toc_entry: false
-  show_docstring_classes: false
-  merge_init_into_class: false
-  show_root_heading: false
-  show_root_full_path: false
-  separate_signature: true
-  show_root_members_full_path: false
+
+
+<div class="doc doc-object doc-module">
+
+
+
+
+  <div class="doc doc-contents first">
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="utils.compare_clusters" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">compare_clusters</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">compare_clusters</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">period1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">period2</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">breakdowns</span><span class="p">:</span> <span class="s2">&quot;no&quot;</span>
+    <span class="o">|</span> <span class="s2">&quot;all&quot;</span>
+    <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Compare metric values for 2 periods.</p>
+<p>The method generates pandas.DataFrame object with descriptions for two periods, for each cluster. 
+You can use it to identify the cluster or set of clusters caused the differences in the overall metric values between two periods.</p>
+
+
+
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b><code>data</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
+        –
+        <div class="doc-md-description">
+          <p>Object containing data to be analyzed</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>period1</code></b>
+            (<code>str</code>)
+        –
+        <div class="doc-md-description">
+          <p>Query to filter the first period. For example, 'dt &lt; 10'.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>period2</code></b>
+            (<code>str</code>)
+        –
+        <div class="doc-md-description">
+          <p>Query to filter the second period. For example, 'dt &gt;= 10'.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>breakdowns</code></b>
+            (<code>no | all | list[str]</code>, default:
+                <code>&#39;no&#39;</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>If 'no', the metric is grouped by date points only. 
+If 'all', all combinations of measures are used to extract and plot clusters. 
+If list[str], then only specific clusters specified in the list are plotted. 
+If list[list[str]] then each internal list is a list of measures used to extract clusters.</p>
+        </div>
+      </li>
+  </ul>
+
+
+
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+<b><code>output</code></b> (            <code><span title="pandas.DataFrame">DataFrame</span></code>
+)        –
+        <div class="doc-md-description">
+          <p>Object describing the clusters and the changes in the metric behavior between them. </p>
+      </div>
+      </li>
+  </ul>
+
+
+
+<p><strong>Examples:</strong></p>
+    <pre><code class="language-python">anomeda.compare_clusters(
+    data,
+    period1='dt &lt; 10',
+    period2='dt &gt;= 10',
+    breakdowns='no'
+)
+</code></pre>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="utils.extract_trends" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">extract_trends</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">extract_trends</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">,</span>
+    <span class="n">y</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">freq</span><span class="p">:</span> <span class="s2">&quot;frequency unit for pandas.DatetimeIndex&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">propagation_strategy</span><span class="p">:</span> <span class="s2">&quot;zeros&quot;</span> <span class="o">|</span> <span class="s2">&quot;ffil&quot;</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_trends</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="s2">&quot;auto&quot;</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">min_var_reduction</span><span class="p">:</span> <span class="nb">float</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Fit and return automatocally fitted linear trends for given X and Y.</p>
+<p>The method can extract more than 1 trend if the metric significantly changed its behavior. 
+The sensibility of the method to identify trend changes are set by parameters "max_trends" and "min_var_reduction".</p>
+
+
+
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b><code>x</code></b>
+            (<code><span title="numpy.ndarray">ndarray</span>[int] | <span title="pandas.DatetimeIndex">DatetimeIndex</span></code>)
+        –
+        <div class="doc-md-description">
+          <p>Indeces corresponding to time points. Must be an increasing array of integers. Some of the values may be omitted, e.g such x is OK: [0, 1, 5, 10].</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>y</code></b>
+            (<code><span title="numpy.ndarray">ndarray</span>[float]</code>)
+        –
+        <div class="doc-md-description">
+          <p>Metric values corresponding to time points.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>propagation_strategy</code></b>
+            (<code>&#39;&#34;zeros&#34; | &#34;ffil&#34; | None&#39; = None</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>How to propogate aggregated time-series for missing index values.
+- zeros: 
+    Let metric for missing index be equal 0. For example, aggregated metric values
+        '2024-01-01': 1
+        '2024-01-03': 2
+    Will be propagated as
+        '2024-01-01': 1 
+        '2024-01-02': 0
+        '2024-01-03': 2
+- ffil: 
+    Let metric for missing index be equal the last observed value. For example, aggregated metric values 
+        '2024-01-01': 1
+        '2024-01-03': 2
+    Will be propagated as
+        '2024-01-01': 1
+        '2024-01-02': 1 
+        '2024-01-03': 2
+- None: 
+    Use only present metric and index values.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>max_trends</code></b>
+            (<code>int | auto</code>, default:
+                <code>&#34;auto&#34;</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Number of trends to extract. If int, the method extracts defined amount of trends or less. Less trends may be extracted if no more trends were found or if the min_var_reduction is reached. It would mean taht the variance is already explained by that amount of trends. If 'auto', the method defines the number of trends automatically using min_var_reduction parameter. Default is 'auto'.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>min_var_reduction</code></b>
+            (<code>float[0, 1] | None</code>, default:
+                <code>0.5</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>% of the variance of approximation error that must be reduced by adding trends comparing to the variance of the initial approximation with one trend. Values closer to 1 will cause extracting more trends, since more trends reduce the variance better. Values closer to 0 will cause producing less trends. If max_trends is set and reached, the extraction finishes regardless the value of the variance. If None, then not used. Default is 0.5.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>verbose</code></b>
+            (<code>bool</code>, default:
+                <code>False</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>If to produce more logs. Default False.</p>
+        </div>
+      </li>
+  </ul>
+
+
+
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+<b><code>trends</code></b> (            <code>dict</code>
+)        –
+        <div class="doc-md-description">
+          <p>Dict contains the extracted trends in the format
+    {
+        trend_id: (xmin_inc, xmax_exc, (trend_slope, trend_intersept), (n_samples, metric_mean, mae, metric_sum)), 
+        ...
+    }</p>
+      </div>
+      </li>
+  </ul>
+
+
+
+<p><strong>Examples:</strong></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">11.2</span><span class="p">,</span> <span class="mf">10.4</span><span class="p">,</span> <span class="mf">3.4</span><span class="p">,</span> <span class="mf">3.1</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">extract_trends</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">max_trends</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="go">{</span>
+<span class="go">    0: (0, 4, (-0.7999999999999989, 11.2), (2, 10.8, 0.0, 21.6)), # trend 1, for date points from 0 (inc) to 4 (excl)</span>
+<span class="go">                                                                  # with slope -0.79 and intercept 11.2 </span>
+<span class="go">                                                                  # consisting of 2 samples, </span>
+<span class="go">                                                                  # metric mean over date points is 10.8,</span>
+<span class="go">                                                                  # mae for fitting trend over date points is 0.0</span>
+<span class="go">                                                                  # sum for all metric values is 21.6</span>
+<span class="go">    1: (4, 6, (-0.2999999999999998, 4.6), (2, 3.25, 0.0, 6.5))</span>
+<span class="go">}</span>
+</code></pre></div>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="utils.find_anomalies" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">find_anomalies</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">find_anomalies</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="o">|</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">float</span><span class="p">]),</span>
+    <span class="n">breakdowns</span><span class="p">:</span> <span class="s2">&quot;no&quot;</span>
+    <span class="o">|</span> <span class="s2">&quot;all&quot;</span>
+    <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span><span class="p">,</span>
+    <span class="n">anomalies_conf</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;p_large&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">&quot;p_low&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">&quot;n_neighbors&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="n">return_all_points</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">trend_fitting_conf</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Find metric anomalies by looking for the most extreme metric changes.</p>
+<p>The method finds differences between real metric and a fitted trends, find points with extreme differences and marks them as anomalies. 
+You can find anomalies for automatically extracted clusters only if passing an anomeda.DataFrame.</p>
+
+
+
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b><code>data</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span> | (<span title="numpy.ndarray">ndarray</span>[int], <span title="numpy.ndarray">ndarray</span>[float])</code>)
+        –
+        <div class="doc-md-description">
+          <p>Object containing metric values to be analyzed. Trends must be fitted for the object with anomeda.fit_trends() method if anomeda.DataFrame is passed.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>breakdowns</code></b>
+            (<code>no | all | list[str]</code>, default:
+                <code>&#39;no&#39;</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>If 'no', the metric is grouped by date points only. 
+If 'all', all combinations of measures are used to extract and plot clusters. 
+If list[str], then only specific clusters specified in the list are plotted. 
+If list[list[str]] then each internal list is a list of measures used to extract clusters.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>anomalies_conf</code></b>
+            (<code>dict</code>, default:
+                <code>{&#39;p_large&#39;: 1., &#39;p_low&#39;: 1., &#39;n_neighbors&#39;: 3}</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Dict containing 'p_large' and 'p_low' values. Both are float values between 0 and 1 corresponding to the % of the anomalies with largest and lowest metric values to be returned.
+For example, if you set 'p_low' to 0, no points with abnormally low metric values will be returned; if 0.5, then 50% of points with abnormally values will be returned, etc. 
+If some of the keys is not present or None, 1 is assumed.
+'n_neighbors' means number of neighbors parameter for sklearn.neighbors.LocalOutlierFactor class. The class is used to find points with abnormally large MAE. The more the parameter, typically, the less sensitive the model to anomalies.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>return_all_points</code></b>
+            (<code>bool</code>, default:
+                <code>False</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>If False, only anomaly points are returned. If True, all points with anomalies marks are returned. Default False.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>trend_fitting_conf</code></b>
+            (<code>dict</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Used only if data is not anomeda.DataFrame, but numpy arrays, to run anomeda.fit_trends method for them. 
+Parameters are similar to those you would pass to the argument anomeda.fit_trends(..., trend_fitting_conf=...).</p>
+        </div>
+      </li>
+  </ul>
+
+
+
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+<b><code>res</code></b> (            <code><span title="pandas.DataFrame">DataFrame</span></code>
+)        –
+        <div class="doc-md-description">
+          <p>A DataFrame containing fields 'cluster', 'index', 'metric_value', 'fitted_trend_value', 'anomaly'.</p>
+      </div>
+      </li>
+  </ul>
+
+
+
+<p><strong>Examples:</strong></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">fit_trends</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">find_anomalies</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</code></pre></div>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="utils.fit_trends" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">fit_trends</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">fit_trends</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="o">|</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span>
+    <span class="o">|</span> <span class="p">(</span><span class="n">pandas</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="nb">float</span><span class="p">]),</span>
+    <span class="n">trend_fitting_conf</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;max_trends&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;min_var_reduction&quot;</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="n">save_trends</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">breakdowns</span><span class="p">:</span> <span class="s2">&quot;no&quot;</span>
+    <span class="o">|</span> <span class="s2">&quot;all&quot;</span>
+    <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span><span class="p">,</span>
+    <span class="n">metric_propagate</span><span class="p">:</span> <span class="s2">&quot;zeros&quot;</span> <span class="o">|</span> <span class="s2">&quot;ffil&quot;</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">min_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">plot</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">df</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Fit trends for a time series.</p>
+<p>Fit trends using the data from an anomeda.DataFrame or an numpy.ndarray with metric values. 
+You can fit trends for automatically extracted clusters only if passing an anomeda.DataFrame. 
+If anomeda.DataFrame is passed and "save_trends" is True, it stores the trends into anomeda.DataFrame._trends attribute of the class every time the method is called. 
+The method returns a pandas.DataFrame describing trends and/or plots the trends.</p>
+
+
+
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b><code>data</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span> | (<span title="numpy.ndarray">ndarray</span>[int], <span title="numpy.ndarray">ndarray</span>[float]) | (<span title="pandas.DatetimeIndex">DatetimeIndex</span>, <span title="numpy.ndarray">ndarray</span>[float])</code>)
+        –
+        <div class="doc-md-description">
+          <p>Object containing metric values. If numpy.ndarray, a tuple of arrays corresponding to x (data points) and y (metric values) respectively.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>trend_fitting_conf</code></b>
+            (<code>dict</code>, default:
+                <code>{&#39;max_trends&#39;: &#39;auto&#39;, &#39;min_var_reduction&#39;: 0.75}</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Parameters for calling anomeda.extract_trends() function. It consists of 'max_trends' parameter, which is responsible for the maximum number of trends that you want to identify, and 'min_var_reduction' parameter, which describes what part of variance must be reduced by estimating trends. Values close to 1 will produce more trends since more trends reduce variance more signigicantly. Default is {'max_trends': 'auto', 'min_var_reduction': 0.75}.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>save_trends</code></b>
+            (<code>bool</code>, default:
+                <code>True</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>If False, return pandas.DataFrame with trends description without assigning it to the anomeda.DataFrame._trends.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>breakdowns</code></b>
+            (<code>no | all | list[str]</code>, default:
+                <code>&#39;no&#39;</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>If 'no', the metric is grouped by date points only. 
+If 'all', all combinations of measures are used to extract and plot clusters. 
+If list[str], then only specific clusters specified in the list are plotted. 
+If list[list[str]] then each internal list is a list of measures used to extract clusters.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>metric_propagate</code></b>
+            (<code>&#39;&#34;zeros&#34; | &#34;ffil&#34; | None&#39; = None</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>How to propogate aggregated time-series for missing index values.
+- zeros: 
+    Let metric for missing index be equal 0. For example, aggregated metric values
+        '2024-01-01': 1
+        '2024-01-03': 2
+    Will be propagated as
+        '2024-01-01': 1 
+        '2024-01-02': 0
+        '2024-01-03': 2
+- ffil: 
+    Let metric for missing index be equal the last observed value. For example, aggregated metric values 
+        '2024-01-01': 1
+        '2024-01-03': 2
+    Will be propagated as
+        '2024-01-01': 1
+        '2024-01-02': 1 
+        '2024-01-03': 2
+- None: 
+    Use only present metric and index values.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>min_cluster_size</code></b>
+            (<code>int</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Skip clusters whose total size among all date points is less than the value.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>max_cluster_size</code></b>
+            (<code>int</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Skip clusters whose total size among all date points is more than the value.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>plot</code></b>
+            (<code>bool</code>, default:
+                <code>False</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Indicator if to plot fitted trends. anomeda.plot_trends is responsibe for plotting if the flag is True.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>df</code></b>
+            (<code>bool</code>, default:
+                <code>True</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Indicator if to return a pandas.DataFrame containing fitted trends.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>verbose</code></b>
+            (<code>bool</code>, default:
+                <code>False</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Indicator if to print additional output.</p>
+        </div>
+      </li>
+  </ul>
+
+
+
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+<b><code>resp</code></b> (            <code><span title="pandas.DataFrame">DataFrame</span></code>
+)        –
+        <div class="doc-md-description">
+          <p>An object containing information about trends</p>
+      </div>
+      </li>
+  </ul>
+
+
+
+<p><strong>Examples:</strong></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">fitted_trends</span> <span class="o">=</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">fit_trends</span><span class="p">(</span>
+<span class="go">        data, </span>
+<span class="go">        trend_fitting_conf={&#39;max_trends&#39;: 3}, </span>
+<span class="go">        breakdowns=&#39;all&#39;,</span>
+<span class="go">        metric_propagate=&#39;zeros&#39;,</span>
+<span class="go">        min_cluster_size=3, </span>
+<span class="go">        plot=True, </span>
+<span class="go">        df=True</span>
+<span class="go">    )</span>
+</code></pre></div>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="utils.plot_clusters" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">plot_clusters</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">plot_clusters</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">anomeda</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">breakdowns</span><span class="p">:</span> <span class="s2">&quot;no&quot;</span>
+    <span class="o">|</span> <span class="s2">&quot;all&quot;</span>
+    <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span><span class="p">,</span>
+    <span class="n">metric_propagate</span><span class="p">:</span> <span class="s2">&quot;zeros&quot;</span> <span class="o">|</span> <span class="s2">&quot;ffil&quot;</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">min_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">colors</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Plot metric in clusters.</p>
+<p>Plot metric extracted from clusters from anomeda.DataFrame instance.</p>
+
+
+
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b><code>data</code></b>
+            (<code><span title="anomeda.DataFrame">DataFrame</span></code>)
+        –
+        <div class="doc-md-description">
+          <p>Object containing clusters to be plotted.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>breakdowns</code></b>
+            (<code>no | all | list[str]</code>, default:
+                <code>&#39;no&#39;</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>If 'no', the metric is grouped by date points only. 
+If 'all', all combinations of measures are used to extract and plot clusters. 
+If list[str], then only specific clusters specified in the list are plotted. 
+If list[list[str]] then each internal list is a list of measures used to extract clusters.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>metric_propagate</code></b>
+            (<code>&#39;&#34;zeros&#34; | &#34;ffil&#34; | None&#39; = None</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>How to propogate aggregated time-series for missing index values.
+- zeros: 
+    Let metric for missing index be equal 0. For example, aggregated metric values
+        '2024-01-01': 1
+        '2024-01-03': 2
+    Will be propagated as
+        '2024-01-01': 1 
+        '2024-01-02': 0
+        '2024-01-03': 2
+- ffil: 
+    Let metric for missing index be equal the last observed value. For example, aggregated metric values 
+        '2024-01-01': 1
+        '2024-01-03': 2
+    Will be propagated as
+        '2024-01-01': 1
+        '2024-01-02': 1 
+        '2024-01-03': 2
+- None: 
+    Use only present metric and index values.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>min_cluster_size</code></b>
+            (<code>int</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Skip clusters whose total size among all date points is less than the value.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>max_cluster_size</code></b>
+            (<code>int</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Skip clusters whose total size among all date points is more than the value.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>colors</code></b>
+            (<code>dict</code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Dictionary with a mapping between clusters and colors used in matplotlib.</p>
+        </div>
+      </li>
+  </ul>
+
+
+
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>None</code>
+        –
+        <div class="doc-md-description">
+          
+      </div>
+      </li>
+  </ul>
+
+
+
+<p><strong>Examples:</strong></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">plot_clusters</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">data</span><span class="p">,</span> <span class="c1"># anomeda.DataFrame</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">breakdowns</span><span class="o">=</span><span class="p">[[</span><span class="s1">&#39;measure_a&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;measure_a&#39;</span><span class="p">,</span> <span class="s1">&#39;measure_b&#39;</span><span class="p">]]</span> <span class="c1"># plot clusters extracted using measure_a and a combination of measure_a and measure_b </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+</code></pre></div>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">plot_clusters</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">data</span><span class="p">,</span> <span class="c1"># anomeda.DataFrame</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">breakdowns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;measure_a==1&#39;</span><span class="p">,</span> <span class="s1">&#39;measure_a == 1 and measure_b == 2&#39;</span><span class="p">]</span> <span class="c1"># plot two specified clusters </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+</code></pre></div>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">plot_clusters</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">data</span><span class="p">,</span> <span class="c1"># anomeda.DataFrame</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">breakdowns</span><span class="o">=</span><span class="s1">&#39;no&#39;</span> <span class="c1"># plot a metric grouped by index values only</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+</code></pre></div>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="utils.plot_trends" class="doc doc-heading">
+          <span class="doc doc-object-name doc-function-name">plot_trends</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">plot_trends</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="s2">&quot;anomeda.DataFrame | pandas.DataFrame returned from anomeda.fit_trends()&quot;</span><span class="p">,</span>
+    <span class="n">breakdowns</span><span class="p">:</span> <span class="s2">&quot;no&quot;</span>
+    <span class="o">|</span> <span class="s2">&quot;all&quot;</span>
+    <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span><span class="p">,</span>
+    <span class="n">show_metric</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">colors</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Plot fitted trends.</p>
+<p>Plot trends either from anomeda.DataFrame instance or using a response from anomeda.fit_trends().</p>
+
+
+
+  <p>Parameters:</p>
+  <ul>
+      <li class="field-body">
+        <b><code>data</code></b>
+            (<code>anomeda.DataFrame | pandas.DataFrame returned from anomeda.fit_trends()</code>)
+        –
+        <div class="doc-md-description">
+          <p>Object containing trends to be plotted.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>breakdowns</code></b>
+            (<code>no | all | list[str]</code>, default:
+                <code>&#39;no&#39;</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>If 'no', the metric is grouped by date points only. 
+If 'all', all combinations of measures are used to extract and plot clusters. 
+If list[str], then only specific clusters specified in the list are plotted. 
+If list[list[str]] then each internal list is a list of measures used to extract clusters.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>show_metric</code></b>
+            (<code>bool</code>, default:
+                <code>True</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Indicator if to show actual metric on plots.</p>
+        </div>
+      </li>
+  </ul>
+
+
+
+  <p>Returns:</p>
+  <ul>
+      <li class="field-body">
+            <code>None</code>
+        –
+        <div class="doc-md-description">
+          
+      </div>
+      </li>
+  </ul>
+
+
+
+<p><strong>Examples:</strong></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">fit_trends</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">anomeda</span><span class="o">.</span><span class="n">plot_trends</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</code></pre></div>
+
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div></div>
             </div>
         </div>
 

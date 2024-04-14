@@ -226,6 +226,7 @@
 
   </div>
 
+
 </div><p>As you may have noticed, most of the parameters are optional. If you don't specify a parameter, a default value will be used. Or you will be notified once you use <code>anomeda.fit_trends</code>, <code>anomeda.find_anomalies</code> or other methods that you need to specify something additionally.</p>
 <p>Note that it is recommended to use <strong>datetime-like index</strong> or <strong>integer index</strong>. You can map change the type of your index to datetime, for example, using <code>pandas.to_datetime</code>. Anomeda will try to change the type automatically, but it may cause unexpected results. If it failes, it will try to convert index values to <em>int64</em>.</p>
 <p>Here is some examples of how you can initialize a new <code>anomeda.DataFrame</code>:</p>
@@ -302,7 +303,6 @@ anomeda.DataFrame(
 
 
 
-
 <h6 id="DataFrame.DataFrame.copy_anomeda_df" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">copy_anomeda_df</span></code>
 
@@ -318,7 +318,6 @@ anomeda.DataFrame(
 
 
 <div class="doc doc-object doc-function">
-
 
 
 
@@ -340,7 +339,6 @@ anomeda.DataFrame(
 
 
 
-
 <h6 id="DataFrame.DataFrame.get_discretization_mapping" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">get_discretization_mapping</span></code>
 
@@ -356,7 +354,6 @@ anomeda.DataFrame(
 
 
 <div class="doc doc-object doc-function">
-
 
 
 
@@ -378,7 +375,6 @@ anomeda.DataFrame(
 
 
 
-
 <h6 id="DataFrame.DataFrame.get_index_name" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">get_index_name</span></code>
 
@@ -394,7 +390,6 @@ anomeda.DataFrame(
 
 
 <div class="doc doc-object doc-function">
-
 
 
 
@@ -416,7 +411,6 @@ anomeda.DataFrame(
 
 
 
-
 <h6 id="DataFrame.DataFrame.get_measures_types" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">get_measures_types</span></code>
 
@@ -432,7 +426,6 @@ anomeda.DataFrame(
 
 
 <div class="doc doc-object doc-function">
-
 
 
 
@@ -454,7 +447,6 @@ anomeda.DataFrame(
 
 
 
-
 <h6 id="DataFrame.DataFrame.replace_df" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">replace_df</span></code>
 
@@ -470,7 +462,6 @@ anomeda.DataFrame(
 
 
 <div class="doc doc-object doc-function">
-
 
 
 
@@ -492,7 +483,6 @@ anomeda.DataFrame(
 
 
 
-
 <h6 id="DataFrame.DataFrame.set_discretization_mapping" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">set_discretization_mapping</span></code>
 
@@ -508,7 +498,6 @@ anomeda.DataFrame(
 
 
 <div class="doc doc-object doc-function">
-
 
 
 
@@ -530,7 +519,6 @@ anomeda.DataFrame(
 
 
 
-
 <h6 id="DataFrame.DataFrame.set_measures_names" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">set_measures_names</span></code>
 
@@ -549,7 +537,6 @@ anomeda.DataFrame(
 
 
 
-
 <h6 id="DataFrame.DataFrame.set_measures_types" class="doc doc-heading">
           <code class="highlight language-python"><span class="n">set_measures_types</span></code>
 
@@ -565,7 +552,6 @@ anomeda.DataFrame(
 
 
 <div class="doc doc-object doc-function">
-
 
 
 
@@ -588,6 +574,7 @@ anomeda.DataFrame(
 
   </div>
 
+
 </div><h2 id="how-we-handle-continuous-measures">How we handle continuous measures</h2>
 <p>Measures with continuous values are mapped to discrete ones by <a href="https://scikit-learn.org/stable/modules/generated/sklearn.mixture.BayesianGaussianMixture.html"><code>sklearn.mixture.BayesianGaussianMixture</code></a> by default. It helps to divide the data into interpretable clusters. Usually the mapped values represent more or less isolated ranges where the feature is concentrated, like "tiny", "medium", "large" or other categories. The <code>anomeda._to_discrete_values</code> is responsible for the transformation, you may redefine it if needed.</p>
 <p>You can pass specific discrete values of a continuous measure both when creating an anomeda.DataFrame object and later. See <code>discretized_measures</code> parameter of <code>anomeda.DataFrame.__init__</code> or <code>anomeda.DataFrame.set_discretized_measures</code>. Alternatively, you may pass a mapping describing how to transform your continuous values into discrete ones, see the <code>discretized_measures_mapping</code> parameter of <code>anomeda.DataFrame.__init__</code> or <code>anomeda.DataFrame.set_discretization_mapping</code>.</p>
@@ -599,6 +586,7 @@ anomeda.DataFrame(
 
 
 <div class="doc doc-object doc-function">
+
 
 
 
@@ -780,6 +768,7 @@ If list[list[str]] then each internal list is a list of measures used to extract
 
 
 <div class="doc doc-object doc-function">
+
 
 
 

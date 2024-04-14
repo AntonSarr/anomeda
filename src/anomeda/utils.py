@@ -160,7 +160,7 @@ def extract_trends(
     freq: 'frequency unit for pandas.DatetimeIndex' = None,
     propagation_strategy: '"zeros" | "ffil" | None' = None,
     max_trends : "int | 'auto'"='auto', 
-    min_var_reduction : 'float[0, 1] | None'=0.5, 
+    min_var_reduction : 'float[0, 1] | None' = 0.5, 
     verbose : 'bool'=False
 ):
     """Fit and return automatocally fitted linear trends for given X and Y.
@@ -226,7 +226,7 @@ def extract_trends(
     }
     """
     
-    if max_trends == 'auto':
+    if max_trends == 'auto' or max_trends is None:
         if min_var_reduction is None:
             raise ValueError("Either max_trends or min_var_reduction parameters must be set. max_trends='auto' and min_var_reduction=None at the same time is not permitted.")
         max_trends = np.inf
@@ -926,8 +926,10 @@ def plot_trends(
         raise ValueError('"data" argument must be either anomeda.DataFrame or pandas.DataFrame returned by anomeda.fit_trends()')
 
     if colors is None:
-            replace = len(clusters) >= len(TABLEAU_COLORS)
-            cluster_c = dict(zip(clusters, np.random.choice(list(TABLEAU_COLORS.keys()), size=len(clusters), replace=replace)))
+        replace = len(clusters) >= len(TABLEAU_COLORS)
+        cluster_c = dict(zip(clusters, np.random.choice(list(TABLEAU_COLORS.keys()), size=len(clusters), replace=replace)))
+    else:
+        cluster_c = colors.copy()
     
     for c in clusters:
         
@@ -954,8 +956,8 @@ def plot_trends(
             cluster = t['cluster']
             
             if type(t['trend_start_dt']) == int:
-                x = np.arange(t['trend_start_dt'], t['trend_end_dt'])
-                x_axis = x
+                x_axis = np.arange(t['trend_start_dt'], t['trend_end_dt'])
+                x = np.arange(len(x_axis))
             else:
                 x_axis = pd.date_range(start=t['trend_start_dt'], end=t['trend_end_dt'])
                 x = np.arange(len(x_axis))
@@ -1124,6 +1126,8 @@ def plot_clusters(
     if colors is None:
         replace = len(clusters) >= len(TABLEAU_COLORS)
         cluster_c = dict(zip(clusters, np.random.choice(list(TABLEAU_COLORS.keys()), size=len(clusters), replace=replace)))
+    else:
+        cluster_c = colors.copy()
     
     for query in clusters:
         if query == 'total':
