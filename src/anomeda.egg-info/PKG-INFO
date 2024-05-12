@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: anomeda
-Version: 0.1.3
+Version: 0.1.4
 Summary: Python package which helps to identify important metric changes and quickly find clusters in data which changed the trend of the metric or caused the anomaly
 Author-email: Anton Saroka <anton.soroka.1313@gmail.com>
 Project-URL: Homepage, https://github.com/AntonSarr/anomeda

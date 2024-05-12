@@ -1360,6 +1360,7 @@ If list[list[str]] then each internal list is a list of measures used to extract
     <span class="n">min_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_cluster_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">colors</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ax</span><span class="p">:</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">Axes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -1451,6 +1452,16 @@ If list[list[str]] then each internal list is a list of measures used to extract
           <p>Dictionary with a mapping between clusters and colors used in matplotlib.</p>
         </div>
       </li>
+      <li class="field-body">
+        <b><code>ax</code></b>
+            (<code><span title="matplotlib.axes.Axes">Axes</span></code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Axes to use for plotting. If None, a new object is created.</p>
+        </div>
+      </li>
   </ul>
 
 
@@ -1507,6 +1518,7 @@ If list[list[str]] then each internal list is a list of measures used to extract
     <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span><span class="p">,</span>
     <span class="n">show_metric</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">colors</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ax</span><span class="p">:</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">Axes</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -1548,6 +1560,16 @@ If list[list[str]] then each internal list is a list of measures used to extract
         –
         <div class="doc-md-description">
           <p>Indicator if to show actual metric on plots.</p>
+        </div>
+      </li>
+      <li class="field-body">
+        <b><code>ax</code></b>
+            (<code><span title="matplotlib.axes.Axes">Axes</span></code>, default:
+                <code>None</code>
+)
+        –
+        <div class="doc-md-description">
+          <p>Axes to use for plotting. If None, a new Axes is created.</p>
         </div>
       </li>
   </ul>

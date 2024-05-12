@@ -645,7 +645,10 @@ def find_anomalies(
                 outliers = np.array([False])
             else:
                 clusterizator = LocalOutlierFactor(n_neighbors=max(min(len(ydata) - 1, n_neighbors), 1), novelty=False)
-                outliers = clusterizator.fit_predict(y_diff.reshape(-1, 1)) == -1
+                try:
+                    outliers = clusterizator.fit_predict(y_diff.reshape(-1, 1)) == -1
+                except ValueError:
+                    raise ValueError("Something is wrong with the metric values. It may contain NaN or other values which caused errors while fitting trends.")
 
             # Remove inliers, i.e. isolated points not from the left or right tail of values range
             # We want to keep only the largest or the lowest differences
@@ -745,7 +748,10 @@ def find_anomalies(
             outliers = np.array([False])
         else:
             clusterizator = LocalOutlierFactor(n_neighbors=max(min(len(ydata) - 1, n_neighbors), 1), novelty=False)
-            outliers = clusterizator.fit_predict(y_diff.reshape(-1, 1)) == -1
+            try:
+                outliers = clusterizator.fit_predict(y_diff.reshape(-1, 1)) == -1
+            except ValueError:
+                raise ValueError("Something is wrong with the metric values. It may contain NaN or other values which caused errors while fitting trends.")
 
         # Remove inliers, i.e. isolated points not from the left or right tail of values range
         # We want to keep only the largest or the lowest differences
@@ -798,7 +804,8 @@ def plot_trends(
     data: 'anomeda.DataFrame | pandas.DataFrame returned from anomeda.fit_trends()', 
     breakdowns : "'no' | 'all' | list[str] | list[list[str]]" = 'no',
     show_metric=True,
-    colors : 'dict' = None
+    colors : 'dict' = None,
+    ax : 'matplotlib.axes.Axes' = None
 ):
     """Plot fitted trends.
     
@@ -815,6 +822,8 @@ def plot_trends(
         If list[list[str]] then each internal list is a list of measures used to extract clusters.
     show_metric : bool, default True
         Indicator if to show actual metric on plots.
+    ax : matplotlib.axes.Axes, default None
+        Axes to use for plotting. If None, a new Axes is created.
         
     Returns
     -------
@@ -825,6 +834,9 @@ def plot_trends(
     >>> anomeda.fit_trends(data)
     >>> anomeda.plot_trends(data)
     """
+    if ax is None:
+        fig, ax = plt.subplots()
+    
     if type(data) == DataFrame:
         if hasattr(data, '_trends'):
             df = data._trends.copy()
@@ -969,13 +981,13 @@ def plot_trends(
         
         x_cluster = np.concatenate(x_cluster)
         y_trend_cluster = np.concatenate(y_trend_cluster)
-        plt.plot(x_cluster, y_trend_cluster, label=cluster, color=cluster_c[cluster], linestyle=(0, (5, 2)))
+        ax.plot(x_cluster, y_trend_cluster, label=cluster, color=cluster_c[cluster], linestyle=(0, (5, 2)))
         
         if show_metric and type(data) == DataFrame:
             cluster_info = data._clusters[c]
-            plt.plot(cluster_info['index'], cluster_info['values'], color=cluster_c[cluster])
+            ax.plot(cluster_info['index'], cluster_info['values'], color=cluster_c[cluster])
         
-    plt.legend()
+    ax.legend()
 
 
 def plot_clusters(
@@ -984,7 +996,8 @@ def plot_clusters(
     metric_propagate : '"zeros" | "ffil" | None' = None,
     min_cluster_size : 'int | None' = None,
     max_cluster_size : 'int | None' = None,
-    colors : 'dict' = None
+    colors : 'dict' = None,
+    ax : 'matplotlib.axes.Axes' = None
 ):
     """Plot metric in clusters.
     
@@ -1025,6 +1038,8 @@ def plot_clusters(
         Skip clusters whose total size among all date points is more than the value.
     colors : dict, default None
         Dictionary with a mapping between clusters and colors used in matplotlib.
+    ax : matplotlib.axes.Axes, default None
+        Axes to use for plotting. If None, a new object is created.
         
     Returns
     -------
@@ -1047,6 +1062,9 @@ def plot_clusters(
     >>>     breakdowns='no' # plot a metric grouped by index values only
     >>> )
     """
+    if ax is None:
+        fig, ax = plt.subplots()
+        
     if type(data) == DataFrame:
         pass
     else:
@@ -1143,9 +1161,9 @@ def plot_clusters(
                 freq = data._index_freq
                 yindex, _, ydata = _propagate_metric(yindex, ydata, strategy=metric_propagate, freq=freq)
             
-            plt.plot(yindex, ydata, label=query, color=cluster_c[query])
+            ax.plot(yindex, ydata, label=query, color=cluster_c[query])
     if len(clusters) > 0:
-        plt.legend()
+        ax.legend()
 
 
 def fit_trends(

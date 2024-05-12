@@ -319,9 +319,24 @@ def test_compare_clusters():
     )
 
     res = anomeda.compare_clusters(anmd_df, period1='dt < "2024-01-01"', period2='dt >= "2024-01-01"')
-
     res = anomeda.compare_clusters(anmd_df, period1='dt < "2024-01-01"', period2='dt >= "2024-01-01"', breakdowns=['total'])
-
+    res = anomeda.compare_clusters(anmd_df, period1='dt < "2024-01-01"', period2='dt >= "2024-01-01"', breakdowns=['`a`==20'])
+    
+    index_name = 'dt'
+    metric_name = 'metric'
+    agg_func = 'sum'
+    measures_names = ['a', 'b']
+    
+    anmd_df = anomeda.DataFrame(
+        dummy_df,
+        measures_names=measures_names,
+        index_name=index_name,
+        metric_name=metric_name,
+        agg_func=agg_func
+    )
+    
+    res = anomeda.compare_clusters(anmd_df, period1='dt < "2024-01-01"', period2='dt >= "2024-01-01"')
+    res = anomeda.compare_clusters(anmd_df, period1='dt < "2024-01-01"', period2='dt >= "2024-01-01"', breakdowns=['total'])
     res = anomeda.compare_clusters(anmd_df, period1='dt < "2024-01-01"', period2='dt >= "2024-01-01"', breakdowns=['`a`==20'])
 
 

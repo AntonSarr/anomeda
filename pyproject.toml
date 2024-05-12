@@ -1,6 +1,6 @@
 [project]
 name = "anomeda"
-version = "0.1.3"
+version = "0.1.4"
 authors = [
   { name="Anton Saroka", email="anton.soroka.1313@gmail.com" },
 ]
