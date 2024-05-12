@@ -224,20 +224,20 @@ class DataFrame(pd.DataFrame):
             measures_names = []
         self.set_measures_names(measures_names)
         
-        measures_types = kwargs.get('measures_types')
-        if measures_types is None:
-            measures_types = {}
-        self.set_measures_types(measures_types)
-        
         discretized_measures = kwargs.get('discretized_measures')
         discretized_measures_mapping = kwargs.get('discretized_measures_mapping')
 
         if discretized_measures is not None and discretized_measures != {}\
               and discretized_measures_mapping is not None and discretized_measures_mapping != {}:
-            raise NotImplementedError('As for now "discretized_measures" and "discretized_measures_mapping" cannot be passed at the same time. Please choose either mapping or measures.')
+            raise NotImplementedError('As for now, "discretized_measures" and "discretized_measures_mapping" cannot be passed at the same time. Please choose either mapping or measures.')
         
         self.set_discretized_measures(discretized_measures)
         self.set_discretization_mapping(discretized_measures_mapping)
+        
+        measures_types = kwargs.get('measures_types')
+        if measures_types is None:
+            measures_types = {}
+        self.set_measures_types(measures_types)
         
         metric_name = kwargs.get('metric_name')
         self.set_metric_name(metric_name)
@@ -364,6 +364,8 @@ class DataFrame(pd.DataFrame):
         """
         if discretized_measures_mapping is not None:
             self._discretized_measures_mapping = discretized_measures_mapping.copy()
+        else:
+            self._discretized_measures_mapping = {}
 
         if discretized_measures_mapping is not None and recalculate_measures:
             self._discretized_measures = {}
@@ -419,26 +421,29 @@ class DataFrame(pd.DataFrame):
         })
         ```
         """
+        
         self._measures_types = measures_types
-        if measures_types is not None:    
-            if 'continuous' in measures_types:
-                if not hasattr(self, '_discretized_measures') or self._discretized_measures is None:
-                    self._discretized_measures = {}
-                    self._discretized_measures_mapping = {}
-                for measure in measures_types['continuous']:
-                    if measure not in self._discretized_measures:
-                        n_samples = self[measure].values.shape[0]
-                        if n_samples >= 2:
-                            self._discretized_measures[measure], \
-                            self._discretized_measures_mapping[measure] = _to_discrete_values(self[measure].values)
-                        elif n_samples == 1:
-                            self._discretized_measures[measure] = [0]
-                            self._discretized_measures_mapping[measure] = {
-                                0: [[self[measure].values[0], self[measure].values[0]]]
-                            }
-                        else:
-                            self._discretized_measures[measure] = []
-                            self._discretized_measures_mapping[measure] = {}
+        
+        if not hasattr(self, '_discretized_measures') or self._discretized_measures is None:
+            self._discretized_measures = {}
+            self._discretized_measures_mapping = {}
+
+            if measures_types is not None:    
+                if 'continuous' in measures_types:
+                    for measure in measures_types['continuous']:
+                        if measure not in self._discretized_measures:
+                            n_samples = self[measure].values.shape[0]
+                            if n_samples >= 2:
+                                self._discretized_measures[measure], \
+                                self._discretized_measures_mapping[measure] = _to_discrete_values(self[measure].values)
+                            elif n_samples == 1:
+                                self._discretized_measures[measure] = [0]
+                                self._discretized_measures_mapping[measure] = {
+                                    0: [[self[measure].values[0], self[measure].values[0]]]
+                                }
+                            else:
+                                self._discretized_measures[measure] = []
+                                self._discretized_measures_mapping[measure] = {}
 
     def get_discretized_measures(self):
         """Return discretized versions of continous measures."""
